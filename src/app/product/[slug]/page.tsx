@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import ProductCard from '@/components/ProductCard';
 import PageHeader from '@/components/PageHeader';
 import Link from 'next/link';
+import { getImageUrl } from '@/lib/utils';
 
 // /data/products.ts
 
@@ -31,7 +32,7 @@ export interface Product {
 
 const products: Product[] = [
   {
-    id: 1,
+    _id: 1,
     slug: 'cancorde-ceiling-lamp',
     name: 'Cancorde Ceiling Lamp',
     description:
@@ -40,7 +41,7 @@ const products: Product[] = [
     oldPrice: 60999,
     discount: 10,
     rating: 4.5,
-    reviews: 120,
+    numReviews: 120,
     colors: ['#d4af37', '#000000', '#ffffff', '#c0c0c0', '#f5deb3'],
     sizes: ['20 inch', '25 inch', '30 inch', '35 inch', '40 inch'],
     images: [
@@ -54,7 +55,7 @@ const products: Product[] = [
     related: [2, 3, 4],
   },
   {
-    id: 2,
+    _id: 2,
     slug: 'golden-glow-lamp',
     name: 'Golden Glow Lamp',
     description: 'Golden Glow Lamp adds elegance with warm lighting that suits any space.',
@@ -62,7 +63,7 @@ const products: Product[] = [
     oldPrice: 27000,
     discount: 15,
     rating: 4.7,
-    reviews: 89,
+    numReviews: 89,
     colors: ['#d4af37'],
     sizes: ['Standard'],
     images: [
@@ -75,106 +76,81 @@ const products: Product[] = [
     category: 'Indoor Products',
     related: [1, 3, 4],
   },
-  {
-    id: 3,
-    slug: 'square-wall-lamp',
-    name: 'Square Wall Lamp',
-    description: 'Minimalist square wall lamp with modern design and energy-efficient lighting.',
-    price: 9500,
-    oldPrice: 12500,
-    discount: 15,
-    rating: 4.3,
-    reviews: 64,
-    colors: ['#000000', '#ffffff'],
-    sizes: ['Standard'],
-    images: [
-      '/prodcut-1.jpg',
-      '/prodcut-2.jpg',
-      '/prodcut-3.jpg',
-      '/prodcut-4.jpg',
-      '/prodcut-5.jpg',
-    ],
-    category: 'Indoor Products',
-    related: [1, 2, 4],
-  },
-  {
-    id: 4,
-    slug: 'solar-hanging-balls',
-    name: 'Solar Hanging Balls',
-    description:
-      'Beautiful decorative solar hanging lights, perfect for gardens and outdoor spaces.',
-    price: 3795,
-    oldPrice: 4500,
-    discount: 15,
-    rating: 4.6,
-    reviews: 47,
-    colors: ['#ffd700'],
-    sizes: ['Small', 'Medium'],
-    images: [
-      '/prodcut-1.jpg',
-      '/prodcut-2.jpg',
-      '/prodcut-3.jpg',
-      '/prodcut-4.jpg',
-      '/prodcut-5.jpg',
-    ],
-    category: 'Outdoor Products',
-    related: [1, 2, 3],
-  },
 ];
 
 const ProductPage = () => {
   const { slug } = useParams();
   const product = products.find((p) => p.slug === slug);
 
-  // Use actual product images for gallery
-  const galleryImages = product ? product.images : [];
-  const [selectedImage, setSelectedImage] = useState(galleryImages[0]);
+  const [selectedImage, setSelectedImage] = useState('');
   const [fetchedproduct, setFetchdProduct] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('description');
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState(product?.colors[0]);
   const [selectedSize, setSelectedSize] = useState(product?.sizes[0]);
 
   const fetcheproduct = async () => {
+    setLoading(true);
     try {
-      const response = await fetch(`/api/products?slug=${slug}`);
+      const response = await fetch(`/api/products/${slug}`);
       const result = await response.json();
 
       if (result.success && result.data) {
-        const mapped: Product[] = result.data.map((item: Product) => ({
-          id: item._id, // or use index if needed
-          slug: item.slug,
-          name: item.name,
-          description: item.description,
-          price: item.price,
+        const productData = result.data;
+        
+        const mapped: Product = {
+          _id: productData._id,
+          slug: productData.slug,
+          name: productData.name,
+          description: productData.description,
+          price: productData.price,
           oldPrice: undefined,
           discount: undefined,
-          rating: item.rating || 0,
-          reviews: item.numReviews || 0,
+          rating: productData.rating || 0,
+          numReviews: productData.numReviews || 0,
           colors: ['#ffffff'], // fallback (since API doesn't give)
           sizes: ['Standard'], // fallback
-          images: item.images,
-          category: item.category?.name || '',
+          images: productData.images || [],
+          category: productData.category?.name || productData.category || '',
           related: [],
-        }));
+        };
 
-        setFetchdProduct(mapped);
-        console.log('Fetched:', mapped);
+        setFetchdProduct([mapped]);
+        console.log('Fetched product:', mapped);
       } else {
-        console.error('Failed to fetch products:', result.error);
+        console.error('Failed to fetch product:', result.error);
         setFetchdProduct([]);
       }
     } catch (error) {
-      console.error('Error fetching products:', error);
+      console.error('Error fetching product:', error);
       setFetchdProduct([]);
+    } finally {
+      setLoading(false);
     }
   };
   console.log(fetchedproduct);
 
   useEffect(() => {
     fetcheproduct();
-  }, []);
-  if (!fetcheproduct) {
+  }, [slug]);
+
+  // Set initial selected image when product data is loaded
+  useEffect(() => {
+    if (fetchedproduct.length > 0 && fetchedproduct[0].images.length > 0) {
+      const firstImage = fetchedproduct[0].images[0];
+      setSelectedImage(getImageUrl(firstImage));
+    }
+  }, [fetchedproduct]);
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (!loading && fetchedproduct.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] bg-white text-center px-4 py-12">
         <div className="bg-blue-100 rounded-full w-24 h-24 flex items-center justify-center mb-6 shadow-lg">
@@ -200,14 +176,10 @@ const ProductPage = () => {
     <div className=" max-w-[85rem] mx-auto">
       <PageHeader title="" subtitle={''} />
       {fetchedproduct.map((product: Product) => {
-        // if product has images, pick the first one as default
-        const baseUrl = 'http://localhost:3000'; // 👈 replace with your backend domain when deployed
-        const galleryImages = product.images.map((img) =>
-          img.startsWith('http') ? img : `${baseUrl}${img}`,
-        );
+        const galleryImages = product.images.map((img) => getImageUrl(img));
 
         return (
-          <div key={product._id} className="grid grid-cols-1 md:grid-cols-2 gap-10">
+          <div key={`product-${product._id}-${product.slug}`} className="grid grid-cols-1 md:grid-cols-2 gap-10">
             {/* Left - Gallery */}
             <div>
               <div className="flex flex-col items-center">
@@ -237,17 +209,16 @@ const ProductPage = () => {
                 <div className="flex gap-3 mt-6 justify-center w-full">
                   {galleryImages.map((img, i) => (
                     <Image
-                      key={i}
+                      key={`thumb-${i}-${img}`}
                       src={img}
                       alt={`thumb-${i}`}
                       width={70}
                       height={70}
                       onClick={() => setSelectedImage(img)}
-                      className={`rounded-lg cursor-pointer border transition-all duration-200 shadow-sm hover:scale-105 ${
-                        selectedImage === img
-                          ? 'border-blue-600 ring-2 ring-blue-300'
-                          : 'border-gray-300'
-                      }`}
+                      className={`rounded-lg cursor-pointer border transition-all duration-200 shadow-sm hover:scale-105 ${selectedImage === img
+                        ? 'border-blue-600 ring-2 ring-blue-300'
+                        : 'border-gray-300'
+                        }`}
                       style={{
                         boxShadow: selectedImage === img ? '0 0 0 2px #2563eb' : undefined,
                       }}
@@ -269,13 +240,13 @@ const ProductPage = () => {
                     .fill(0)
                     .map((_, i) => (
                       <Star
-                        key={i}
+                        key={`star-${i}`}
                         size={20}
                         fill={i < Math.round(product?.rating) ? 'currentColor' : 'none'}
                       />
                     ))}
                 </div>
-                <span className="text-gray-500">{product?.reviews} Reviews</span>
+                <span className="text-gray-500">{product?.numReviews} Reviews</span>
               </div>
 
               {/* Price */}
@@ -299,12 +270,11 @@ const ProductPage = () => {
               <div className="mt-6">
                 <h4 className="font-semibold">Color</h4>
                 <div className="flex gap-3 mt-2">
-                  {product?.colors.map((c) => (
+                  {product?.colors.map((c, index) => (
                     <button
-                      key={c}
-                      className={`w-8 h-8 rounded-full border ${
-                        selectedColor === c ? 'ring-2 ring-blue-600' : ''
-                      }`}
+                      key={`color-${c}-${index}`}
+                      className={`w-8 h-8 rounded-full border ${selectedColor === c ? 'ring-2 ring-blue-600' : ''
+                        }`}
                       style={{ backgroundColor: c }}
                       onClick={() => setSelectedColor(c)}
                     />
@@ -316,12 +286,11 @@ const ProductPage = () => {
               <div className="mt-6">
                 <h4 className="font-semibold">Size</h4>
                 <div className="flex gap-3 mt-2 flex-wrap">
-                  {product?.sizes.map((s) => (
+                  {product?.sizes.map((s, index) => (
                     <button
-                      key={s}
-                      className={`px-4 py-2 border rounded-lg ${
-                        selectedSize === s ? 'border-blue-600 text-blue-600' : 'border-gray-300'
-                      }`}
+                      key={`size-${s}-${index}`}
+                      className={`px-4 py-2 border rounded-lg ${selectedSize === s ? 'border-blue-600 text-blue-600' : 'border-gray-300'
+                        }`}
                       onClick={() => setSelectedSize(s)}
                     >
                       {s}
@@ -364,10 +333,9 @@ const ProductPage = () => {
         <div className="flex gap-6 border-b">
           {['description', 'specification', 'reviews', 'shipping'].map((tab) => (
             <button
-              key={tab}
-              className={`pb-3 font-semibold capitalize ${
-                activeTab === tab ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'
-              }`}
+              key={`tab-${tab}`}
+              className={`pb-3 font-semibold capitalize ${activeTab === tab ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'
+                }`}
               onClick={() => setActiveTab(tab)}
             >
               {tab}
@@ -395,13 +363,13 @@ const ProductPage = () => {
           .slice(0, 4)
           .map((p) => (
             <ProductCard
-              key={p._id}
+              key={`related-${p._id}-${p.slug}`}
               id={p._id}
               name={p.name}
               price={p.price}
-              img={p.images[0]}
+              img={getImageUrl(p.images[0])}
               href={`/product/${p.slug}`}
-              onAddToCart={() => {}}
+              onAddToCart={() => { }}
             />
           ))}
       </div>

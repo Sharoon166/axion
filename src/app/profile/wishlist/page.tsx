@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,52 +8,39 @@ import PageHeader from '@/components/PageHeader';
 import Pagination from '@/components/Pagination';
 import { ShoppingCart, X } from 'lucide-react';
 
-// Mock wishlist data
-const wishlistData = [
-  {
-    id: '1',
-    name: 'Vanity Light',
-    price: 'Rs. 14,500',
-    image: '/collection-1.jpg',
-  },
-  {
-    id: '2',
-    name: 'Solar Hanging Bulb',
-    price: 'Rs. 4,500',
-    image: '/collection-2.jpg',
-  },
-  {
-    id: '3',
-    name: 'Solar Pathway Lights',
-    price: 'Rs. 3,500',
-    image: '/product-1.jpg',
-  },
-  {
-    id: '4',
-    name: 'Solar Lighting Bush',
-    price: 'Rs. 5,500',
-    image: '/product-2.jpg',
-  },
-  {
-    id: '5',
-    name: 'Foyer Wall Lamp',
-    price: 'Rs. 5,500',
-    image: '/about-image.jpg',
-  },
-  {
-    id: '6',
-    name: 'Modern Ceiling Light',
-    price: 'Rs. 8,900',
-    image: '/hero-image.jpg',
-  },
-];
-
 export default function WishlistPage() {
   const [currentPage, setCurrentPage] = useState(1);
-  const [wishlistItems, setWishlistItems] = useState(wishlistData);
+  const [wishlistItems, setWishlistItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const itemsPerPage = 6;
   const totalPages = Math.ceil(wishlistItems.length / itemsPerPage);
+
+  // Fetch wishlist items
+  useEffect(() => {
+    const fetchWishlist = async () => {
+      try {
+        // For now, fetch featured products as wishlist items
+        const response = await fetch('/api/products?featured=true&limit=12');
+        if (response.ok) {
+          const result = await response.json();
+          const products = result.success ? result.data : [];
+          setWishlistItems(products.map((product: any) => ({
+            id: product.id,
+            name: product.name,
+            price: `Rs. ${product.price?.toLocaleString()}`,
+            image: product.image || '/prodcut-1.jpg'
+          })));
+        }
+      } catch (error) {
+        console.error('Error fetching wishlist:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWishlist();
+  }, []);
 
   // Paginate wishlist items
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -78,7 +65,12 @@ export default function WishlistPage() {
 
       <div className="max-w-[85rem] mx-auto px-4 py-8">
         {/* Wishlist Grid */}
-        {paginatedItems.length > 0 ? (
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+            <p className="mt-4 text-gray-500">Loading wishlist...</p>
+          </div>
+        ) : paginatedItems.length > 0 ? (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {paginatedItems.map((item) => (

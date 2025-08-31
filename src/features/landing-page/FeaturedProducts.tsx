@@ -78,12 +78,17 @@ const FeaturedProducts = () => {
 
   return (
     <div className="bg-[#050B1B] px-4 sm:px-5 py-6 sm:py-8">
+
       <div className="max-w-[85rem] mx-auto px-4">
         <div className="text-center mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-3 text-white">Featured Products</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-3 text-white">Featured
+            <span className="text-[var(--color-primary-accent)]"> Products</span></h2>
           <p className="text-sm sm:text-base text-gray-600">
             Discover our handpicked collection of premium lighting solutions
           </p>
+        </div>
+        <div className="flex justify-end">
+        <AddButton type="product" />
         </div>
 
         {products.length === 0 ? (

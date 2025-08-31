@@ -7,14 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { useActions } from '@/hooks/useActions';
-import { Edit3, Plus, ShoppingBag, Heart, Settings, MapPin, Mail, Phone, LogOut, ExternalLink } from 'lucide-react';
+import { Edit3, ShoppingBag, Heart,  MapPin, Mail, Phone } from 'lucide-react';
 import ProfileSidebar from '@/components/ProfileSidebar';
 
-// Dummy data - replace with actual data from your API
-const orderHistory: Array<{ id: string; name: string; status: string; image: string; date: string }> = [];
-const wishlistImages: string[] = [];
-
 interface UserData {
+  id?: string;
   name?: string;
   email?: string;
   avatar?: string;
@@ -50,8 +47,11 @@ const OrderItem = ({ id, name, status, image, date }: { id: string; name: string
 export default function ProfilePage() {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const pathname = usePathname();
-  const { product, user } = useActions();
+  const [activeTab, setActiveTab] = useState('profile');
+  const [orderHistory, setOrderHistory] = useState<Array<{ id: string; name: string; status: string; image: string; date: string }>>([]);
+  const [wishlistItems, setWishlistItems] = useState<any[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [loadingWishlist, setLoadingWishlist] = useState(false);
 
   useEffect(() => {
     // Get user data from localStorage
@@ -60,14 +60,7 @@ export default function ProfilePage() {
     if (storedUserData) {
       try {
         const parsedUserData = JSON.parse(storedUserData);
-        setUserData({
-          name: 'John Doe',
-          email: 'john@example.com',
-          address: '123 Main St, Anytown, USA',
-          phone: '+1 (555) 123-4567',
-          isAdmin: false,
-          ...parsedUserData
-        });
+        setUserData(parsedUserData);
       } catch (error) {
         console.error('Error parsing user data from localStorage:', error);
         redirect('/login');
@@ -79,6 +72,57 @@ export default function ProfilePage() {
 
     setIsLoading(false);
   }, []);
+
+  // Fetch user orders
+  useEffect(() => {
+    const fetchOrders = async () => {
+      if (!userData?.id) return;
+      
+      setLoadingOrders(true);
+      try {
+        const response = await fetch(`/api/orders?userId=${userData.id}`);
+        if (response.ok) {
+          const result = await response.json();
+          const orders = result.success ? result.data : [];
+          setOrderHistory(orders.map((order: any) => ({
+            id: order.id,
+            name: order.items?.[0]?.name || 'Order Items',
+            status: order.status,
+            image: order.items?.[0]?.image || '/prodcut-1.jpg',
+            date: new Date(order.createdAt).toLocaleDateString()
+          })));
+        }
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+      } finally {
+        setLoadingOrders(false);
+      }
+    };
+
+    fetchOrders();
+  }, [userData?.id]);
+
+  // Fetch wishlist items
+  useEffect(() => {
+    const fetchWishlist = async () => {
+      if (!userData?.id) return;
+      
+      setLoadingWishlist(true);
+      try {
+        const response = await fetch(`/api/products?featured=true&limit=8`);
+        if (response.ok) {
+          const products = await response.json();
+          setWishlistItems(products);
+        }
+      } catch (error) {
+        console.error('Error fetching wishlist:', error);
+      } finally {
+        setLoadingWishlist(false);
+      }
+    };
+
+    fetchWishlist();
+  }, [userData?.id]);
 
   const renderProfileContent = () => (
     <div className="space-y-6">
@@ -129,14 +173,19 @@ export default function ProfilePage() {
 
       {/* Recent Orders */}
       <ProfileCard title="Recent Orders">
-        {orderHistory.length > 0 ? (
+        {loadingOrders ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+            <p className="mt-2 text-gray-500">Loading orders...</p>
+          </div>
+        ) : orderHistory.length > 0 ? (
           <div className="divide-y divide-gray-100">
             {orderHistory.slice(0, 3).map((order) => (
               <OrderItem key={order.id} {...order} />
             ))}
             <div className="pt-4 text-center">
-              <Button variant="outline" asChild>
-                <Link href="/orders">View All Orders</Link>
+              <Button variant="outline" onClick={() => setActiveTab('orders')}>
+                View All Orders
               </Button>
             </div>
           </div>
@@ -167,7 +216,12 @@ export default function ProfilePage() {
       </div>
 
       <ProfileCard title="Order History">
-        {orderHistory.length > 0 ? (
+        {loadingOrders ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+            <p className="mt-2 text-gray-500">Loading orders...</p>
+          </div>
+        ) : orderHistory.length > 0 ? (
           <div className="divide-y divide-gray-100">
             {orderHistory.map((order) => (
               <OrderItem key={order.id} {...order} />
@@ -195,22 +249,27 @@ export default function ProfilePage() {
       </div>
 
       <ProfileCard title="Saved Items">
-        {wishlistImages.length > 0 ? (
+        {loadingWishlist ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+            <p className="mt-2 text-gray-500">Loading wishlist...</p>
+          </div>
+        ) : wishlistItems.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {wishlistImages.map((image, index) => (
-              <div key={index} className="group relative">
+            {wishlistItems.map((item, index) => (
+              <div key={item.id || index} className="group relative">
                 <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
                   <Image
-                    src={image}
-                    alt={`Wishlist item ${index + 1}`}
+                    src={item.image || '/prodcut-1.jpg'}
+                    alt={item.name || `Wishlist item ${index + 1}`}
                     width={200}
                     height={200}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                   />
                 </div>
                 <div className="mt-2">
-                  <h4 className="font-medium text-sm">Product {index + 1}</h4>
-                  <p className="text-sm text-gray-500">$99.99</p>
+                  <h4 className="font-medium text-sm">{item.name || `Product ${index + 1}`}</h4>
+                  <p className="text-sm text-gray-500">Rs.{item.price?.toLocaleString() || '0'}</p>
                 </div>
                 <Button size="sm" className="w-full mt-2" variant="outline">
                   Add to Cart
@@ -328,16 +387,16 @@ export default function ProfilePage() {
     redirect('/login');
   }
 
-  // Main layout with sidebar and content
+  // Main layout with conditional sidebar and content
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <ProfileSidebar />
+      {!userData?.isAdmin && <ProfileSidebar activeTab={activeTab} setActiveTab={setActiveTab} />}
       <main className="flex-1 p-6 md:p-8 overflow-auto">
         <div className="max-w-4xl mx-auto">
-          {pathname === '/profile' && renderProfileContent()}
-          {pathname === '/orders' && renderOrdersContent()}
-          {pathname === '/wishlist' && renderWishlistContent()}
-          {pathname === '/settings' && renderSettingsContent()}
+          {activeTab === 'profile' && renderProfileContent()}
+          {activeTab === 'orders' && renderOrdersContent()}
+          {activeTab === 'wishlist' && renderWishlistContent()}
+          {activeTab === 'settings' && renderSettingsContent()}
         </div>
       </main>
     </div>

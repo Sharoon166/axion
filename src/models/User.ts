@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema(
     toJSON: {
       transform: function(doc, ret) {
         if ('password' in ret) {
-          const { password, ...rest } = ret;
+          const { ...rest } = ret;
           return rest;
         }
         return ret;

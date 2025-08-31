@@ -146,6 +146,9 @@ export function FormField({
   value,
   onChange,
   error,
+  min,
+  max,
+  step,
 }: {
   name: string;
   label: string;
@@ -157,9 +160,30 @@ export function FormField({
   value: string | number | boolean;
   onChange: (name: string, value: string | number | boolean) => void;
   error?: string;
+  min?: string | number;
+  max?: string | number;
+  step?: string | number;
 }) {
-  const handleChange = (newValue: string | number | boolean) => {
-    onChange(name, newValue);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement> | string | number | boolean) => {
+    if (typeof e === 'object' && e !== null && 'target' in e) {
+      // Handle DOM event
+      const { type } = e.target;
+      let value: string | number | boolean;
+
+      if (type === 'checkbox') {
+        value = (e.target as HTMLInputElement).checked;
+      } else if (type === 'number') {
+        // For number inputs, we'll keep it as a string to match formData types
+        value = e.target.value;
+      } else {
+        value = e.target.value;
+      }
+      
+      onChange(name, value);
+    } else {
+      // Handle direct value
+      onChange(name, e);
+    }
   };
 
   switch (type) {
@@ -174,7 +198,7 @@ export function FormField({
           <Textarea
             id={name}
             value={String(value)}
-            onChange={(e) => handleChange(e.target.value)}
+            onChange={handleChange}
             required={required}
             placeholder={placeholder}
             className="min-h-[100px]"
@@ -232,14 +256,29 @@ export function FormField({
             {label}
             {required && <span className="text-red-500 ml-1">*</span>}
           </Label>
-          <Input
-            id={name}
-            type={type}
-            value={String(value)}
-            onChange={(e) => handleChange(e.target.value)}
-            required={required}
-            placeholder={placeholder}
-          />
+          {type === 'number' ? (
+            <Input
+              id={name}
+              name={name}
+              type="number"
+              placeholder={placeholder}
+              value={value as string | number}
+              onChange={(e) => onChange(name, e.target.value)}
+              className="w-full"
+              min={min}
+              max={max}
+              step={step}
+            />
+          ) : (
+            <Input
+              id={name}
+              type={type}
+              value={String(value)}
+              onChange={handleChange}
+              required={required}
+              placeholder={placeholder}
+            />
+          )}
           {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
       );

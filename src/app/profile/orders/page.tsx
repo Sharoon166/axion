@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,53 +16,47 @@ import PageHeader from '@/components/PageHeader';
 import Pagination from '@/components/Pagination';
 import { Star, Search } from 'lucide-react';
 
-// Mock order data
-const orderData = [
-  {
-    id: 'B1X5L96',
-    name: 'Concorde Ceiling Lamp',
-    status: 'Delivered',
-    date: 'July 23, 2025',
-    price: 'Rs. 59,000',
-    rating: 5,
-    image: '/collection-1.jpg',
-  },
-  {
-    id: 'AU13Q41',
-    name: 'Golden Glow Lamp',
-    status: 'In Progress',
-    date: 'July 19, 2025',
-    price: 'Rs. 27,000',
-    rating: 5,
-    image: '/collection-2.jpg',
-  },
-  {
-    id: '2BLQ370',
-    name: 'Ceiling Strip Chandelier',
-    status: 'Cancelled',
-    date: 'May 11, 2025',
-    price: 'Rs. 49,500',
-    rating: 5,
-    image: '/product-1.jpg',
-  },
-  {
-    id: '5TP4L38',
-    name: 'Outdoor Lamp',
-    status: 'Delivered',
-    date: 'April 05, 2025',
-    price: 'Rs. 3,250',
-    rating: 5,
-    image: '/product-2.jpg',
-  },
-];
-
 export default function OrderHistoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [orderData, setOrderData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const itemsPerPage = 10;
+
+  // Fetch orders
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const userData = localStorage.getItem('userData');
+        if (userData) {
+          const user = JSON.parse(userData);
+          const response = await fetch(`/api/orders?userId=${user.id}`);
+          if (response.ok) {
+            const result = await response.json();
+            const orders = result.success ? result.data : [];
+            setOrderData(orders.map((order: any) => ({
+              id: order.id,
+              name: order.items?.[0]?.name || 'Order Items',
+              status: order.status || 'Pending',
+              date: new Date(order.createdAt).toLocaleDateString(),
+              price: `Rs. ${order.total?.toLocaleString()}`,
+              rating: 5,
+              image: order.items?.[0]?.image || '/prodcut-1.jpg'
+            })));
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, []);
 
   // Filter orders based on status, date, and search
   const filteredOrders = orderData.filter(order => {
@@ -145,8 +139,14 @@ export default function OrderHistoryPage() {
         </div>
 
         {/* Orders List */}
-        <div className="space-y-6">
-          {paginatedOrders.map((order) => (
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+            <p className="mt-4 text-gray-500">Loading orders...</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {paginatedOrders.map((order) => (
             <Card key={order.id} className="shadow-sm hover:shadow-md transition-shadow">
               <CardContent className="p-6">
                 <div className="flex flex-col lg:flex-row lg:items-center gap-6">
@@ -190,8 +190,9 @@ export default function OrderHistoryPage() {
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Pagination */}
         {filteredOrders.length > itemsPerPage && (

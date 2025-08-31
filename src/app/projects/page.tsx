@@ -79,7 +79,6 @@ const projects = [
 ];
 
 const categories = ['All', 'Residential', 'Commercial'];
-const styles = ['Modern', 'Classic', 'Outdoor'];
 
 const ProjectsPage: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<string>('All');

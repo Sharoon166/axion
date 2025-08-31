@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,8 +23,83 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 export default function ContactUs() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    company: '',
+    inquiryType: '',
+    budgetRange: '',
+    cityCountry: '',
+    message: '',
+    contactMethod: '',
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('full-name', formData.fullName);
+      formDataToSend.append('email', formData.email);
+      formDataToSend.append('company', formData.company);
+      formDataToSend.append('inquiry-type', formData.inquiryType);
+      formDataToSend.append('budget-range', formData.budgetRange);
+      formDataToSend.append('city-country', formData.cityCountry);
+      formDataToSend.append('message', formData.message);
+      formDataToSend.append('contact-method', formData.contactMethod);
+
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        body: formDataToSend,
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success(result.message || 'Message sent successfully!');
+        // Reset form
+        setFormData({
+          fullName: '',
+          email: '',
+          company: '',
+          inquiryType: '',
+          budgetRange: '',
+          cityCountry: '',
+          message: '',
+          contactMethod: '',
+        });
+      } else {
+        throw new Error(result.error || 'Failed to send message');
+      }
+    } catch (error: any) {
+      console.error('Contact form error:', error);
+      toast.error(error.message || 'Failed to send message. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   return (
     <div className="min-h-screen bg-white">
       <PageHeader
@@ -33,7 +111,7 @@ export default function ContactUs() {
 
         <Card className="w-full shadow-xl border border-gray-100 rounded-2xl overflow-hidden">
           <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-12 p-8 lg:p-12">
-            <form className="space-y-8">
+            <form onSubmit={handleSubmit} className="space-y-8">
               <h3 className="text-3xl font-bold text-gray-900 mb-2">Send Us a Message</h3>
               <p className="text-gray-600 mb-8">Fill out the form below and we&apos;ll get back to you within 24 hours.</p>
               <div className="space-y-4">
@@ -43,19 +121,28 @@ export default function ContactUs() {
                   </Label>
                   <Input
                     id="full-name"
+                    name="fullName"
+                    value={formData.fullName}
+                    onChange={handleInputChange}
                     placeholder="Full Name"
                     required
                     className="h-12 transition-all duration-200 focus:ring-2 focus:ring-blue-500 border border-gray-200 bg-white rounded-lg"
                   />
                   <Input
                     id="email"
+                    name="email"
                     type="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
                     placeholder="Email Address"
                     required
                     className="h-12 transition-all duration-200 focus:ring-2 focus:ring-blue-500 border border-gray-200 bg-white rounded-lg"
                   />
                   <Input
                     id="company"
+                    name="company"
+                    value={formData.company}
+                    onChange={handleInputChange}
                     placeholder="Company Name (Optional)"
                     className="h-12 transition-all duration-200 focus:ring-2 focus:ring-blue-500 border border-gray-200 bg-white rounded-lg"
                   />
@@ -63,7 +150,11 @@ export default function ContactUs() {
 
                 <div className="space-y-6">
                   <Label className="text-base font-semibold text-gray-900">Project Details</Label>
-                  <Select required>
+                  <Select 
+                    value={formData.inquiryType} 
+                    onValueChange={(value) => handleSelectChange('inquiryType', value)}
+                    required
+                  >
                     <SelectTrigger
                       id="inquiry-type"
                       className="h-12 transition-all duration-200 focus:ring-2 focus:ring-blue-500 border border-gray-200 bg-white rounded-lg"
@@ -77,7 +168,11 @@ export default function ContactUs() {
                       <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Select required>
+                  <Select 
+                    value={formData.budgetRange} 
+                    onValueChange={(value) => handleSelectChange('budgetRange', value)}
+                    required
+                  >
                     <SelectTrigger
                       id="budget-range"
                       className="h-12 transition-all duration-200 focus:ring-2 focus:ring-blue-500 border border-gray-200 bg-white rounded-lg"
@@ -91,7 +186,10 @@ export default function ContactUs() {
                       <SelectItem value="20000+">$20,000+</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Select>
+                  <Select 
+                    value={formData.cityCountry} 
+                    onValueChange={(value) => handleSelectChange('cityCountry', value)}
+                  >
                     <SelectTrigger
                       id="city-country"
                       className="h-12 transition-all duration-200 focus:ring-2 focus:ring-blue-500 border border-gray-200 bg-white rounded-lg"
@@ -113,6 +211,9 @@ export default function ContactUs() {
                   </Label>
                   <Textarea
                     id="message"
+                    name="message"
+                    value={formData.message}
+                    onChange={handleInputChange}
                     placeholder="Tell us about your project requirements, timeline, and any specific needs..."
                     className="min-h-[140px] transition-all duration-200 focus:ring-2 focus:ring-blue-500 border border-gray-200 bg-white rounded-lg resize-none"
                     required
@@ -125,8 +226,10 @@ export default function ContactUs() {
                     <label className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                       <input
                         type="radio"
-                        name="contact-method"
+                        name="contactMethod"
                         value="email"
+                        checked={formData.contactMethod === 'email'}
+                        onChange={handleInputChange}
                         className="form-radio h-4 w-4 text-primary"
                         required
                       />
@@ -135,8 +238,10 @@ export default function ContactUs() {
                     <label className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                       <input
                         type="radio"
-                        name="contact-method"
+                        name="contactMethod"
                         value="whatsapp"
+                        checked={formData.contactMethod === 'whatsapp'}
+                        onChange={handleInputChange}
                         className="form-radio h-4 w-4 text-primary"
                       />
                       <span className="text-sm">WhatsApp</span>
@@ -144,8 +249,10 @@ export default function ContactUs() {
                     <label className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                       <input
                         type="radio"
-                        name="contact-method"
+                        name="contactMethod"
                         value="both"
+                        checked={formData.contactMethod === 'both'}
+                        onChange={handleInputChange}
                         className="form-radio h-4 w-4 text-primary"
                       />
                       <span className="text-sm">Both</span>
@@ -160,9 +267,10 @@ export default function ContactUs() {
                 </p>
                 <Button
                   type="submit"
-                  className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl"
+                  disabled={isSubmitting}
+                  className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Send Message Now
+                  {isSubmitting ? 'Sending...' : 'Send Message Now'}
                 </Button>
               </div>
             </form>

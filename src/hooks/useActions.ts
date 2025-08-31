@@ -2,47 +2,39 @@
 import { useState } from 'react';
 import { toast } from 'sonner'; // You can use any toast library
 
-// Import all actions
+// Import available actions
 import {
   // User actions
   createUser,
   authenticateUser,
-  updateUserProfile,
-  changePassword,
-  addToWishlist,
-  removeFromWishlist,
-  getWishlist,
-  
+
   // Product actions
   createProduct,
   getProducts,
   updateProduct,
   deleteProduct,
-  searchProducts,
   getFeaturedProducts,
   getProductsByCategory,
   getProductBySlug,
-  updateProductStock,
-  getProductRecommendations,
-  
+
   // Order actions
   createOrder,
-  getUserOrders,
   updateOrderStatus,
   getAllOrders,
-  cancelOrder,
-  processRefund,
-  getOrderAnalytics,
-  updateShippingTracking,
   getOrderById,
-  
+
   // Category actions
   createCategory,
   getCategories,
-  getCategoryBySlug,
   updateCategory,
   deleteCategory,
-  
+
+  // Blog actions
+  createBlog,
+
+  // Project actions
+  createProject,
+
   // Admin actions
   getAllUsers,
   updateUserRole,
@@ -93,32 +85,6 @@ export function useActions() {
         'Authentication successful',
         'Authentication failed'
       ),
-    updateProfile: (userId: string, formData: FormData) =>
-      handleAction(
-        () => updateUserProfile(userId, formData),
-        'Profile updated successfully',
-        'Failed to update profile'
-      ),
-    changePassword: (userId: string, currentPassword: string, newPassword: string) =>
-      handleAction(
-        () => changePassword(userId, currentPassword, newPassword),
-        'Password changed successfully',
-        'Failed to change password'
-      ),
-    addToWishlist: (userId: string, productId: string) =>
-      handleAction(
-        () => addToWishlist(userId, productId),
-        'Added to wishlist',
-        'Failed to add to wishlist'
-      ),
-    removeFromWishlist: (userId: string, productId: string) =>
-      handleAction(
-        () => removeFromWishlist(userId, productId),
-        'Removed from wishlist',
-        'Failed to remove from wishlist'
-      ),
-    getWishlist: (userId: string) =>
-      handleAction(() => getWishlist(userId)),
   };
 
   // Product actions
@@ -142,19 +108,10 @@ export function useActions() {
         'Product deleted successfully',
         'Failed to delete product'
       ),
-    search: (filters: any) => handleAction(() => searchProducts(filters)),
     getFeatured: (limit?: number) => handleAction(() => getFeaturedProducts(limit)),
     getByCategory: (categorySlug: string, limit?: number) =>
       handleAction(() => getProductsByCategory(categorySlug, limit)),
     getBySlug: (slug: string) => handleAction(() => getProductBySlug(slug)),
-    updateStock: (productId: string, quantity: number, operation: 'add' | 'subtract') =>
-      handleAction(
-        () => updateProductStock(productId, quantity, operation),
-        'Stock updated successfully',
-        'Failed to update stock'
-      ),
-    getRecommendations: (productId: string, limit?: number) =>
-      handleAction(() => getProductRecommendations(productId, limit)),
   };
 
   // Order actions
@@ -165,34 +122,21 @@ export function useActions() {
         'Order created successfully',
         'Failed to create order'
       ),
-    getUserOrders: (userId: string) => handleAction(() => getUserOrders(userId)),
-    updateStatus: (orderId: string, status: 'paid' | 'delivered') =>
-      handleAction(
-        () => updateOrderStatus(orderId, status),
+    getUserOrders: (userId: string) => handleAction(() => getAllOrders({ userId })),
+    updateStatus: (orderId: string, status: 'paid' | 'delivered') => {
+      const formData = new FormData();
+      if (status === 'paid') {
+        formData.append('isPaid', 'true');
+      } else if (status === 'delivered') {
+        formData.append('isDelivered', 'true');
+      }
+      return handleAction(
+        () => updateOrderStatus(orderId, formData),
         'Order status updated',
         'Failed to update order status'
-      ),
-    getAll: (filters?: any) => handleAction(() => getAllOrders(filters)),
-    cancel: (orderId: string, reason: string) =>
-      handleAction(
-        () => cancelOrder(orderId, reason),
-        'Order cancelled successfully',
-        'Failed to cancel order'
-      ),
-    processRefund: (orderId: string, refundAmount: number, reason: string) =>
-      handleAction(
-        () => processRefund(orderId, refundAmount, reason),
-        'Refund processed successfully',
-        'Failed to process refund'
-      ),
-    getAnalytics: (dateFrom: Date, dateTo: Date) =>
-      handleAction(() => getOrderAnalytics(dateFrom, dateTo)),
-    updateShipping: (orderId: string, trackingNumber: string, carrier: string) =>
-      handleAction(
-        () => updateShippingTracking(orderId, trackingNumber, carrier),
-        'Shipping updated successfully',
-        'Failed to update shipping'
-      ),
+      );
+    },
+    getAll: (filters?: any) => handleAction(() => getAllOrders(filters || {})),
     getById: (orderId: string) => handleAction(() => getOrderById(orderId)),
   };
 
@@ -205,7 +149,6 @@ export function useActions() {
         'Failed to create category'
       ),
     getAll: () => handleAction(() => getCategories()),
-    getBySlug: (slug: string) => handleAction(() => getCategoryBySlug(slug)),
     update: (id: string, formData: FormData) =>
       handleAction(
         () => updateCategory(id, formData),
@@ -217,6 +160,26 @@ export function useActions() {
         () => deleteCategory(id),
         'Category deleted successfully',
         'Failed to delete category'
+      ),
+  };
+
+  // Blog actions
+  const blogActions = {
+    create: (formData: FormData) =>
+      handleAction(
+        () => createBlog(formData),
+        'Blog created successfully',
+        'Failed to create blog'
+      ),
+  };
+
+  // Project actions
+  const projectActions = {
+    create: (formData: FormData) =>
+      handleAction(
+        () => createProject(formData),
+        'Project created successfully',
+        'Failed to create project'
       ),
   };
 
@@ -260,6 +223,8 @@ export function useActions() {
     product: productActions,
     order: orderActions,
     category: categoryActions,
+    blog: blogActions,
+    project: projectActions,
     admin: adminActions,
   };
 }

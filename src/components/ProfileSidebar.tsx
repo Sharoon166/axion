@@ -1,36 +1,38 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { LogOut, User, ShoppingBag, Heart, Settings } from 'lucide-react';
 
 interface SidebarLinkProps {
-  href: string;
+  tabKey: string;
   icon: React.ReactNode;
   label: string;
   isActive: boolean;
+  onClick: () => void;
 }
 
-const SidebarLink = ({ href, icon, label, isActive }: SidebarLinkProps) => (
-  <Link
-    href={href}
-    className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+const SidebarLink = ({  icon, label, isActive, onClick }: SidebarLinkProps) => (
+  <button
+    onClick={onClick}
+    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
       isActive ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
     }`}
   >
     <span className="flex-shrink-0">{icon}</span>
     <span className="font-medium">{label}</span>
-  </Link>
+  </button>
 );
 
-export default function ProfileSidebar() {
-  const pathname = usePathname();
+interface ProfileSidebarProps {
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+}
 
+export default function ProfileSidebar({ activeTab, setActiveTab }: ProfileSidebarProps) {
   const links = [
-    { href: '/profile', icon: <User className="w-5 h-5" />, label: 'My Profile' },
-    { href: '/orders', icon: <ShoppingBag className="w-5 h-5" />, label: 'My Orders' },
-    { href: '/wishlist', icon: <Heart className="w-5 h-5" />, label: 'Wishlist' },
-    { href: '/settings', icon: <Settings className="w-5 h-5" />, label: 'Settings' },
+    { key: 'profile', icon: <User className="w-5 h-5" />, label: 'My Profile' },
+    { key: 'orders', icon: <ShoppingBag className="w-5 h-5" />, label: 'My Orders' },
+    { key: 'wishlist', icon: <Heart className="w-5 h-5" />, label: 'Wishlist' },
+    { key: 'settings', icon: <Settings className="w-5 h-5" />, label: 'Settings' },
   ];
 
   return (
@@ -48,11 +50,12 @@ export default function ProfileSidebar() {
       <div className="flex-1 space-y-1">
         {links.map((link) => (
           <SidebarLink
-            key={link.href}
-            href={link.href}
+            key={link.key}
+            tabKey={link.key}
             icon={link.icon}
             label={link.label}
-            isActive={pathname === link.href}
+            isActive={activeTab === link.key}
+            onClick={() => setActiveTab(link.key)}
           />
         ))}
       </div>

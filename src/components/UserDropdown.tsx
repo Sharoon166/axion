@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import Image from 'next/image';
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -47,7 +48,7 @@ export default function UserDropdown() {
         aria-label="User menu"
       >
         {user.image ? (
-          <img
+          <Image
             className="w-8 h-8 rounded-full"
             src={user.image}
             alt={user.name || 'User'}

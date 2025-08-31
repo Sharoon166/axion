@@ -40,16 +40,6 @@ import {
 } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 
-interface UserData {
-  id: string;
-  name: string;
-  email: string;
-  isAdmin: boolean;
-  avatar?: string;
-  address?: string;
-  createdAt: string;
-}
-
 const Header = () => {
   const pathname = usePathname();
   const [hovered, setHovered] = useState<string | null>(null);

@@ -24,7 +24,6 @@ export default function RegisterPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -131,7 +130,7 @@ export default function RegisterPage() {
         })(),
         {
           loading: 'Creating your account...',
-          success: (data) => {
+          success: () => {
             // Redirect after successful registration
             setTimeout(() => {
               router.push(formData.isAdmin ? '/admin' : '/profile');
@@ -294,17 +293,6 @@ export default function RegisterPage() {
                   Register as Admin (This will create an admin account with full access)
                 </label>
               </div>
-
-              {message && (
-                <div className={`p-3 rounded-md text-sm ${
-                  message.includes('Error') 
-                    ? 'bg-red-100 text-red-700 border border-red-200' 
-                    : 'bg-green-100 text-green-700 border border-green-200'
-                }`}>
-                  {message}
-                </div>
-              )}
-
               <Button 
                 type="submit" 
                 className="w-full" 

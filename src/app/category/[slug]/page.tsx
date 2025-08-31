@@ -15,42 +15,15 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/select';
+import { Package } from 'lucide-react';
 import AddButton from '@/components/AddButton';
 import { createProduct } from '@/app/actions';
-
-// Dummy product data
-const products = [
-  {
-    id: 1,
-    slug: 'square-wall-lamp',
-    name: 'Square Wall Lamp',
-    price: 12500,
-    img: '/prodcut-1.jpg',
-  },
-  { id: 2, slug: 'cancorde-lamp', name: 'Cancorde Lamp', price: 59999, img: '/prodcut-2.jpg' },
-  { id: 3, slug: 'hanging-lights', name: 'Hanging Lights', price: 3999, img: '/prodcut-3.jpg' },
-  {
-    id: 4,
-    slug: 'strip-chandelier',
-    name: 'Strip Chandelier',
-    price: 49500,
-    img: '/prodcut-4.jpg',
-  },
-  { id: 5, slug: 'neom-chandelier', name: 'Neom Chandelier', price: 29999, img: '/prodcut-5.jpg' },
-  { id: 6, slug: 'lighthouse-lamp', name: 'Lighthouse Lamp', price: 9500, img: '/prodcut-6.jpg' },
-  { id: 7, slug: 'vanity-light', name: 'Vanity Light', price: 19500, img: '/prodcut-7.jpg' },
-  {
-    id: 8,
-    slug: 'square-wall-lamp-2',
-    name: 'Square Wall Lamp',
-    price: 12500,
-    img: '/prodcut-8.jpg',
-  },
-];
 
 const CategoryPage = () => {
   const params = useParams();
   const slug = params?.slug as string;
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Countdown Timer for Sale (HH:MM:SS style)
   const [timeLeft, setTimeLeft] = React.useState('22:13:49');
@@ -77,6 +50,34 @@ const CategoryPage = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  // Fetch products based on category
+  React.useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        let apiUrl = '/api/products';
+        if (slug === 'sale') {
+          apiUrl += '?featured=true';
+        } else if (slug !== 'all') {
+          apiUrl += `?category=${slug}`;
+        }
+
+        const response = await fetch(apiUrl);
+        if (response.ok) {
+          const result = await response.json();
+          const products = result.success ? result.data : [];
+          setProducts(products);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [slug]);
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentItems = products.slice(startIndex, startIndex + itemsPerPage);
@@ -130,24 +131,37 @@ const CategoryPage = () => {
             <Button variant="ghost" className="ml-auto text-gray-500 hover:text-black">
               Clear Filters
             </Button>
-            <AddButton type="product" action={createProduct} />
+            <AddButton type="product" />
           </div>
         </div>
 
         {/* Product Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {currentItems.map((item) => (
-            <ProductCard
-              key={item.id}
-              id={item.id}
-              name={item.name}
-              price={item.price}
-              img={item.img}
-              href={`/product/${item.slug}`}
-              onAddToCart={() => {}}
-            />
-          ))}
-        </div>
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+            <p className="mt-4 text-gray-500">Loading products...</p>
+          </div>
+        ) : currentItems.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {currentItems.map((item) => (
+              <ProductCard
+                key={item.id}
+                id={item.id}
+                name={item.name}
+                price={item.price}
+                img={item.image || item.img || '/prodcut-1.jpg'}
+                href={`/product/${item.slug}`}
+                onAddToCart={() => { }}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <Package className="w-12 h-12 mx-auto text-gray-300" />
+            <h4 className="mt-4 text-gray-500">No products found</h4>
+            <p className="text-sm text-gray-400 mt-1">Try adjusting your filters or check back later</p>
+          </div>
+        )}
 
         {/* Pagination */}
         <Pagination

@@ -11,6 +11,11 @@ interface Category {
   slug: string;
 }
 
+interface ColorOption {
+  name: string;
+  color: string;
+}
+
 interface ProductFormProps {
   onSuccess?: () => void;
   className?: string;
@@ -23,8 +28,11 @@ export default function ProductForm({ onSuccess, className = '' }: ProductFormPr
     price: '',
     description: '',
     category: '',
+    colors: [] as string[],
     stock: '',
     featured: false,
+    specifications: '',
+    shippingInfo: ''
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
@@ -175,7 +183,10 @@ export default function ProductForm({ onSuccess, className = '' }: ProductFormPr
           description: '',
           category: '',
           stock: '',
+          colors: [],
           featured: false,
+          specifications: '',
+          shippingInfo: ''
         });
         setUploadedImages([]);
         setSelectedFiles([]);
@@ -188,6 +199,25 @@ export default function ProductForm({ onSuccess, className = '' }: ProductFormPr
       return { success: false, error: 'Form submission failed' };
     }
   };
+
+  const colors: ColorOption[] = [
+    {
+      name: 'white',
+      color: '#f5f3eb',
+    },
+    {
+      name: 'golden',
+      color: '#e1b857',
+    },
+    {
+      name: 'black',
+      color: '#1a1a1a',
+    },
+    {
+      name: 'silver',
+      color: '#c0c0c0',
+    }
+  ];
 
   const categoryOptions = [...categories.map((cat) => cat.name), 'Create New Category...'];
 
@@ -281,6 +311,60 @@ export default function ProductForm({ onSuccess, className = '' }: ProductFormPr
           error={errors.category}
         />
       )}
+
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700">Colors</label>
+        <div className="flex gap-4">
+          {colors.map((color) => (
+            <label key={color.name} className="flex items-center">
+              <input
+                type="checkbox"
+                name="colors"
+                value={color.name}
+                checked={formData.colors.includes(color.name)}
+                onChange={(e) => {
+                  const { value, checked } = e.target;
+                  setFormData(prev => ({
+                    ...prev,
+                    colors: checked
+                      ? [...prev.colors, value]
+                      : prev.colors.filter((c: string) => c !== value)
+                  }));
+                }}
+                className="sr-only"
+              />
+              <div
+                className={`w-8 h-8 rounded-full border-2 ${formData.colors.includes(color.name)
+                    ? 'ring-2 ring-offset-2 ring-purple-500'
+                    : 'border-gray-200'
+                  } cursor-pointer`}
+                style={{ backgroundColor: color.color }}
+                title={color.name.charAt(0).toUpperCase() + color.name.slice(1)}
+              />
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <FormField
+        name="specifications"
+        label="Specifications"
+        type="textarea"
+        placeholder="Enter product specifications (e.g., Wattage: 15W, Lumen Output: 1500LM, Color Temperature: 3000K, Dimmable: Yes, Lifespan: 25000 hours)"
+        value={formData.specifications}
+        onChange={handleInputChange}
+        error={errors.specifications}
+      />
+
+      <FormField
+        name="shippingInfo"
+        label="Shipping Information"
+        type="textarea"
+        placeholder="Enter shipping details (e.g., Weight: 1.5kg, Dimensions: 20x20x10cm, Free Shipping: Yes, Return Policy: 30 days)"
+        value={formData.shippingInfo}
+        onChange={handleInputChange}
+        error={errors.shippingInfo}
+      />
 
       <FormField
         name="stock"

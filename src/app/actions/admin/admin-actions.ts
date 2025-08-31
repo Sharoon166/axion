@@ -34,7 +34,7 @@ export async function getAllUsers(page: number = 1, limit: number = 20) {
         }
       }
     };
-  } catch (error) {
+  } catch {
     return { success: false, error: 'Failed to fetch users' };
   }
 }
@@ -55,7 +55,7 @@ export async function updateUserRole(userId: string, isAdmin: boolean) {
     
     revalidatePath('/admin/users');
     return { success: true, data: user };
-  } catch (error) {
+  } catch  {
     return { success: false, error: 'Failed to update user role' };
   }
 }
@@ -74,7 +74,7 @@ export async function deleteUser(userId: string) {
     
     revalidatePath('/admin/users');
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false, error: 'Failed to delete user' };
   }
 }
@@ -142,7 +142,7 @@ export async function getDashboardStats() {
         lowStockProducts
       }
     };
-  } catch (error) {
+  } catch {
     return { success: false, error: 'Failed to fetch dashboard stats' };
   }
 }
@@ -241,12 +241,12 @@ export async function getProductAnalytics() {
         categoryPerformance
       }
     };
-  } catch (error) {
+  } catch  {
     return { success: false, error: 'Failed to fetch product analytics' };
   }
 }
 
-export async function updateSystemSettings(settings: any) {
+export async function updateSystemSettings() {
   try {
     // This would typically update a settings collection or environment variables
     // For now, we'll just return success
@@ -254,7 +254,7 @@ export async function updateSystemSettings(settings: any) {
     
     revalidatePath('/admin/settings');
     return { success: true, message: 'Settings updated successfully' };
-  } catch (error) {
+  } catch {
     return { success: false, error: 'Failed to update settings' };
   }
 }
@@ -302,7 +302,6 @@ export async function getSystemLogs({
 }) {
   try {
     await dbConnect();
-    const skip = (page - 1) * limit;
     
     const query: any = {};
     if (type) query.type = type;
@@ -334,7 +333,7 @@ export async function getSystemLogs({
         }
       }
     };
-  } catch (error) {
+  } catch {
     return { success: false, error: 'Failed to fetch system logs' };
   }
 }
@@ -469,7 +468,7 @@ export async function exportData(dataType: 'users' | 'products' | 'orders', form
     } else {
       return { success: true, data, format: 'json' };
     }
-  } catch (error) {
+  } catch  {
     return { success: false, error: 'Failed to export data' };
   }
 }

@@ -2,13 +2,24 @@
 
 import Image from 'next/image';
 import { ArrowLeft, ArrowRight, Star } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { useSwipeable } from 'react-swipeable';
 
-const testimonials = [
+interface Testimonial {
+  _id: string;
+  name: string;
+  title: string;
+  rating: number;
+  text: string;
+  image: string;
+  featured?: boolean;
+  approved?: boolean;
+}
+
+// Fallback testimonials in case API fails or no testimonials exist
+const fallbackTestimonials: Testimonial[] = [
   {
-    id: 1,
+    _id: '1',
     name: 'Sophia Martinez',
     title: 'Interior Designer',
     rating: 5,
@@ -16,7 +27,7 @@ const testimonials = [
     image: '/prodcut-1.jpg'
   },
   {
-    id: 2,
+    _id: '2',
     name: 'Michael Chen',
     title: 'Architect',
     rating: 5,
@@ -24,7 +35,7 @@ const testimonials = [
     image: '/prodcut-2.jpg'
   },
   {
-    id: 3,
+    _id: '3',
     name: 'Emma Rodriguez',
     title: 'Homeowner',
     rating: 5,
@@ -35,6 +46,30 @@ const testimonials = [
 
 const TestimonialsSection = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>(fallbackTestimonials);
+
+  const fetchTestimonials = async () => {
+    try {
+      const response = await fetch('/api/testimonials?featured=true&limit=10');
+      const result = await response.json();
+
+      if (result.success && result.data && result.data.length > 0) {
+        setTestimonials(result.data as Testimonial[]);
+      } else {
+        // Use fallback testimonials if no data from API
+        setTestimonials(fallbackTestimonials);
+      }
+    } catch (error) {
+      console.error('Error fetching testimonials:', error);
+      // Use fallback testimonials on error
+      setTestimonials(fallbackTestimonials);
+    } finally {
+    }
+  };
+
+  useEffect(() => {
+    fetchTestimonials();
+  }, []);
 
   const nextTestimonial = () => {
     setCurrentIndex((prev) => (prev + 1) % testimonials.length);
@@ -50,14 +85,6 @@ const TestimonialsSection = () => {
 
   const currentTestimonial = testimonials[currentIndex];
 
-  // ✅ Swipe support
-  const handlers = useSwipeable({
-    onSwipedLeft: nextTestimonial,
-    onSwipedRight: prevTestimonial,
-    preventScrollOnSwipe: true,
-    trackMouse: true,
-  });
-
   return (
     <section className="py-12 md:py-20 bg-[var(--color-background)]">
       <div className="max-w-[85rem] mx-auto px-4 sm:px-6">
@@ -72,16 +99,16 @@ const TestimonialsSection = () => {
         </div>
 
         {/* Testimonial Card */}
-        <div {...handlers}>
+        <div>
           <div className="bg-white rounded-2xl shadow-xl md:pl-12 max-w-4xl mx-auto overflow-hidden">
-            <div className="flex flex-col md:grid md:grid-cols-2 md:gap-8 md:items-center">
+            <div className="flex flex-col md:grid md:grid-cols-2 md:gap-8">
               {/* Image */}
-              <div className="order-1 md:order-2 h-48 md:h-64 flex items-center justify-center">
+              <div className="order-1 md:order-2 flex items-center justify-center">
                 <Image
                   src={currentTestimonial.image}
                   alt="Lighting fixture"
-                  width={400}
-                  height={400}
+                  width={100}
+                  height={100}
                   className="w-full h-full object-cover md:rounded-r-2xl"
                   sizes="(max-width: 768px) 100vw, 400px"
                   priority
@@ -143,11 +170,10 @@ const TestimonialsSection = () => {
               <Button
                 key={index}
                 onClick={() => goToTestimonial(index)}
-                className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all border-0 p-0 ${
-                  index === currentIndex
-                    ? 'bg-[var(--color-primary)] w-3 h-3 md:w-4 md:h-4'
-                    : 'bg-[var(--color-border)] hover:bg-[var(--color-primary-light)]'
-                }`}
+                className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all border-0 p-0 ${index === currentIndex
+                  ? 'bg-[var(--color-primary)] w-3 h-3 md:w-4 md:h-4'
+                  : 'bg-[var(--color-border)] hover:bg-[var(--color-primary-light)]'
+                  }`}
               />
             ))}
           </div>
