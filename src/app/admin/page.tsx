@@ -18,17 +18,15 @@ import {
   DollarSign,
   ShoppingBag,
   UserCheck,
+  FileText,
 } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
-import AddButton from '@/components/AddButton';
-import { createProduct } from '@/app/actions';
-import { createCategory } from '@/app/actions/categories/actions';
-import { createBlog } from '@/app/actions/blog/actions';
-import { createProject } from '@/app/actions/project/actions';
+import { useRouter } from 'next/navigation';
 
 export default function AdminDashboard() {
   // Support both next-auth and localStorage fallback
   const { data: session, status } = useSession();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
   const [localUser, setLocalUser] = useState<any>(null);
 
@@ -247,19 +245,23 @@ export default function AdminDashboard() {
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <h3 className="text-lg font-medium">Product Catalog</h3>
-                        <AddButton
-                          type="product"
-                          action={createProduct}
+                        <Button
+                          onClick={() => router.push('/admin/products')}
                           className="bg-blue-600 hover:bg-blue-700"
-                        />
+                        >
+                          <Package className="w-4 h-4 mr-2" />
+                          Manage Products
+                        </Button>
                       </div>
                       <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-medium">Categories</h3>
-                        <AddButton
-                          type="category"
-                          action={createCategory}
+                        <h3 className="text-lg font-medium">Blog Posts</h3>
+                        <Button
+                          onClick={() => router.push('/admin/blogs')}
                           className="bg-green-600 hover:bg-green-700"
-                        />
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          Manage Blogs
+                        </Button>
                       </div>
                       <p className="text-muted-foreground">
                         Manage your product inventory, categories, and pricing.
@@ -302,26 +304,34 @@ export default function AdminDashboard() {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <AddButton
-                        type="product"
-                        action={createProduct}
+                      <Button
+                        onClick={() => router.push('/admin/products/new')}
                         className="h-20 flex-col bg-blue-600 hover:bg-blue-700"
-                      />
-                      <AddButton
-                        type="category"
-                        action={createCategory}
+                      >
+                        <Package className="w-6 h-6 mb-2" />
+                        Add Product
+                      </Button>
+                      <Button
+                        onClick={() => router.push('/admin/blogs/new')}
                         className="h-20 flex-col bg-green-600 hover:bg-green-700"
-                      />
-                      <AddButton
-                        type="blog"
-                        action={createBlog}
+                      >
+                        <FileText className="w-6 h-6 mb-2" />
+                        Add Blog Post
+                      </Button>
+                      <Button
+                        onClick={() => router.push('/admin/products')}
                         className="h-20 flex-col bg-orange-600 hover:bg-orange-700"
-                      />
-                      <AddButton
-                        type="project"
-                        action={createProject}
+                      >
+                        <Package className="w-6 h-6 mb-2" />
+                        Manage Products
+                      </Button>
+                      <Button
+                        onClick={() => router.push('/admin/blogs')}
                         className="h-20 flex-col bg-purple-600 hover:bg-purple-700"
-                      />
+                      >
+                        <FileText className="w-6 h-6 mb-2" />
+                        Manage Blogs
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>

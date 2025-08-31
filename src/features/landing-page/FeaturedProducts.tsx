@@ -4,7 +4,8 @@ import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-import AddButton from '@/components/AddButton';
+import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 
 interface Product {
   _id: string;
@@ -21,6 +22,7 @@ interface Product {
 }
 
 const FeaturedProducts = () => {
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -88,7 +90,9 @@ const FeaturedProducts = () => {
           </p>
         </div>
         <div className="flex justify-end">
-        <AddButton type="product" />
+        <Button onClick={() => router.push('/admin/products/new')}>
+          Add Product
+        </Button>
         </div>
 
         {products.length === 0 ? (
@@ -98,7 +102,9 @@ const FeaturedProducts = () => {
               <p className="text-gray-400 mb-6">
                 Get started by adding your first featured product to showcase on the homepage.
               </p>
-              <AddButton type="product" />
+              <Button onClick={() => router.push('/admin/products/new')}>
+                Add Product
+              </Button>
             </div>
           </div>
         ) : (

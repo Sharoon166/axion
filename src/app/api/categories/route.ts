@@ -23,13 +23,16 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
-    const formData = await request.formData();
+    const body = await request.json();
+
+    // Generate slug from name if not provided
+    const slug = body.slug || body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
     const categoryData = {
-      name: formData.get('name'),
-      slug: formData.get('slug'),
-      description: formData.get('description'),
-      image: formData.get('image')?.toString() || null,
+      name: body.name,
+      slug: slug,
+      description: body.description || '',
+      image: body.image || null,
     };
 
     const category = await Category.create(categoryData);

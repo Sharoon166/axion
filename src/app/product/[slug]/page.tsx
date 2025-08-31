@@ -30,65 +30,19 @@ export interface Product {
   related?: number[]; // product IDs for "You may also like"
 }
 
-const products: Product[] = [
-  {
-    _id: 1,
-    slug: 'cancorde-ceiling-lamp',
-    name: 'Cancorde Ceiling Lamp',
-    description:
-      'Cancorde Ceiling Lamp is a spectacular piece of light and offers a harmonious lighting distribution in the area around.',
-    price: 54999,
-    oldPrice: 60999,
-    discount: 10,
-    rating: 4.5,
-    numReviews: 120,
-    colors: ['#d4af37', '#000000', '#ffffff', '#c0c0c0', '#f5deb3'],
-    sizes: ['20 inch', '25 inch', '30 inch', '35 inch', '40 inch'],
-    images: [
-      '/prodcut-1.jpg',
-      '/prodcut-2.jpg',
-      '/prodcut-3.jpg',
-      '/prodcut-4.jpg',
-      '/prodcut-5.jpg',
-    ],
-    category: 'Indoor Products',
-    related: [2, 3, 4],
-  },
-  {
-    _id: 2,
-    slug: 'golden-glow-lamp',
-    name: 'Golden Glow Lamp',
-    description: 'Golden Glow Lamp adds elegance with warm lighting that suits any space.',
-    price: 23000,
-    oldPrice: 27000,
-    discount: 15,
-    rating: 4.7,
-    numReviews: 89,
-    colors: ['#d4af37'],
-    sizes: ['Standard'],
-    images: [
-      '/prodcut-1.jpg',
-      '/prodcut-2.jpg',
-      '/prodcut-3.jpg',
-      '/prodcut-4.jpg',
-      '/prodcut-5.jpg',
-    ],
-    category: 'Indoor Products',
-    related: [1, 3, 4],
-  },
-];
+// Removed dummy data - now using real backend data
 
 const ProductPage = () => {
   const { slug } = useParams();
-  const product = products.find((p) => p.slug === slug);
 
   const [selectedImage, setSelectedImage] = useState('');
   const [fetchedproduct, setFetchdProduct] = useState<Product[]>([]);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('description');
   const [quantity, setQuantity] = useState(1);
-  const [selectedColor, setSelectedColor] = useState(product?.colors[0]);
-  const [selectedSize, setSelectedSize] = useState(product?.sizes[0]);
+  const [selectedColor, setSelectedColor] = useState('');
+  const [selectedSize, setSelectedSize] = useState('');
 
   const fetcheproduct = async () => {
     setLoading(true);
@@ -98,26 +52,30 @@ const ProductPage = () => {
 
       if (result.success && result.data) {
         const productData = result.data;
-        
+
         const mapped: Product = {
           _id: productData._id,
           slug: productData.slug,
           name: productData.name,
           description: productData.description,
           price: productData.price,
-          oldPrice: undefined,
-          discount: undefined,
+          oldPrice: productData.oldPrice,
+          discount: productData.discount,
           rating: productData.rating || 0,
           numReviews: productData.numReviews || 0,
-          colors: ['#ffffff'], // fallback (since API doesn't give)
-          sizes: ['Standard'], // fallback
+          colors: productData.colors || ['#ffffff'],
+          sizes: productData.sizes || ['Standard'],
           images: productData.images || [],
           category: productData.category?.name || productData.category || '',
           related: [],
         };
 
         setFetchdProduct([mapped]);
-        console.log('Fetched product:', mapped);
+        setSelectedColor(mapped.colors[0]);
+        setSelectedSize(mapped.sizes[0]);
+
+        // Fetch related products
+        fetchRelatedProducts(mapped.category);
       } else {
         console.error('Failed to fetch product:', result.error);
         setFetchdProduct([]);
@@ -127,6 +85,39 @@ const ProductPage = () => {
       setFetchdProduct([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRelatedProducts = async (category: string) => {
+    try {
+      const response = await fetch(`/api/products?category=${category}&limit=4`);
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        const relatedData = result.data
+          .filter((p: any) => p.slug !== slug)
+          .slice(0, 4)
+          .map((productData: any) => ({
+            _id: productData._id,
+            slug: productData.slug,
+            name: productData.name,
+            description: productData.description,
+            price: productData.price,
+            oldPrice: productData.oldPrice,
+            discount: productData.discount,
+            rating: productData.rating || 0,
+            numReviews: productData.numReviews || 0,
+            colors: productData.colors || ['#ffffff'],
+            sizes: productData.sizes || ['Standard'],
+            images: productData.images || [],
+            category: productData.category?.name || productData.category || '',
+            related: [],
+          }));
+
+        setRelatedProducts(relatedData);
+      }
+    } catch (error) {
+      console.error('Error fetching related products:', error);
     }
   };
   console.log(fetchedproduct);
@@ -273,10 +264,18 @@ const ProductPage = () => {
                   {product?.colors.map((c, index) => (
                     <button
                       key={`color-${c}-${index}`}
-                      className={`w-8 h-8 rounded-full border ${selectedColor === c ? 'ring-2 ring-blue-600' : ''
+                      className={`w-10 h-10 rounded-full border-2 shadow-md hover:scale-110 transition-all duration-200 ${selectedColor === c
+                          ? 'ring-2 ring-blue-600 ring-offset-2 border-blue-600'
+                          : 'border-gray-300 hover:border-gray-400'
                         }`}
-                      style={{ backgroundColor: c }}
+                      style={{
+                        backgroundColor: c,
+                        boxShadow: c === '#ffffff' || c === 'white'
+                          ? 'inset 0 0 0 1px #e5e7eb'
+                          : undefined
+                      }}
                       onClick={() => setSelectedColor(c)}
+                      title={`Color: ${c}`}
                     />
                   ))}
                 </div>
@@ -344,7 +343,7 @@ const ProductPage = () => {
         </div>
 
         <div className="mt-6">
-          {activeTab === 'description' && <p className="text-gray-700">{product?.description}</p>}
+          {activeTab === 'description' && <p className="text-gray-700">{fetchedproduct[0]?.description}</p>}
           {activeTab === 'specification' && (
             <p className="text-gray-700">Add specifications here.</p>
           )}
@@ -356,23 +355,24 @@ const ProductPage = () => {
       </div>
 
       {/* Related Products */}
-      <h2 className="text-2xl font-bold mt-12 mb-6">You may also like</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        {[...products, ...fetchedproduct]
-          .filter((p) => p.slug !== slug)
-          .slice(0, 4)
-          .map((p) => (
-            <ProductCard
-              key={`related-${p._id}-${p.slug}`}
-              id={p._id}
-              name={p.name}
-              price={p.price}
-              img={getImageUrl(p.images[0])}
-              href={`/product/${p.slug}`}
-              onAddToCart={() => { }}
-            />
-          ))}
-      </div>
+      {relatedProducts.length > 0 && (
+        <>
+          <h2 className="text-2xl font-bold mt-12 mb-6">You may also like</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {relatedProducts.map((p) => (
+              <ProductCard
+                key={`related-${p._id}-${p.slug}`}
+                id={p._id}
+                name={p.name}
+                price={p.price}
+                img={getImageUrl(p.images[0])}
+                href={`/product/${p.slug}`}
+                onAddToCart={() => { }}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 };

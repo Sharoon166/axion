@@ -4,11 +4,12 @@ import Project from '@/models/Project';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     await dbConnect();
-    const project = await Project.findOne({ slug: params.slug });
+    const { slug } = await params;
+    const project = await Project.findOne({ slug });
 
     if (!project) {
       return NextResponse.json(
@@ -32,10 +33,11 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     await dbConnect();
+    const { slug } = await params;
     const formData = await request.formData();
 
     const updateData = {
@@ -63,7 +65,7 @@ export async function PUT(
     };
 
     const project = await Project.findOneAndUpdate(
-      { slug: params.slug },
+      { slug },
       updateData,
       { new: true }
     );
@@ -90,11 +92,12 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     await dbConnect();
-    const project = await Project.findOneAndDelete({ slug: params.slug });
+    const { slug } = await params;
+    const project = await Project.findOneAndDelete({ slug });
 
     if (!project) {
       return NextResponse.json(

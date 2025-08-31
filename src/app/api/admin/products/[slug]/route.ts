@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Product from '@/models/Products';
+import Category from '@/models/Category';
 
 export async function GET(
   request: NextRequest,
@@ -9,8 +10,8 @@ export async function GET(
   try {
     await dbConnect();
     const { slug } = await params;
-    const product = await Product.findOne({ slug })
-      .populate('category', 'name slug');
+
+    const product = await Product.findOne({ slug }).populate('category', 'name slug');
 
     if (!product) {
       return NextResponse.json(
@@ -27,7 +28,7 @@ export async function GET(
     console.error('Error fetching product:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch product' },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -41,12 +42,27 @@ export async function PUT(
     const { slug } = await params;
     const formData = await request.formData();
 
+    // Handle category - find by name and get ObjectId
+    const categoryName = formData.get('category') as string;
+    let categoryId = null;
+
+    if (categoryName && categoryName !== 'Create New Category...') {
+      const category = await Category.findOne({ name: categoryName });
+      if (category) {
+        categoryId = category._id;
+      }
+    }
+
     const updateData = {
       name: formData.get('name'),
+      slug: formData.get('slug'),
       price: Number(formData.get('price')),
       description: formData.get('description'),
+      category: categoryId,
       stock: Number(formData.get('stock')) || 0,
       featured: formData.get('featured') === 'true',
+      specifications: formData.get('specifications'),
+      shippingInfo: formData.get('shippingInfo'),
       images: formData.getAll('images'),
       colors: formData.getAll('colors'),
     };
@@ -72,18 +88,19 @@ export async function PUT(
     console.error('Error updating product:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to update product' },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
 
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     await dbConnect();
     const { slug } = await params;
+
     const product = await Product.findOneAndDelete({ slug });
 
     if (!product) {
@@ -101,7 +118,7 @@ export async function DELETE(
     console.error('Error deleting product:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to delete product' },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

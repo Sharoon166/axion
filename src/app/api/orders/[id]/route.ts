@@ -4,11 +4,12 @@ import Order from '@/models/Order';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await dbConnect();
-    const order = await Order.findById(params.id)
+    const { id } = await params;
+    const order = await Order.findById(id)
       .populate('user', 'name email')
       .populate('orderItems.product', 'name slug images');
 
@@ -34,10 +35,11 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await dbConnect();
+    const { id } = await params;
     const formData = await request.formData();
 
     const updateData: any = {};
@@ -75,7 +77,7 @@ export async function PUT(
     }
 
     const order = await Order.findByIdAndUpdate(
-      params.id,
+      id,
       updateData,
       { new: true }
     ).populate('user', 'name email')

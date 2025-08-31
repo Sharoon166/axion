@@ -1,87 +1,72 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import PageHeader from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import AddButton from '@/components/AddButton';
-import { createProject } from '@/app/actions/project/actions';
+import { useRouter } from 'next/navigation';
 
-const projects = [
-  {
-    id: 1,
-    slug: 'luxury-villa-lighting',
-    category: 'Residential',
-    style: 'Modern',
-    title: 'Luxury Villa Lighting Project',
-    overview:
-      "This Luxury Villa project was designed to create an atmosphere of sophistication, comfort, and modern elegance. Our team at Axion Lighting combined premium fixtures with innovative design solutions to highlight the villa's unique architecture and interior spaces.",
-    features: [
-      'Customized chandelier installations for the main living space',
-      'Ambient LED lighting for bedrooms to enhance relaxation',
-      "Smart outdoor lighting for the villa's garden and pool area",
-      'Energy-efficient solutions without compromising luxury aesthetics',
-    ],
-    specs: {
-      type: 'Residential Luxury Villa',
-      location: 'Islamabad, Pakistan',
-      completion: 'July 2025',
-      duration: '6 Months',
-      team: '5 Lighting Designers, 3 Engineers',
-    },
-    testimonial: {
-      text: 'Axion Lighting truly transformed our home into a masterpiece. The attention to detail and commitment to quality exceeded our expectations. Every corner feels luxurious, modern, and alive.',
-      author: 'Mr. Ahmed Khan, Villa Owner',
-    },
-    images: [
-      'https://images.unsplash.com/photo-1600585154154-59e4f4f7a3c2?w=800&q=80',
-      'https://images.unsplash.com/photo-1616486886892-ff366943d45f?w=800&q=80',
-      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80',
-      'https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80',
-      'https://images.unsplash.com/photo-1615874959474-d609969a20ed?w=800&q=80',
-      'https://images.unsplash.com/photo-1505691723518-36a5ac3be353?w=800&q=80',
-    ],
-    location: 'Islamabad, Pakistan',
-    date: 'July 2025',
-    image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80',
-  },
-  {
-    id: 2,
-    slug: 'solar-pathway-hotel',
-    category: 'Commercial',
-    style: 'Outdoor',
-    title: 'Solar Pathway for Boutique Hotel Courtyard',
-    location: 'Lahore, Pakistan',
-    date: 'June 2025',
-    image: 'https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80',
-  },
-  {
-    id: 3,
-    slug: 'dining-room-statement',
-    category: 'Residential',
-    style: 'Classic',
-    title: 'Dining Room Statement with Other Hanging Ceiling Lights',
-    location: 'Karachi, Pakistan',
-    date: 'May 2025',
-    image: 'https://images.unsplash.com/photo-1505691723518-36a5ac3be353?w=800&q=80',
-  },
-  {
-    id: 4,
-    slug: 'minimalist-living-room',
-    category: 'Residential',
-    style: 'Modern',
-    title: 'Minimalist Living Room with Recessed Lighting',
-    location: 'Lahore, Pakistan',
-    date: 'April 2025',
-    image: 'https://images.unsplash.com/photo-1615874959474-d609969a20ed?w=800&q=80',
-  },
-];
-
-const categories = ['All', 'Residential', 'Commercial'];
+interface Project {
+  _id: string;
+  title: string;
+  slug: string;
+  category: string;
+  style: string;
+  overview?: string;
+  features?: string[];
+  specs?: {
+    type?: string;
+    location?: string;
+    completion?: string;
+    duration?: string;
+    team?: string;
+  };
+  testimonial?: {
+    text?: string;
+    author?: string;
+  };
+  location: string;
+  date: string;
+  image: string;
+  images?: string[];
+  featured?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
 const ProjectsPage: React.FC = () => {
+  const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<string>('All');
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<string[]>(['All']);
+
+  // Fetch projects from API
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch('/api/projects');
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            const projectsData = result.data || [];
+            setProjects(projectsData);
+
+            // Extract unique categories from projects
+            const uniqueCategories = ['All', ...new Set(projectsData.map((p: Project) => p.category).filter(Boolean))];
+            setCategories(uniqueCategories as string[]);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
 
   const filteredProjects =
     activeFilter === 'All'
@@ -116,74 +101,92 @@ const ProjectsPage: React.FC = () => {
               </Button>
             ))}
           </div>
-          <AddButton
-            type="project"
-            action={createProject}
-            className="bg-[var(--color-logo)] hover:bg-[var(--color-logo)]/90 text-white"
-          />
+          <Button
+            onClick={() => router.push('/projects/new')}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            Add Project
+          </Button>
         </div>
 
         {/* Projects Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredProjects.map((project) => (
-            <div
-              key={project.id}
-              className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden group"
-            >
-              {/* Project Image */}
-              <div className="relative h-48 overflow-hidden">
-                <Image
-                  src={project.image}
-                  alt={project.title}
-                  fill
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-300" />
-              </div>
-
-              {/* Project Content */}
-              <div className="p-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="inline-block bg-[var(--color-logo)] text-white px-3 py-1 rounded-full text-xs font-semibold">
-                    {project.category}
-                  </span>
-                  <span className="inline-block bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-semibold">
-                    {project.style}
-                  </span>
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+            <p className="mt-4 text-gray-500">Loading projects...</p>
+          </div>
+        ) : filteredProjects.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredProjects.map((project) => (
+              <div
+                key={project._id}
+                className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden group"
+              >
+                {/* Project Image */}
+                <div className="relative h-48 overflow-hidden">
+                  <Image
+                    src={project.image}
+                    alt={project.title}
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-300" />
                 </div>
 
-                <h3 className="text-xl font-bold text-[var(--color-logo)] mb-3 leading-tight">
-                  {project.title}
-                </h3>
+                {/* Project Content */}
+                <div className="p-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="inline-block bg-[var(--color-logo)] text-white px-3 py-1 rounded-full text-xs font-semibold">
+                      {project.category}
+                    </span>
+                    <span className="inline-block bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-semibold">
+                      {project.style}
+                    </span>
+                  </div>
 
-                <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
-                  <span>{project.location}</span>
-                  <span>{project.date}</span>
-                </div>
+                  <h3 className="text-xl font-bold text-[var(--color-logo)] mb-3 leading-tight">
+                    {project.title}
+                  </h3>
 
-                <Link
-                  href={`/projects/${project.slug}`}
-                  className="inline-flex items-center text-[var(--color-logo)] font-medium hover:underline transition-colors"
-                >
-                  View Project Details
-                  <svg
-                    className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                  <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
+                    <span>{project.location}</span>
+                    <span>{project.date}</span>
+                  </div>
+
+                  <Link
+                    href={`/projects/${project.slug}`}
+                    className="inline-flex items-center text-[var(--color-logo)] font-medium hover:underline transition-colors"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </Link>
+                    View Project Details
+                    <svg
+                      className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </Link>
+                </div>
               </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <div className="w-12 h-12 mx-auto text-gray-300 mb-4">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
             </div>
-          ))}
-        </div>
+            <h4 className="text-gray-500">No projects found</h4>
+            <p className="text-sm text-gray-400 mt-1">Try adjusting your filters or add some projects</p>
+          </div>
+        )}
       </div>
     </div>
   );

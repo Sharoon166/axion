@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,8 +25,8 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { FileText, Search, Calendar, Eye, Edit, Trash2 } from 'lucide-react';
-import { useActions } from '@/hooks/useActions';
 import { getImageUrl } from '@/lib/utils';
+import { api } from '@/lib/api';
 
 interface BlogPost {
     _id: string;
@@ -41,6 +43,7 @@ interface BlogPost {
 }
 
 export default function BlogsManagement() {
+    const router = useRouter();
     const [blogs, setBlogs] = useState<BlogPost[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -57,17 +60,34 @@ export default function BlogsManagement() {
         image: '',
         tags: ''
     });
-    const { blog } = useActions();
-
     // Fetch blogs from API
     useEffect(() => {
         const fetchBlogs = async () => {
             try {
+                console.log('Fetching blogs from /api/blogs...');
                 const response = await fetch('/api/blogs');
-                if (response.ok) {
-                    const result = await response.json();
-                    const blogs = result.success ? result.data : [];
-                    setBlogs(blogs);
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    console.error('Expected JSON but got:', text);
+                    throw new Error('Server returned non-JSON response');
+                }
+                
+                const result = await response.json();
+                console.log('API response:', result);
+                
+                if (result.success) {
+                    setBlogs(result.data || []);
+                } else {
+                    console.error('API returned error:', result.error);
+                    setBlogs([]);
                 }
             } catch (error) {
                 console.error('Error fetching blogs:', error);
@@ -120,17 +140,22 @@ export default function BlogsManagement() {
 
         try {
             if (editingBlog) {
-                await blog.update(editingBlog._id, blogData);
+                await api.blogs.update(editingBlog._id, blogData);
             } else {
-                await blog.create(blogData);
+                await api.blogs.create(blogData);
             }
 
             // Refresh blogs list
             const response = await fetch('/api/blogs');
             if (response.ok) {
-                const result = await response.json();
-                const updatedBlogs = result.success ? result.data : [];
-                setBlogs(updatedBlogs);
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const result = await response.json();
+                    const updatedBlogs = result.success ? result.data : [];
+                    setBlogs(updatedBlogs);
+                } else {
+                    console.error('Non-JSON response when refreshing blogs');
+                }
             }
 
             // Reset form
@@ -162,11 +187,15 @@ export default function BlogsManagement() {
     };
 
     // Handle delete
-    const handleDelete = async (blogId: string) => {
+    const handleDelete = async (blogSlug: string) => {
         if (confirm('Are you sure you want to delete this blog post?')) {
             try {
-                await blog.delete(blogId);
-                setBlogs(blogs.filter(b => b._id !== blogId));
+                const response = await fetch(`/api/admin/blogs/${blogSlug}`, {
+                    method: 'DELETE',
+                });
+                if (response.ok) {
+                    setBlogs(blogs.filter(b => b.slug !== blogSlug));
+                }
             } catch (error) {
                 console.error('Error deleting blog:', error);
             }
@@ -174,15 +203,15 @@ export default function BlogsManagement() {
     };
 
     // Handle status change
-    const handleStatusChange = async (blogId: string, newStatus: boolean) => {
+    const handleStatusChange = async (blogSlug: string, newStatus: boolean) => {
         try {
             const formData = new FormData();
             formData.append('published', newStatus.toString());
             
-            await blog.update(blogId, formData);
+            await api.blogs.update(blogSlug, formData);
             
             setBlogs(blogs.map(b =>
-                b._id === blogId ? { ...b, published: newStatus, updatedAt: new Date().toISOString() } : b
+                b.slug === blogSlug ? { ...b, published: newStatus, updatedAt: new Date().toISOString() } : b
             ));
         } catch (error) {
             console.error('Error updating blog status:', error);
@@ -201,13 +230,20 @@ export default function BlogsManagement() {
                     <h2 className="text-2xl font-bold text-gray-900">Blog Management</h2>
                     <p className="text-gray-600">Create and manage your blog posts</p>
                 </div>
-                <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-                    <DialogTrigger asChild>
+                <div className="flex gap-3">
+                    <Link href="/admin/blogs/new">
                         <Button className="bg-blue-600 hover:bg-blue-700">
                             <FileText className="w-4 h-4 mr-2" />
                             New Blog Post
                         </Button>
-                    </DialogTrigger>
+                    </Link>
+                    <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline">
+                                <FileText className="w-4 h-4 mr-2" />
+                                Quick Add
+                            </Button>
+                        </DialogTrigger>
                     <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle>{editingBlog ? 'Edit Blog Post' : 'Create New Blog Post'}</DialogTitle>
@@ -316,6 +352,7 @@ export default function BlogsManagement() {
                         </form>
                     </DialogContent>
                 </Dialog>
+                </div>
             </div>
 
             {/* Stats Cards */}
@@ -486,24 +523,32 @@ export default function BlogsManagement() {
                                                 </td>
                                                 <td className="py-4 px-4">
                                                     <div className="flex items-center gap-2">
+                                                        <Link href={`/admin/blogs/${blogPost.slug}/edit`}>
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                            >
+                                                                <Edit className="w-3 h-3" />
+                                                            </Button>
+                                                        </Link>
                                                         <Button
                                                             variant="outline"
                                                             size="sm"
                                                             onClick={() => handleEdit(blogPost)}
                                                         >
-                                                            <Edit className="w-3 h-3" />
+                                                            Quick Edit
                                                         </Button>
                                                         <Button
                                                             variant={blogPost.published ? "outline" : "default"}
                                                             size="sm"
-                                                            onClick={() => handleStatusChange(blogPost._id, !blogPost.published)}
+                                                            onClick={() => handleStatusChange(blogPost.slug, !blogPost.published)}
                                                         >
                                                             {blogPost.published ? 'Unpublish' : 'Publish'}
                                                         </Button>
                                                         <Button
                                                             variant="destructive"
                                                             size="sm"
-                                                            onClick={() => handleDelete(blogPost._id)}
+                                                            onClick={() => handleDelete(blogPost.slug)}
                                                         >
                                                             <Trash2 className="w-3 h-3" />
                                                         </Button>

@@ -99,11 +99,8 @@ const Header = () => {
     { name: 'Industrial High Bay', category: 'Industrial' },
   ];
 
-  const cartItems = [
-    { id: 1, name: 'LED Panel Light 60W', price: 89.99, quantity: 2, image: '/next.svg' },
-    { id: 2, name: 'Smart WiFi Bulb Set', price: 45.99, quantity: 1, image: '/next.svg' },
-    { id: 3, name: 'Industrial High Bay 150W', price: 199.99, quantity: 1, image: '/next.svg' },
-  ];
+  // Cart items would come from a cart context/state management
+  const cartItems: any[] = [];
 
   const pillTarget = hovered ?? pathname;
 

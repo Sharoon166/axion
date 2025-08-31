@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
       stock: Number(formData.get('stock')) || 0,
       featured: formData.get('featured') === 'true',
       images: formData.getAll('images'),
+      colors: formData.getAll('colors'),
     };
 
     const product = await Product.create(productData);

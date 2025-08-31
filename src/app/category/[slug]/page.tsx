@@ -7,7 +7,6 @@ import Pagination from '@/components/Pagination';
 // import Image from 'next/image';
 
 import ProductCard from '@/components/ProductCard';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectTrigger,
@@ -16,10 +15,11 @@ import {
   SelectItem,
 } from '@/components/ui/select';
 import { Package } from 'lucide-react';
-import AddButton from '@/components/AddButton';
-import { createProduct } from '@/app/actions';
+import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 
 const CategoryPage = () => {
+  const router = useRouter();
   const params = useParams();
   const slug = params?.slug as string;
   const [products, setProducts] = useState<any[]>([]);
@@ -131,7 +131,9 @@ const CategoryPage = () => {
             <Button variant="ghost" className="ml-auto text-gray-500 hover:text-black">
               Clear Filters
             </Button>
-            <AddButton type="product" />
+            <Button onClick={() => router.push('/admin/products/new')}>
+              Add Product
+            </Button>
           </div>
         </div>
 
@@ -143,13 +145,13 @@ const CategoryPage = () => {
           </div>
         ) : currentItems.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {currentItems.map((item) => (
+            {currentItems.map((item, index) => (
               <ProductCard
-                key={item.id}
-                id={item.id}
+                key={item._id || item.id || item.slug || index}
+                id={item._id || item.id}
                 name={item.name}
                 price={item.price}
-                img={item.image || item.img || '/prodcut-1.jpg'}
+                img={item.images?.[0] || item.image || item.img || '/prodcut-1.jpg'}
                 href={`/product/${item.slug}`}
                 onAddToCart={() => { }}
               />

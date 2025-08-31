@@ -3,8 +3,8 @@
 import { ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import AddButton from '@/components/AddButton';
-import { createBlog } from '@/app/actions/blog/actions';
+import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 interface BlogPost {
@@ -20,6 +20,7 @@ interface BlogPost {
 }
 
 const BlogSection = () => {
+  const router = useRouter();
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -71,11 +72,12 @@ const BlogSection = () => {
               Insights, tips, and inspiration for lighting up your world.
             </p>
           </div>
-          <AddButton
-            type="blog"
-            action={createBlog}
-            className="bg-[var(--color-logo)] hover:bg-[var(--color-logo)]/90 text-white"
-          />
+          <Button
+            onClick={() => router.push('/admin/blogs/new')}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            Add Blog Post
+          </Button>
         </div>
 
         {/* Blog Posts Grid */}
@@ -102,11 +104,12 @@ const BlogSection = () => {
               <p className="text-gray-600 mb-6">
                 Get started by adding your first blog post to share insights and tips.
               </p>
-              <AddButton
-                type="blog"
-                action={createBlog}
-                className="bg-[var(--color-logo)] hover:bg-[var(--color-logo)]/90 text-white"
-              />
+              <Button
+                onClick={() => router.push('/admin/blogs/new')}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Add Blog Post
+              </Button>
             </div>
           </div>
         ) : (

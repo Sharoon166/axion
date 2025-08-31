@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +17,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Package, Search } from 'lucide-react';
-import { useActions } from '@/hooks/useActions';
+import { api } from '@/lib/api';
 import { getImageUrl } from '@/lib/utils';
 
 interface Product {
@@ -34,11 +36,13 @@ interface Product {
   featured: boolean;
   rating: number;
   numReviews: number;
+  colors?: string[];
   createdAt: string;
   updatedAt: string;
 }
 
 export default function ProductsManagement() {
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -52,9 +56,10 @@ export default function ProductsManagement() {
     description: '',
     stock: 1,
     featured: false,
-    images: ['']
+    images: [''],
+    colors: [] as string[]
   });
-  const { product } = useActions();
+
 
   // Fetch products
   useEffect(() => {
@@ -78,7 +83,7 @@ export default function ProductsManagement() {
   }, []);
 
   // Filter products based on search
-  const filteredProducts = products.filter(p => 
+  const filteredProducts = products.filter(p =>
     p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.slug?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.category?.name?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -88,7 +93,7 @@ export default function ProductsManagement() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const data = new FormData();
-    
+
     data.append('name', formData.name);
     data.append('slug', formData.slug || formData.name.toLowerCase().replace(/\s+/g, '-'));
     data.append('category', formData.category);
@@ -96,17 +101,22 @@ export default function ProductsManagement() {
     data.append('description', formData.description);
     data.append('stock', formData.stock.toString());
     data.append('featured', formData.featured.toString());
-    
+
     // Handle images array
-    formData.images.forEach((image, index) => {
+    formData.images.forEach((image) => {
       if (image) data.append('images', image);
+    });
+
+    // Handle colors array
+    formData.colors.forEach((color) => {
+      if (color) data.append('colors', color);
     });
 
     try {
       if (editingProduct) {
-        await product.update(editingProduct._id, data);
+        await api.products.update(editingProduct._id, data);
       } else {
-        await product.create(data);
+        await api.products.create(data);
       }
 
       // Refresh products list
@@ -120,7 +130,7 @@ export default function ProductsManagement() {
       // Reset form
       setFormData({
         name: '', slug: '', category: '', price: '', description: '',
-        stock: 1, featured: false, images: ['']
+        stock: 1, featured: false, images: [''], colors: []
       });
       setShowAddDialog(false);
       setEditingProduct(null);
@@ -140,7 +150,8 @@ export default function ProductsManagement() {
       description: productItem.description || '',
       stock: productItem.stock || 1,
       featured: productItem.featured || false,
-      images: productItem.images.length > 0 ? productItem.images : ['']
+      images: productItem.images.length > 0 ? productItem.images : [''],
+      colors: (productItem as any).colors || []
     });
     setShowAddDialog(true);
   };
@@ -149,7 +160,7 @@ export default function ProductsManagement() {
   const handleDelete = async (productId: string) => {
     if (confirm('Are you sure you want to delete this product?')) {
       try {
-        await product.delete(productId);
+        await api.products.delete(productId);
         setProducts(products.filter(p => p._id !== productId));
       } catch (error) {
         console.error('Error deleting product:', error);
@@ -165,9 +176,12 @@ export default function ProductsManagement() {
           <h2 className="text-2xl font-bold text-gray-900">Product Details</h2>
         </div>
         <div className="flex gap-3">
+          <Link href="/admin/products/new">
+            <Button className="bg-blue-600 hover:bg-blue-700">Add Product</Button>
+          </Link>
           <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
             <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-700">Add Product</Button>
+              <Button variant="outline">Quick Add</Button>
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
@@ -176,7 +190,7 @@ export default function ProductsManagement() {
                   {editingProduct ? 'Update product details' : 'Create a new product'}
                 </DialogDescription>
               </DialogHeader>
-              
+
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Left side - Image upload area */}
@@ -193,21 +207,21 @@ export default function ProductsManagement() {
                         type="url"
                         placeholder="Enter image URL"
                         value={formData.images[0] || ''}
-                        onChange={(e) => setFormData({...formData, images: [e.target.value, ...formData.images.slice(1)]})}
+                        onChange={(e) => setFormData({ ...formData, images: [e.target.value, ...formData.images.slice(1)] })}
                       />
                     </div>
-                    
+
                     {/* Additional image thumbnails */}
                     <div className="grid grid-cols-3 gap-2">
                       {[1, 2, 3, 4, 5, 6].map((i) => (
                         <div key={`thumbnail-${i}`} className="aspect-square bg-gray-100 rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
                           {formData.images[0] && (
-                            <Image 
-                              src={getImageUrl(formData.images[0])} 
-                              alt={`Thumbnail ${i}`} 
-                              width={80} 
-                              height={80} 
-                              className="object-cover rounded w-full h-full" 
+                            <Image
+                              src={getImageUrl(formData.images[0])}
+                              alt={`Thumbnail ${i}`}
+                              width={80}
+                              height={80}
+                              className="object-cover rounded w-full h-full"
                             />
                           )}
                         </div>
@@ -224,7 +238,7 @@ export default function ProductsManagement() {
                           required
                           placeholder="Enter Product Name"
                           value={formData.name}
-                          onChange={(e) => setFormData({...formData, name: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         />
                       </div>
                       <div>
@@ -232,7 +246,7 @@ export default function ProductsManagement() {
                         <Input
                           placeholder="product-slug"
                           value={formData.slug}
-                          onChange={(e) => setFormData({...formData, slug: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                         />
                       </div>
                     </div>
@@ -243,7 +257,7 @@ export default function ProductsManagement() {
                         <Input
                           placeholder="Enter Product Category"
                           value={formData.category}
-                          onChange={(e) => setFormData({...formData, category: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                         />
                       </div>
                       <div>
@@ -252,7 +266,7 @@ export default function ProductsManagement() {
                           type="number"
                           placeholder="Enter Product Price"
                           value={formData.price}
-                          onChange={(e) => setFormData({...formData, price: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                         />
                       </div>
                     </div>
@@ -262,34 +276,93 @@ export default function ProductsManagement() {
                       <Textarea
                         placeholder="Enter Product Description"
                         value={formData.description}
-                        onChange={(e) => setFormData({...formData, description: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         rows={3}
                       />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Available Colors</label>
+                      <div className="grid grid-cols-6 gap-3">
+                        {[
+                          { name: 'Red', value: '#EF4444', bg: 'bg-red-500' },
+                          { name: 'Blue', value: '#3B82F6', bg: 'bg-blue-500' },
+                          { name: 'Green', value: '#10B981', bg: 'bg-green-500' },
+                          { name: 'Yellow', value: '#F59E0B', bg: 'bg-yellow-500' },
+                          { name: 'Purple', value: '#8B5CF6', bg: 'bg-purple-500' },
+                          { name: 'Pink', value: '#EC4899', bg: 'bg-pink-500' },
+                          { name: 'Orange', value: '#F97316', bg: 'bg-orange-500' },
+                          { name: 'Teal', value: '#14B8A6', bg: 'bg-teal-500' },
+                          { name: 'Indigo', value: '#6366F1', bg: 'bg-indigo-500' },
+                          { name: 'Gray', value: '#6B7280', bg: 'bg-gray-500' },
+                          { name: 'Black', value: '#000000', bg: 'bg-black' },
+                          { name: 'White', value: '#FFFFFF', bg: 'bg-white border-2 border-gray-300' }
+                        ].map((color) => (
+                          <div key={color.value} className="flex flex-col items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const isSelected = formData.colors.includes(color.value);
+                                if (isSelected) {
+                                  setFormData({
+                                    ...formData,
+                                    colors: formData.colors.filter(c => c !== color.value)
+                                  });
+                                } else {
+                                  setFormData({
+                                    ...formData,
+                                    colors: [...formData.colors, color.value]
+                                  });
+                                }
+                              }}
+                              className={`w-8 h-8 rounded-full ${color.bg} relative transition-all duration-200 hover:scale-110 ${
+                                formData.colors.includes(color.value) 
+                                  ? 'ring-2 ring-blue-500 ring-offset-2' 
+                                  : 'hover:ring-2 hover:ring-gray-300 hover:ring-offset-1'
+                              }`}
+                            >
+                              {formData.colors.includes(color.value) && (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <svg className="w-4 h-4 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                              )}
+                            </button>
+                            <span className="text-xs text-gray-600 text-center">{color.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                      {formData.colors.length > 0 && (
+                        <div className="mt-2 text-sm text-gray-600">
+                          Selected: {formData.colors.length} color{formData.colors.length !== 1 ? 's' : ''}
+                        </div>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
                         <div className="flex items-center gap-2">
-                          <Button 
-                            type="button" 
-                            variant="outline" 
+                          <Button
+                            type="button"
+                            variant="outline"
                             size="sm"
-                            onClick={() => setFormData({...formData, stock: Math.max(0, formData.stock - 1)})}
+                            onClick={() => setFormData({ ...formData, stock: Math.max(0, formData.stock - 1) })}
                           >
                             -
                           </Button>
                           <Input
                             type="number"
                             value={formData.stock}
-                            onChange={(e) => setFormData({...formData, stock: parseInt(e.target.value) || 0})}
+                            onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })}
                             className="w-20 text-center"
                           />
-                          <Button 
-                            type="button" 
-                            variant="outline" 
+                          <Button
+                            type="button"
+                            variant="outline"
                             size="sm"
-                            onClick={() => setFormData({...formData, stock: formData.stock + 1})}
+                            onClick={() => setFormData({ ...formData, stock: formData.stock + 1 })}
                           >
                             +
                           </Button>
@@ -302,7 +375,7 @@ export default function ProductsManagement() {
                             type="checkbox"
                             id="featured"
                             checked={formData.featured}
-                            onChange={(e) => setFormData({...formData, featured: e.target.checked})}
+                            onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
                             className="rounded"
                           />
                           <label htmlFor="featured" className="text-sm text-gray-700">
@@ -396,11 +469,10 @@ export default function ProductsManagement() {
                           </td>
                           <td className="py-4 px-4 text-gray-600 capitalize">{productItem.category?.name || 'Uncategorized'}</td>
                           <td className="py-4 px-4">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              productItem.stock > 10 ? 'bg-green-100 text-green-800' :
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${productItem.stock > 10 ? 'bg-green-100 text-green-800' :
                               productItem.stock > 0 ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-red-100 text-red-800'
-                            }`}>
+                                'bg-red-100 text-red-800'
+                              }`}>
                               {productItem.stock} in stock
                             </span>
                           </td>
@@ -417,12 +489,20 @@ export default function ProductsManagement() {
                           </td>
                           <td className="py-4 px-4">
                             <div className="flex items-center gap-2">
+                              <Link href={`/admin/products/${productItem.slug}/edit`}>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                >
+                                  Edit
+                                </Button>
+                              </Link>
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleEdit(productItem)}
                               >
-                                Edit
+                                Quick Edit
                               </Button>
                               <Button
                                 variant="destructive"

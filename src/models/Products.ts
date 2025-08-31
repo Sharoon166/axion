@@ -12,6 +12,7 @@ const productSchema = new mongoose.Schema(
     featured: { type: Boolean, default: false },
     rating: { type: Number, default: 0 },
     numReviews: { type: Number, default: 0 },
+    colors: [String],
   },
   { timestamps: true }
 );

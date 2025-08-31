@@ -1,90 +1,58 @@
 'use client';
-import AddButton from '@/components/AddButton';
+import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 import PageHeader from '@/components/PageHeader';
 import Pagination from '@/components/Pagination';
 import Image from 'next/image';
-import React, { useState } from 'react';
-import { createBlog } from '@/app/actions/blog/actions';
+import Link from 'next/link';
+import React, { useState, useEffect } from 'react';
+import { getImageUrl } from '@/lib/utils';
 
-const blogPosts = [
-  {
-    id: 1,
-    image: '/prodcut-4.jpg',
-    category: 'INTERIOR DESIGN',
-    title: 'Choosing the Perfect Warm Lighting for Your Living Room',
-    date: 'March 14, 2026',
-    author: 'By Michael Brown',
-  },
-  {
-    id: 2,
-    image: '/prodcut-5.jpg',
-    category: 'LIGHTING TIPS',
-    title: '5 Ways to Brighten Your Home Without Raising Your Energy Bill',
-    date: 'April 5, 2025',
-    author: 'By Sarah Johnson',
-  },
-  {
-    id: 3,
-    image: '/prodcut-6.jpg',
-    category: 'INSPIRATION',
-    title: 'Transforming Your Backyard With our Solar Lights',
-    date: 'June 29, 2025',
-    author: 'By Emily Harris',
-  },
-  {
-    id: 4,
-    image: '/prodcut-1.jpg',
-    category: 'DESIGN',
-    title: 'Modern Lighting Trends for 2025',
-    date: 'May 10, 2025',
-    author: 'By Alex Lee',
-  },
-  {
-    id: 5,
-    image: '/prodcut-2.jpg',
-    category: 'TIPS',
-    title: 'How to Save Energy with Smart Lighting',
-    date: 'May 20, 2025',
-    author: 'By Priya Singh',
-  },
-  {
-    id: 6,
-    image: '/prodcut-3.jpg',
-    category: 'INSPIRATION',
-    title: 'Creative Outdoor Lighting Ideas',
-    date: 'June 1, 2025',
-    author: 'By John Doe',
-  },
-  {
-    id: 7,
-    image: '/prodcut-7.jpg',
-    category: 'INTERIOR DESIGN',
-    title: 'Lighting for Small Spaces',
-    date: 'June 15, 2025',
-    author: 'By Jane Smith',
-  },
-  {
-    id: 8,
-    image: '/prodcut-8.jpg',
-    category: 'LIGHTING TIPS',
-    title: 'Best Bulbs for Cozy Bedrooms',
-    date: 'July 1, 2025',
-    author: 'By Omar Farooq',
-  },
-  {
-    id: 9,
-    image: '/prodcut-5.jpg',
-    category: 'INSPIRATION',
-    title: 'Solar Lighting for Gardens',
-    date: 'July 10, 2025',
-    author: 'By Emily Harris',
-  },
-];
+interface BlogPost {
+  _id: string;
+  title: string;
+  slug: string;
+  excerpt?: string;
+  content: string;
+  author?: string;
+  published: boolean;
+  createdAt: string;
+  updatedAt: string;
+  image?: string;
+  tags: string[];
+}
 
 const itemsPerPage = 6;
 
 export default function BlogPage() {
+  const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch blogs from API
+  useEffect(() => {
+    const fetchBlogs = async () => {
+      try {
+        const response = await fetch('/api/blogs');
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            // Only show published blogs
+            const publishedBlogs = result.data.filter((blog: BlogPost) => blog.published);
+            setBlogPosts(publishedBlogs);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching blogs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBlogs();
+  }, []);
+
   const totalPages = Math.ceil(blogPosts.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentItems = blogPosts.slice(startIndex, startIndex + itemsPerPage);
@@ -102,43 +70,81 @@ export default function BlogPage() {
       <section className="py-20">
         <div className="max-w-[85rem] mx-auto px-4 sm:px-6">
           <div className="flex justify-end mb-4">
-            <AddButton type="blog" action={createBlog} />
+            <Button onClick={() => router.push('/admin/blogs/new')}>
+              Add Blog Post
+            </Button>
           </div>
           {/* Blog Posts Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mb-12">
-            {currentItems.map((post) => (
-              <article key={post.id} className="bg-white rounded-xl overflow-hidden">
-                {/* Blog Post Image */}
-                <div className="relative h-48 overflow-hidden">
-                  <Image
-                    src={post.image}
-                    alt={post.title}
-                    fill
-                    className="object-cover hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+              <p className="mt-4 text-gray-500">Loading blog posts...</p>
+            </div>
+          ) : currentItems.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mb-12">
+              {currentItems.map((post) => (
+                <Link key={post._id} href={`/blog/${post.slug}`}>
+                  <article className="bg-white rounded-xl overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer">
+                    {/* Blog Post Image */}
+                    <div className="relative h-48 overflow-hidden">
+                      <Image
+                        src={getImageUrl(post.image || '')}
+                        alt={post.title}
+                        fill
+                        className="object-cover hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
 
-                {/* Blog Post Content */}
-                <div className="p-6">
-                  {/* Category Tag */}
-                  <div className="inline-block bg-[var(--color-logo)] text-white px-3 py-1 rounded text-xs font-semibold mb-4">
-                    {post.category}
-                  </div>
+                    {/* Blog Post Content */}
+                    <div className="p-6">
+                      {/* Tags */}
+                      {post.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {post.tags.slice(0, 2).map((tag, index) => (
+                            <span key={index} className="inline-block bg-[var(--color-logo)] text-white px-3 py-1 rounded text-xs font-semibold">
+                              {tag.toUpperCase()}
+                            </span>
+                          ))}
+                        </div>
+                      )}
 
-                  {/* Title */}
-                  <h3 className="text-xl font-bold text-[var(--color-logo)] mb-4 leading-tight">
-                    {post.title}
-                  </h3>
+                      {/* Title */}
+                      <h3 className="text-xl font-bold text-[var(--color-logo)] mb-4 leading-tight">
+                        {post.title}
+                      </h3>
 
-                  {/* Meta Information */}
-                  <div className="text-sm text-[var(--color-secondary-text)] space-y-1">
-                    <p>{post.date}</p>
-                    <p>{post.author}</p>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
+                      {/* Excerpt */}
+                      {post.excerpt && (
+                        <p className="text-gray-600 mb-4 line-clamp-2">
+                          {post.excerpt}
+                        </p>
+                      )}
+
+                      {/* Meta Information */}
+                      <div className="text-sm text-[var(--color-secondary-text)] space-y-1">
+                        <p>{new Date(post.createdAt).toLocaleDateString('en-US', { 
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric' 
+                        })}</p>
+                        {post.author && <p>By {post.author}</p>}
+                      </div>
+                    </div>
+                  </article>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="w-12 h-12 mx-auto text-gray-300 mb-4">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h4 className="text-gray-500">No blog posts found</h4>
+              <p className="text-sm text-gray-400 mt-1">Check back later for new content</p>
+            </div>
+          )}
 
           {/* Pagination */}
           <Pagination

@@ -9,15 +9,21 @@ const projectSchema = new mongoose.Schema(
     overview: { type: String, required: true },
     features: [String],
     specs: {
-      type: String,
-      location: String,
-      completion: String,
-      duration: String,
-      team: String,
+      type: {
+        projectType: { type: String, default: '' },
+        projectLocation: { type: String, default: '' },
+        completion: { type: String, default: '' },
+        duration: { type: String, default: '' },
+        team: { type: String, default: '' },
+      },
+      required: false
     },
     testimonial: {
-      text: String,
-      author: String,
+      type: {
+        text: String,
+        author: String,
+      },
+      required: false
     },
     images: [String],
     location: { type: String, required: true },

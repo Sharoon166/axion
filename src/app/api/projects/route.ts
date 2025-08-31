@@ -23,31 +23,25 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
-    const formData = await request.formData();
+    const body = await request.json();
+
+    // Generate slug from title if not provided
+    const slug = body.slug || body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
     const projectData = {
-      title: formData.get('title'),
-      slug: formData.get('slug'),
-      category: formData.get('category'),
-      style: formData.get('style'),
-      overview: formData.get('overview'),
-      features: formData.getAll('features'),
-      specs: {
-        type: formData.get('specs.type'),
-        location: formData.get('specs.location'),
-        completion: formData.get('specs.completion'),
-        duration: formData.get('specs.duration'),
-        team: formData.get('specs.team'),
-      },
-      testimonial: {
-        text: formData.get('testimonial.text'),
-        author: formData.get('testimonial.author'),
-      },
-      location: formData.get('location'),
-      date: formData.get('date'),
-      featured: formData.get('featured') === 'true',
-      images: formData.getAll('images'),
-      image: formData.get('image'),
+      title: body.title,
+      slug: slug,
+      category: body.category,
+      style: body.style,
+      overview: body.overview,
+      features: body.features || [],
+      location: body.location,
+      date: body.date,
+      featured: body.featured || false,
+      images: body.images || [],
+      image: body.image || '/prodcut-1.jpg', // Default image if none provided
+      tags: body.tags || [],
+      content: body.content || '',
     };
 
     const project = await Project.create(projectData);
