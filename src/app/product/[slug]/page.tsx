@@ -1,17 +1,16 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Star, Plus, Minus, ShoppingCart, Heart, Share2, Truck, Shield, RotateCcw } from 'lucide-react';
+import { Star, Plus, Minus, ShoppingCart, Heart, } from 'lucide-react';
 import { getImageUrl } from '@/lib/utils';
 import { useCart } from '@/contexts/CartContext';
-import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import Link from 'next/link';
+import { PageHeader, ProductCard } from '@/components';
+import { AnimatePresence,motion } from 'framer-motion';
 
 // /data/products.ts
 
@@ -36,8 +35,7 @@ export interface Product {
 
 const ProductPage = () => {
   const { slug } = useParams();
-  const router = useRouter();
-  const { addToCart, cartItems, getTotalPrice, getTotalItems } = useCart();
+   const { addToCart,  } = useCart();
 
   const [selectedImage, setSelectedImage] = useState('');
   const [fetchedproduct, setFetchdProduct] = useState<Product[]>([]);
@@ -47,8 +45,7 @@ const ProductPage = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState('');
   const [selectedSize, setSelectedSize] = useState('');
-  const [showCart, setShowCart] = useState(false);
-
+ 
   const fetcheproduct = async () => {
     setLoading(true);
     try {

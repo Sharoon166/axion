@@ -20,6 +20,7 @@ import { Package, Search } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { getImageUrl } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface Product {
   _id: string;
@@ -43,7 +44,6 @@ interface Product {
 }
 
 export default function ProductsManagement() {
-  const router = useRouter();
   const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -141,33 +141,28 @@ export default function ProductsManagement() {
     }
   };
 
-  // Handle edit
-  const handleEdit = (productItem: Product) => {
-    setEditingProduct(productItem);
-    setFormData({
-      name: productItem.name || '',
-      slug: productItem.slug || '',
-      category: productItem.category?.name || '',
-      price: productItem.price?.toString() || '',
-      description: productItem.description || '',
-      stock: productItem.stock || 1,
-      featured: productItem.featured || false,
-      images: productItem.images.length > 0 ? productItem.images : [''],
-      colors: (productItem as any).colors || []
-    });
-    setShowAddDialog(true);
-  };
 
   // Handle delete
-  const handleDelete = async (productId: string) => {
-    if (confirm('Are you sure you want to delete this product?')) {
-      try {
-        await api.products.delete(productId);
-        setProducts(products.filter(p => p._id !== productId));
-      } catch (error) {
-        console.error('Error deleting product:', error);
+  const handleDelete = async (productSlug: string) => {
+    const promise = (async () => {
+      const response = await fetch(`/api/products/${productSlug}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete product');
       }
-    }
+
+      const result = await response.json();
+      setProducts(products.filter(p => p.slug !== productSlug));
+      return result;
+    })();
+
+    toast.promise(promise, {
+      success: 'Product deleted successfully!',
+      error: 'Failed to delete product',
+    });
+
   };
 
   return (
@@ -188,218 +183,217 @@ export default function ProductsManagement() {
                   <Button variant="outline">Quick Add</Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{editingProduct ? 'Edit Product' : 'Add Product'}</DialogTitle>
-                <DialogDescription>
-                  {editingProduct ? 'Update product details' : 'Create a new product'}
-                </DialogDescription>
-              </DialogHeader>
+                  <DialogHeader>
+                    <DialogTitle>{editingProduct ? 'Edit Product' : 'Add Product'}</DialogTitle>
+                    <DialogDescription>
+                      {editingProduct ? 'Update product details' : 'Create a new product'}
+                    </DialogDescription>
+                  </DialogHeader>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Left side - Image upload area */}
-                  <div className="space-y-4">
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                      <div className="w-full h-48 bg-gray-100 rounded-lg mb-4 flex items-center justify-center">
-                        {formData.images[0] ? (
-                          <Image src={getImageUrl(formData.images[0])} alt="Product" width={200} height={200} className="object-cover rounded" />
-                        ) : (
-                          <Package className="w-16 h-16 text-gray-400" />
-                        )}
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Left side - Image upload area */}
+                      <div className="space-y-4">
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                          <div className="w-full h-48 bg-gray-100 rounded-lg mb-4 flex items-center justify-center">
+                            {formData.images[0] ? (
+                              <Image src={getImageUrl(formData.images[0])} alt="Product" width={200} height={200} className="object-cover rounded" />
+                            ) : (
+                              <Package className="w-16 h-16 text-gray-400" />
+                            )}
+                          </div>
+                          <Input
+                            type="url"
+                            placeholder="Enter image URL"
+                            value={formData.images[0] || ''}
+                            onChange={(e) => setFormData({ ...formData, images: [e.target.value, ...formData.images.slice(1)] })}
+                          />
+                        </div>
+
+                        {/* Additional image thumbnails */}
+                        <div className="grid grid-cols-3 gap-2">
+                          {[1, 2, 3, 4, 5, 6].map((i) => (
+                            <div key={`thumbnail-${i}`} className="aspect-square bg-gray-100 rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
+                              {formData.images[0] && (
+                                <Image
+                                  src={getImageUrl(formData.images[0])}
+                                  alt={`Thumbnail ${i}`}
+                                  width={80}
+                                  height={80}
+                                  className="object-cover rounded w-full h-full"
+                                />
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <Input
-                        type="url"
-                        placeholder="Enter image URL"
-                        value={formData.images[0] || ''}
-                        onChange={(e) => setFormData({ ...formData, images: [e.target.value, ...formData.images.slice(1)] })}
-                      />
-                    </div>
 
-                    {/* Additional image thumbnails */}
-                    <div className="grid grid-cols-3 gap-2">
-                      {[1, 2, 3, 4, 5, 6].map((i) => (
-                        <div key={`thumbnail-${i}`} className="aspect-square bg-gray-100 rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
-                          {formData.images[0] && (
-                            <Image
-                              src={getImageUrl(formData.images[0])}
-                              alt={`Thumbnail ${i}`}
-                              width={80}
-                              height={80}
-                              className="object-cover rounded w-full h-full"
+                      {/* Right side - Form fields */}
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                            <Input
+                              required
+                              placeholder="Enter Product Name"
+                              value={formData.name}
+                              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
+                            <Input
+                              placeholder="product-slug"
+                              value={formData.slug}
+                              onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                            <Input
+                              placeholder="Enter Product Category"
+                              value={formData.category}
+                              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                            <Input
+                              type="number"
+                              placeholder="Enter Product Price"
+                              value={formData.price}
+                              onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                          <Textarea
+                            placeholder="Enter Product Description"
+                            value={formData.description}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            rows={3}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Available Colors</label>
+                          <div className="grid grid-cols-6 gap-3">
+                            {[
+                              { name: 'Red', value: '#EF4444', bg: 'bg-red-500' },
+                              { name: 'Blue', value: '#3B82F6', bg: 'bg-blue-500' },
+                              { name: 'Green', value: '#10B981', bg: 'bg-green-500' },
+                              { name: 'Yellow', value: '#F59E0B', bg: 'bg-yellow-500' },
+                              { name: 'Purple', value: '#8B5CF6', bg: 'bg-purple-500' },
+                              { name: 'Pink', value: '#EC4899', bg: 'bg-pink-500' },
+                              { name: 'Orange', value: '#F97316', bg: 'bg-orange-500' },
+                              { name: 'Teal', value: '#14B8A6', bg: 'bg-teal-500' },
+                              { name: 'Indigo', value: '#6366F1', bg: 'bg-indigo-500' },
+                              { name: 'Gray', value: '#6B7280', bg: 'bg-gray-500' },
+                              { name: 'Black', value: '#000000', bg: 'bg-black' },
+                              { name: 'White', value: '#FFFFFF', bg: 'bg-white border-2 border-gray-300' }
+                            ].map((color) => (
+                              <div key={color.value} className="flex flex-col items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const isSelected = formData.colors.includes(color.value);
+                                    if (isSelected) {
+                                      setFormData({
+                                        ...formData,
+                                        colors: formData.colors.filter(c => c !== color.value)
+                                      });
+                                    } else {
+                                      setFormData({
+                                        ...formData,
+                                        colors: [...formData.colors, color.value]
+                                      });
+                                    }
+                                  }}
+                                  className={`w-8 h-8 rounded-full ${color.bg} relative transition-all duration-200 hover:scale-110 ${formData.colors.includes(color.value)
+                                    ? 'ring-2 ring-blue-500 ring-offset-2'
+                                    : 'hover:ring-2 hover:ring-gray-300 hover:ring-offset-1'
+                                    }`}
+                                >
+                                  {formData.colors.includes(color.value) && (
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                      <svg className="w-4 h-4 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                      </svg>
+                                    </div>
+                                  )}
+                                </button>
+                                <span className="text-xs text-gray-600 text-center">{color.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                          {formData.colors.length > 0 && (
+                            <div className="mt-2 text-sm text-gray-600">
+                              Selected: {formData.colors.length} color{formData.colors.length !== 1 ? 's' : ''}
+                            </div>
                           )}
                         </div>
-                      ))}
-                    </div>
-                  </div>
 
-                  {/* Right side - Form fields */}
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                        <Input
-                          required
-                          placeholder="Enter Product Name"
-                          value={formData.name}
-                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
-                        <Input
-                          placeholder="product-slug"
-                          value={formData.slug}
-                          onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                        <Input
-                          placeholder="Enter Product Category"
-                          value={formData.category}
-                          onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
-                        <Input
-                          type="number"
-                          placeholder="Enter Product Price"
-                          value={formData.price}
-                          onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                      <Textarea
-                        placeholder="Enter Product Description"
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        rows={3}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Available Colors</label>
-                      <div className="grid grid-cols-6 gap-3">
-                        {[
-                          { name: 'Red', value: '#EF4444', bg: 'bg-red-500' },
-                          { name: 'Blue', value: '#3B82F6', bg: 'bg-blue-500' },
-                          { name: 'Green', value: '#10B981', bg: 'bg-green-500' },
-                          { name: 'Yellow', value: '#F59E0B', bg: 'bg-yellow-500' },
-                          { name: 'Purple', value: '#8B5CF6', bg: 'bg-purple-500' },
-                          { name: 'Pink', value: '#EC4899', bg: 'bg-pink-500' },
-                          { name: 'Orange', value: '#F97316', bg: 'bg-orange-500' },
-                          { name: 'Teal', value: '#14B8A6', bg: 'bg-teal-500' },
-                          { name: 'Indigo', value: '#6366F1', bg: 'bg-indigo-500' },
-                          { name: 'Gray', value: '#6B7280', bg: 'bg-gray-500' },
-                          { name: 'Black', value: '#000000', bg: 'bg-black' },
-                          { name: 'White', value: '#FFFFFF', bg: 'bg-white border-2 border-gray-300' }
-                        ].map((color) => (
-                          <div key={color.value} className="flex flex-col items-center gap-1">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const isSelected = formData.colors.includes(color.value);
-                                if (isSelected) {
-                                  setFormData({
-                                    ...formData,
-                                    colors: formData.colors.filter(c => c !== color.value)
-                                  });
-                                } else {
-                                  setFormData({
-                                    ...formData,
-                                    colors: [...formData.colors, color.value]
-                                  });
-                                }
-                              }}
-                              className={`w-8 h-8 rounded-full ${color.bg} relative transition-all duration-200 hover:scale-110 ${
-                                formData.colors.includes(color.value) 
-                                  ? 'ring-2 ring-blue-500 ring-offset-2' 
-                                  : 'hover:ring-2 hover:ring-gray-300 hover:ring-offset-1'
-                              }`}
-                            >
-                              {formData.colors.includes(color.value) && (
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                  <svg className="w-4 h-4 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                  </svg>
-                                </div>
-                              )}
-                            </button>
-                            <span className="text-xs text-gray-600 text-center">{color.name}</span>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setFormData({ ...formData, stock: Math.max(0, formData.stock - 1) })}
+                              >
+                                -
+                              </Button>
+                              <Input
+                                type="number"
+                                value={formData.stock}
+                                onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })}
+                                className="w-20 text-center"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setFormData({ ...formData, stock: formData.stock + 1 })}
+                              >
+                                +
+                              </Button>
+                            </div>
                           </div>
-                        ))}
-                      </div>
-                      {formData.colors.length > 0 && (
-                        <div className="mt-2 text-sm text-gray-600">
-                          Selected: {formData.colors.length} color{formData.colors.length !== 1 ? 's' : ''}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setFormData({ ...formData, stock: Math.max(0, formData.stock - 1) })}
-                          >
-                            -
-                          </Button>
-                          <Input
-                            type="number"
-                            value={formData.stock}
-                            onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })}
-                            className="w-20 text-center"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setFormData({ ...formData, stock: formData.stock + 1 })}
-                          >
-                            +
-                          </Button>
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Featured Product</label>
-                        <div className="flex items-center gap-2 mt-2">
-                          <input
-                            type="checkbox"
-                            id="featured"
-                            checked={formData.featured}
-                            onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                            className="rounded"
-                          />
-                          <label htmlFor="featured" className="text-sm text-gray-700">
-                            Mark as featured product
-                          </label>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Featured Product</label>
+                            <div className="flex items-center gap-2 mt-2">
+                              <input
+                                type="checkbox"
+                                id="featured"
+                                checked={formData.featured}
+                                onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                                className="rounded"
+                              />
+                              <label htmlFor="featured" className="text-sm text-gray-700">
+                                Mark as featured product
+                              </label>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </div>
 
-                <div className="flex justify-end gap-3">
-                  <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-                    {editingProduct ? 'Update Product' : 'Add Product'}
-                  </Button>
-                </div>
-              </form>
+                    <div className="flex justify-end gap-3">
+                      <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)}>
+                        Cancel
+                      </Button>
+                      <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                        {editingProduct ? 'Update Product' : 'Add Product'}
+                      </Button>
+                    </div>
+                  </form>
                 </DialogContent>
               </Dialog>
             </>
@@ -503,16 +497,9 @@ export default function ProductsManagement() {
                                 </Button>
                               </Link>
                               <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleEdit(productItem)}
-                              >
-                                Quick Edit
-                              </Button>
-                              <Button
                                 variant="destructive"
                                 size="sm"
-                                onClick={() => handleDelete(productItem._id)}
+                                onClick={() => handleDelete(productItem.slug)}
                               >
                                 Delete
                               </Button>

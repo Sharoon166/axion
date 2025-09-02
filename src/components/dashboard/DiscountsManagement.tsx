@@ -21,7 +21,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Percent, Calendar, Tag, Search, DollarSign, Users } from 'lucide-react';
+import { Percent, Calendar, Tag, Search } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Discount {

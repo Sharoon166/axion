@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import Image from 'next/image';
 
 interface Category {
   _id: string;
@@ -258,9 +259,10 @@ export default function NewProjectPage() {
               />
               {imagePreview && (
                 <div className="mt-2">
-                  <img 
+                  <Image
                     src={imagePreview} 
                     alt="Preview" 
+                    fill
                     className="w-32 h-32 object-cover rounded-md border"
                   />
                 </div>

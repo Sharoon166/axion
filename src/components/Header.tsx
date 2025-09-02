@@ -1,7 +1,7 @@
 'use client';
 import Image from 'next/image';
 import Link from 'next/link';
-import {
+import{
   Search,
   Handbag,
   UserRound,
@@ -114,19 +114,19 @@ const Header = () => {
       )}
     >
       <div className={cn(
-        "max-w-[85rem] mx-auto my-4 px-4 sm:px-6 py-1 flex items-center justify-between transition-all duration-300 rounded-full sm:backdrop-filter-none sm:shadow-none bg-black/20 sm:bg-black/0 backdrop-blur-sm shadow-lg",
+        "max-w-[85rem] mx-auto my-4 px-4 sm:px-6 flex items-center justify-between transition-all duration-300 rounded-full sm:backdrop-filter-none sm:shadow-none bg-black/20 sm:bg-black/0 backdrop-blur-sm shadow-lg",
         {
           "bg-black/40": scrolled
         }
       )}>
         {/* Logo */}
-        <div className="size-10 sm:size-12 md:size-16 flex items-center justify-center">
+        <div className="size-10 sm:size-12 md:size-20 flex items-center justify-center">
           <Image
-            src="/Logo.png"
+            src="/Logo.svg"
             alt="Axion Lighting Solutions Logo"
             width={80}
             height={40}
-            className="brightness-200 w-6 h-6 sm:w-8 sm:h-8 md:w-12 md:h-12"
+            className="object-cover object-center"
           />
         </div>
 

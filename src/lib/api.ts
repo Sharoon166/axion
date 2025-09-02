@@ -25,7 +25,7 @@ class ApiClient {
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || `HTTP error! status: ${response.status}`);
       }
@@ -43,11 +43,11 @@ class ApiClient {
   // Products API
   products = {
     getAll: () => this.request<any[]>('/products'),
-    
+
     getById: (id: string) => this.request<any>(`/products/${id}`),
-    
+
     getBySlug: (slug: string) => this.request<any>(`/products/${slug}`),
-    
+
     create: async (data: FormData) => {
       const promise = fetch('/api/products', {
         method: 'POST',
@@ -62,7 +62,7 @@ class ApiClient {
 
       return promise;
     },
-    
+
     update: async (slug: string, data: FormData) => {
       const promise = fetch(`/api/admin/products/${slug}`, {
         method: 'PUT',
@@ -77,9 +77,9 @@ class ApiClient {
 
       return promise;
     },
-    
-    delete: async (id: string) => {
-      const promise = fetch(`/api/products/${id}`, {
+
+    delete: async (slug: string) => {
+      const promise = fetch(`/api/products/${slug}`, {
         method: 'DELETE',
       }).then(res => res.json());
 
@@ -96,7 +96,7 @@ class ApiClient {
   // Categories API
   categories = {
     getAll: () => this.request<any[]>('/categories'),
-    
+
     create: async (data: FormData) => {
       const promise = fetch('/api/categories', {
         method: 'POST',
@@ -111,7 +111,7 @@ class ApiClient {
 
       return promise;
     },
-    
+
     update: async (id: string, data: FormData) => {
       const promise = fetch(`/api/categories/${id}`, {
         method: 'PUT',
@@ -126,7 +126,7 @@ class ApiClient {
 
       return promise;
     },
-    
+
     delete: async (id: string) => {
       const promise = fetch(`/api/categories/${id}`, {
         method: 'DELETE',
@@ -145,11 +145,11 @@ class ApiClient {
   // Blogs API
   blogs = {
     getAll: () => this.request<any[]>('/blogs'),
-    
+
     getById: (id: string) => this.request<any>(`/blogs/${id}`),
-    
+
     getBySlug: (slug: string) => this.request<any>(`/blogs/${slug}`),
-    
+
     create: async (data: FormData) => {
       const promise = fetch('/api/blogs', {
         method: 'POST',
@@ -164,7 +164,7 @@ class ApiClient {
 
       return promise;
     },
-    
+
     update: async (slug: string, data: FormData) => {
       const promise = fetch(`/api/admin/blogs/${slug}`, {
         method: 'PUT',
@@ -179,7 +179,7 @@ class ApiClient {
 
       return promise;
     },
-    
+
     delete: async (id: string) => {
       const promise = fetch(`/api/blogs/${id}`, {
         method: 'DELETE',
@@ -198,7 +198,7 @@ class ApiClient {
   // Users API
   users = {
     getAll: () => this.request<any[]>('/users'),
-    
+
     create: async (data: FormData) => {
       const promise = fetch('/api/users', {
         method: 'POST',
@@ -213,7 +213,7 @@ class ApiClient {
 
       return promise;
     },
-    
+
     update: async (id: string, data: FormData) => {
       const promise = fetch(`/api/users/${id}`, {
         method: 'PUT',
@@ -228,7 +228,7 @@ class ApiClient {
 
       return promise;
     },
-    
+
     delete: async (id: string) => {
       const promise = fetch(`/api/users/${id}`, {
         method: 'DELETE',
@@ -247,9 +247,9 @@ class ApiClient {
   // Orders API
   orders = {
     getAll: () => this.request<any[]>('/orders'),
-    
+
     getById: (id: string) => this.request<any>(`/orders/${id}`),
-    
+
     create: async (data: any) => {
       const promise = this.request('/orders', {
         method: 'POST',
@@ -264,17 +264,22 @@ class ApiClient {
 
       return promise;
     },
-    
-    updateStatus: async (id: string, status: string) => {
-      const promise = this.request(`/orders/${id}/status`, {
+
+    updateStatus: async (id: string, status: 'processing' | 'paid' | 'delivered' | 'cancelled') => {
+      const promise = fetch(`/api/orders/${id}/status?status=${status}`, {
         method: 'PUT',
-        body: JSON.stringify({ status }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }), // also sent in body; query alone also works
+      }).then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || 'Update failed');
+        return data;
       });
 
       toast.promise(promise, {
         loading: 'Updating order status...',
         success: 'Order status updated successfully!',
-        error: 'Failed to update order status',
+        error: (err) => err.message || 'Failed to update order status',
       });
 
       return promise;

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,7 +29,6 @@ export default function EditProfilePage() {
   const [userData, setUserData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [message, setMessage] = useState('');
   const [formData, setFormData] = useState({
     id: '1',
     firstName: 'Sarah',
@@ -112,9 +112,8 @@ export default function EditProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    setMessage('');
 
-    try {
+    const promise = (async () => {
       // Convert form data back to localStorage format
       const updatedUserData = {
         ...userData,
@@ -132,15 +131,26 @@ export default function EditProfilePage() {
 
       localStorage.setItem('userData', JSON.stringify(updatedUserData));
       
-      setMessage('Profile updated successfully!');
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Redirect back to profile page after 2 seconds
-      setTimeout(() => {
-        router.push('/profile');
-      }, 2000);
+      return updatedUserData;
+    })();
 
+    toast.promise(promise, {
+      loading: 'Updating profile...',
+      success: () => {
+        setTimeout(() => {
+          router.push('/profile');
+        }, 1000);
+        return 'Profile updated successfully!';
+      },
+      error: 'Error updating profile. Please try again.',
+    });
+
+    try {
+      await promise;
     } catch (error) {
-      setMessage('Error updating profile. Please try again.');
       console.error('Update error:', error);
     } finally {
       setIsSaving(false);
@@ -159,16 +169,7 @@ export default function EditProfilePage() {
         subtitle="Update your Details, Preferences and Password"
       />
 
-      {/* Success/Error Message */}
-      {message && (
-        <div className={`max-w-[85rem] mx-auto px-4 py-2 ${
-          message.includes('Error') 
-            ? 'bg-red-100 text-red-700 border border-red-200' 
-            : 'bg-green-100 text-green-700 border border-green-200'
-        }`}>
-          {message}
-        </div>
-      )}
+
 
       <form onSubmit={handleSubmit}>
         <div className="max-w-[85rem] mx-auto px-4 py-8">
@@ -183,14 +184,20 @@ export default function EditProfilePage() {
                 <CardContent className="space-y-6">
                   {/* Avatar Upload */}
                   <div className="flex items-center gap-4">
-                    <div className="w-20 h-20 rounded-full overflow-hidden">
-                      <Image
-                        src={formData.avatar}
-                        alt="Profile"
-                        width={80}
-                        height={80}
-                        className="w-full h-full object-cover"
-                      />
+                    <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                      {formData.avatar ? (
+                        <Image
+                          src={formData.avatar}
+                          alt="Profile"
+                          width={80}
+                          height={80}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">
+                          <Upload className="w-6 h-6" />
+                        </div>
+                      )}
                     </div>
                     <div className="relative">
                       <input
@@ -200,10 +207,26 @@ export default function EditProfilePage() {
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) {
+                            // Validate file size (max 5MB)
+                            if (file.size > 5 * 1024 * 1024) {
+                              toast.error('Image size should be less than 5MB');
+                              return;
+                            }
+                            
+                            // Validate file type
+                            if (!file.type.startsWith('image/')) {
+                              toast.error('Please select a valid image file');
+                              return;
+                            }
+
                             const reader = new FileReader();
                             reader.onload = (e) => {
                               const result = e.target?.result as string;
                               handleInputChange('avatar', result);
+                              toast.success('Image uploaded successfully!');
+                            };
+                            reader.onerror = () => {
+                              toast.error('Failed to read image file');
                             };
                             reader.readAsDataURL(file);
                           }
@@ -211,7 +234,7 @@ export default function EditProfilePage() {
                         className="hidden"
                       />
                       <label htmlFor="avatar-upload">
-                        <Button variant="outline" className="flex items-center gap-2 cursor-pointer">
+                        <Button type="button" variant="outline" className="flex items-center gap-2 cursor-pointer">
                           <Upload className="w-4 h-4" />
                           Upload Image
                         </Button>

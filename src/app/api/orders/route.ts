@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Order from '@/models/Order';
+import mongoose from 'mongoose';
 
 export async function GET(request: NextRequest) {
   try {
@@ -50,13 +51,70 @@ export async function GET(request: NextRequest) {
   }
 }
 
+
+
+export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    await dbConnect();
+
+    let update: Record<string, any> = {};
+    const ct = req.headers.get('content-type') || '';
+
+    if (ct.includes('application/json')) {
+      update = await req.json();
+    } else if (ct.includes('multipart/form-data')) {
+      const fd = await req.formData();
+      for (const [key, value] of fd.entries()) {
+        if (value === 'true') update[key] = true;
+        else if (value === 'false') update[key] = false;
+        else update[key] = value;
+      }
+    } else if (ct.includes('application/x-www-form-urlencoded')) {
+      const text = await req.text();
+      const paramsObj = Object.fromEntries(new URLSearchParams(text));
+      for (const [k, v] of Object.entries(paramsObj)) {
+        if (v === 'true') update[k] = true;
+        else if (v === 'false') update[k] = false;
+        else update[k] = v;
+      }
+    } else {
+      try { update = await req.json(); } catch { }
+    }
+
+    const allowed = [
+      'isPaid', 'isDelivered', 'isCancelled',
+      'paidAt', 'deliveredAt', 'cancelledAt',
+      'cancellationReason'
+    ];
+    const sanitized: Record<string, any> = {};
+    for (const k of allowed) if (k in update) sanitized[k] = update[k];
+
+    if (sanitized.isPaid === true && !sanitized.paidAt) sanitized.paidAt = new Date();
+    if (sanitized.isDelivered === true && !sanitized.deliveredAt) sanitized.deliveredAt = new Date();
+    if (sanitized.isCancelled === true && !sanitized.cancelledAt) sanitized.cancelledAt = new Date();
+
+    const order = await Order.findByIdAndUpdate(params.id, { $set: sanitized }, { new: true });
+    if (!order) return NextResponse.json({ success: false, error: 'Order not found' }, { status: 404 });
+
+    return NextResponse.json({ success: true, data: order.toObject() });
+  } catch (err: any) {
+    console.error('Order update failed:', err);
+    return NextResponse.json(
+      { success: false, error: 'Failed to update order', details: err?.message },
+      { status: 500 }
+    );
+  }
+}
+
+
+
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
     const body = await request.json();
 
     console.log('Order request body:', JSON.stringify(body, null, 2));
-    
+
     // Log each order item to debug
     body.orderItems?.forEach((item: any, index: number) => {
       console.log(`Order item ${index}:`, item);
@@ -117,12 +175,12 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Detailed error creating order:', error);
-    
+
     // Return more specific error information
     if (error instanceof Error) {
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: 'Failed to create order',
           details: error.message,
           stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
@@ -130,7 +188,7 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-    
+
     return NextResponse.json(
       { success: false, error: 'Failed to create order' },
       { status: 500 },

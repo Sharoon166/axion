@@ -22,8 +22,9 @@ async function getOrderById(orderId: string) {
   }
 }
 
-export default async function OrderDetail({ params }: { params: { id: string } }) {
-  const res = await getOrderById(params.id);
+export default async function OrderDetail({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const res = await getOrderById(id);
   if (!res.success) {
     return (
       <div className="max-w-6xl mx-auto py-10">
@@ -49,7 +50,7 @@ export default async function OrderDetail({ params }: { params: { id: string } }
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Orders Details</h1>
-            <p className="text-gray-600">Order ID: #{params.id.slice(-6)}</p>
+            <p className="text-gray-600">Order ID: #{id.slice(-6)}</p>
           </div>
           <Button className="bg-blue-600 hover:bg-blue-700 text-white">
             Update Status

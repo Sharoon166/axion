@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 
 export async function requireAdmin(request: NextRequest) {
   try {
+    console.log(request)
     const session = await auth();
     
     if (!session || !session.user) {

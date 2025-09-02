@@ -14,7 +14,7 @@ const Footer = () => {
             <div className="space-y-4 sm:space-y-6 flex flex-col items-start col-span-1 sm:col-span-2 lg:col-span-1">
               <div className='size-20 sm:size-24 lg:size-28 overflow-hidden flex items-center justify-start'>
                 <Image
-                  src={'/Logo.png'}
+                  src={'/Logo.svg'}
                   alt={'logo'}
                   width={100}
                   height={100}

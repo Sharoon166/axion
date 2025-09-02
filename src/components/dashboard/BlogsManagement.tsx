@@ -23,7 +23,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { FileText, Search, Calendar, User, Eye, Edit, Trash2 } from 'lucide-react';
+import { FileText, Search, Calendar,  Eye, Edit, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -45,7 +45,6 @@ interface BlogPost {
 
 export default function BlogsManagement() {
     const { user } = useAuth();
-    const router = useRouter();
     const [blogs, setBlogs] = useState<BlogPost[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');

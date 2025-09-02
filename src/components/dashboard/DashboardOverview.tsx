@@ -107,7 +107,7 @@ export default function DashboardOverview({ dashboardData: propData, loadingData
       const topProducts = Object.entries(productSales)
         .sort(([,a], [,b]) => b - a)
         .slice(0, 5)
-        .map(([name, sales], index) => {
+        .map(([name, sales]) => {
           const maxSales = Math.max(...Object.values(productSales));
           return {
             name,
