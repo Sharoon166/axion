@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const featured = searchParams.get('featured');
+    const category = searchParams.get('category');
     const limit = searchParams.get('limit');
 
     let query: any = {};
@@ -16,6 +17,15 @@ export async function GET(request: NextRequest) {
     // Filter by featured status if specified
     if (featured === 'true') {
       query.featured = true;
+    }
+
+    // Filter by category if specified
+    if (category) {
+      // Find category by slug
+      const categoryDoc = await Category.findOne({ slug: category });
+      if (categoryDoc) {
+        query.category = categoryDoc._id;
+      }
     }
 
     let productsQuery = Product.find(query)

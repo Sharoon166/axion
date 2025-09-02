@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-
+import {useAuth} from '@/contexts/AuthContext';
 interface Project {
   _id: string;
   title: string;
@@ -41,6 +41,7 @@ const ProjectsPage: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<string[]>(['All']);
+  const {user}=useAuth();
 
   // Fetch projects from API
   useEffect(() => {
@@ -101,12 +102,14 @@ const ProjectsPage: React.FC = () => {
               </Button>
             ))}
           </div>
+          {user?.role === 'admin' && (
           <Button
             onClick={() => router.push('/projects/new')}
             className="bg-blue-600 hover:bg-blue-700 text-white"
           >
             Add Project
           </Button>
+          )}
         </div>
 
         {/* Projects Grid */}

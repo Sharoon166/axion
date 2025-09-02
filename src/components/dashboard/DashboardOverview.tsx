@@ -1,18 +1,19 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  TrendingUp, 
+import {
+  TrendingUp,
   TrendingDown,
-  MoreHorizontal,
   CheckCircle,
   Clock,
   AlertTriangle,
   ShoppingCart
 } from 'lucide-react';
 import { getImageUrl } from '@/lib/utils';
+import LineChartComponent from './LineChartComponent';
 
 interface DashboardData {
   totalOrders: number;
@@ -39,11 +40,109 @@ interface DashboardData {
 }
 
 interface DashboardOverviewProps {
-  dashboardData: DashboardData;
-  loadingData: boolean;
+  dashboardData?: DashboardData;
+  loadingData?: boolean;
 }
 
-export default function DashboardOverview({ dashboardData, loadingData }: DashboardOverviewProps) {
+export default function DashboardOverview({ dashboardData: propData, loadingData: propLoading }: DashboardOverviewProps) {
+  const [dashboardData, setDashboardData] = useState<DashboardData>({
+    totalOrders: 0,
+    pendingOrders: 0,
+    completedOrders: 0,
+    recentOrders: [],
+    topProducts: [],
+    lowStockProducts: [],
+    ordersPerDay: []
+  });
+  const [loadingData, setLoadingData] = useState(true);
+
+  useEffect(() => {
+    if (propData && !propLoading) {
+      setDashboardData(propData);
+      setLoadingData(false);
+    } else {
+      fetchDashboardData();
+    }
+  }, [propData, propLoading]);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoadingData(true);
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+      
+      // Fetch orders
+      const ordersRes = await fetch(`${baseUrl}/api/orders`);
+      const ordersData = ordersRes.ok ? await ordersRes.json() : { data: [] };
+      const orders = ordersData.data || [];
+      
+      // Fetch products
+      const productsRes = await fetch(`${baseUrl}/api/products`);
+      const productsData = productsRes.ok ? await productsRes.json() : { data: [] };
+      const products = productsData.data || [];
+      
+      // Calculate metrics
+      const totalOrders = orders.length;
+      const pendingOrders = orders.filter((order: any) => !order.isPaid && !order.isCancelled).length;
+      const completedOrders = orders.filter((order: any) => order.isDelivered).length;
+      
+      // Get recent orders (last 5)
+      const recentOrders = orders
+        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 5)
+        .map((order: any) => ({
+          id: order._id?.slice(-8) || 'N/A',
+          customer: order.user?.name || order.shippingAddress?.fullName || 'Unknown',
+          total: order.totalPrice || 0
+        }));
+      
+      // Calculate top products based on order items
+      const productSales: { [key: string]: number } = {};
+      orders.forEach((order: any) => {
+        order.orderItems?.forEach((item: any) => {
+          const productName = item.name || 'Unknown Product';
+          productSales[productName] = (productSales[productName] || 0) + (item.qty || 0);
+        });
+      });
+      
+      const topProducts = Object.entries(productSales)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 5)
+        .map(([name, sales], index) => {
+          const maxSales = Math.max(...Object.values(productSales));
+          return {
+            name,
+            value: maxSales > 0 ? Math.round((sales / maxSales) * 100) : 0,
+            image: products.find((p: any) => p.name === name)?.image
+          };
+        });
+      
+      // Get low stock products (stock < 10)
+      const lowStockProducts = products
+        .filter((product: any) => (product.countInStock || 0) < 10)
+        .slice(0, 5)
+        .map((product: any) => ({
+          name: product.name || 'Unknown',
+          stock: product.countInStock || 0,
+          status: (product.countInStock || 0) < 5 ? 'Critical' : 'Low',
+          color: (product.countInStock || 0) < 5 ? 'red' : 'orange',
+          image: product.image
+        }));
+      
+      setDashboardData({
+        totalOrders,
+        pendingOrders,
+        completedOrders,
+        recentOrders,
+        topProducts,
+        lowStockProducts,
+        ordersPerDay: [] // This can be calculated if needed
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoadingData(false);
+    }
+  };
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
@@ -115,33 +214,7 @@ export default function DashboardOverview({ dashboardData, loadingData }: Dashbo
       {/* Charts and Tables Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Orders Per Day Chart */}
-        <Card className="bg-white border border-gray-200">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-lg font-semibold text-gray-900">Orders Per Day</CardTitle>
-            </div>
-            <Button variant="ghost" size="sm">
-              <MoreHorizontal className="w-4 h-4" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="h-48 flex items-end justify-between gap-1">
-              {loadingData ? (
-                <div className="w-full flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-                </div>
-              ) : (
-                dashboardData.ordersPerDay.map((value: number, i: number) => (
-                  <div
-                    key={i}
-                    className="flex-1 bg-blue-200 rounded-t-sm transition-all hover:bg-blue-300"
-                    style={{ height: `${(value / Math.max(...dashboardData.ordersPerDay)) * 100}%` }}
-                  />
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <LineChartComponent />
 
         {/* Last 5 Orders */}
         <Card className="bg-white border border-gray-200">
@@ -195,7 +268,7 @@ export default function DashboardOverview({ dashboardData, loadingData }: Dashbo
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
                 </div>
-              ) : (
+              ) : dashboardData.topProducts.length > 0 ? (
                 dashboardData.topProducts.map((product: any) => (
                   <div key={product.name} className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
@@ -203,13 +276,15 @@ export default function DashboardOverview({ dashboardData, loadingData }: Dashbo
                       <span className="text-gray-500">{product.value}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
+                      <div
                         className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                         style={{ width: `${product.value}%` }}
                       />
                     </div>
                   </div>
                 ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">No product data available</div>
               )}
             </div>
           </CardContent>
@@ -254,11 +329,10 @@ export default function DashboardOverview({ dashboardData, loadingData }: Dashbo
                     </div>
                     <div className="text-sm text-gray-600">{product.stock} pcs</div>
                     <div>
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        product.status === 'Low' 
-                          ? 'bg-red-100 text-red-800' 
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${product.status === 'Low'
+                          ? 'bg-red-100 text-red-800'
                           : 'bg-orange-100 text-orange-800'
-                      }`}>
+                        }`}>
                         {product.status}
                       </span>
                     </div>

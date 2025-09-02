@@ -1,20 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { redirect, usePathname } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { useActions } from '@/hooks/useActions';
-import { Edit3, ShoppingBag, Heart,  MapPin, Mail, Phone } from 'lucide-react';
+import { Edit3, ShoppingBag, Heart, MapPin, Mail, Phone } from 'lucide-react';
 import ProfileSidebar from '@/components/ProfileSidebar';
 
 interface UserData {
   id?: string;
   name?: string;
   email?: string;
-  avatar?: string;
+  image?: string;
   address?: string;
   phone?: string;
   isAdmin?: boolean;
@@ -77,18 +76,19 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchOrders = async () => {
       if (!userData?.id) return;
-      
+
       setLoadingOrders(true);
       try {
         const response = await fetch(`/api/orders?userId=${userData.id}`);
         if (response.ok) {
           const result = await response.json();
+          console.log('Orders API response:', result);
           const orders = result.success ? result.data : [];
-          setOrderHistory(orders.map((order: any) => ({
-            id: order.id,
-            name: order.items?.[0]?.name || 'Order Items',
-            status: order.status,
-            image: order.items?.[0]?.image || '/prodcut-1.jpg',
+          setOrderHistory(orders.map((order: any, index: number) => ({
+            id: order._id || `order-${index}`,
+            name: order.orderItems?.[0]?.name || 'Order Items',
+            status: order.isDelivered ? 'Delivered' : order.isCancelled ? 'Cancelled' : order.isPaid ? 'Processing' : 'Pending',
+            image: order.orderItems?.[0]?.image || '/prodcut-1.jpg',
             date: new Date(order.createdAt).toLocaleDateString()
           })));
         }
@@ -106,13 +106,14 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchWishlist = async () => {
       if (!userData?.id) return;
-      
+
       setLoadingWishlist(true);
       try {
         const response = await fetch(`/api/products?featured=true&limit=8`);
         if (response.ok) {
-          const products = await response.json();
-          setWishlistItems(products);
+          const result = await response.json();
+          const products = result.success ? result.data : result;
+          setWishlistItems(Array.isArray(products) ? products : []);
         }
       } catch (error) {
         console.error('Error fetching wishlist:', error);
@@ -132,7 +133,7 @@ export default function ProfilePage() {
           <div className="relative group">
             <div className="w-24 h-24 rounded-full bg-gray-100 overflow-hidden">
               <Image
-                src={userData?.avatar || '/about-image.jpg'}
+                src={userData?.image || '/about-image.jpg'}
                 alt={userData?.name || 'User'}
                 width={96}
                 height={96}
@@ -143,16 +144,18 @@ export default function ProfilePage() {
               <Edit3 className="w-4 h-4" />
             </button>
           </div>
-          
+
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-gray-900">{userData?.name || 'User'}</h2>
-              <Button variant="outline" size="sm" className="flex items-center">
-                <Edit3 className="w-4 h-4 mr-2" />
-                Edit Profile
+              <Button variant="outline" size="sm" className="*:flex *:items-center">
+                <Link href="/profile/edit">
+                  <Edit3 className="w-4 h-4 mr-2" />
+                  Edit Profile
+                </Link>
               </Button>
             </div>
-            
+
             <div className="mt-4 space-y-3">
               <div className="flex items-center text-gray-600">
                 <Mail className="w-5 h-5 mr-2 text-gray-400" />
@@ -257,7 +260,7 @@ export default function ProfilePage() {
         ) : wishlistItems.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {wishlistItems.map((item, index) => (
-              <div key={item.id || index} className="group relative">
+              <div key={item._id || item.id || `wishlist-${index}`} className="group relative">
                 <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
                   <Image
                     src={item.image || '/prodcut-1.jpg'}

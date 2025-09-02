@@ -3,19 +3,11 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import {
     Dialog,
     DialogContent,
@@ -24,9 +16,18 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { FileText, Search, Calendar, Eye, Edit, Trash2 } from 'lucide-react';
-import { getImageUrl } from '@/lib/utils';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { FileText, Search, Calendar, User, Eye, Edit, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import { getImageUrl } from '@/lib/utils';
 
 interface BlogPost {
     _id: string;
@@ -43,6 +44,7 @@ interface BlogPost {
 }
 
 export default function BlogsManagement() {
+    const { user } = useAuth();
     const router = useRouter();
     const [blogs, setBlogs] = useState<BlogPost[]>([]);
     const [loading, setLoading] = useState(true);
@@ -60,6 +62,7 @@ export default function BlogsManagement() {
         image: '',
         tags: ''
     });
+
     // Fetch blogs from API
     useEffect(() => {
         const fetchBlogs = async () => {
@@ -231,127 +234,131 @@ export default function BlogsManagement() {
                     <p className="text-gray-600">Create and manage your blog posts</p>
                 </div>
                 <div className="flex gap-3">
-                    <Link href="/admin/blogs/new">
-                        <Button className="bg-blue-600 hover:bg-blue-700">
-                            <FileText className="w-4 h-4 mr-2" />
-                            New Blog Post
-                        </Button>
-                    </Link>
-                    <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-                        <DialogTrigger asChild>
-                            <Button variant="outline">
-                                <FileText className="w-4 h-4 mr-2" />
-                                Quick Add
-                            </Button>
-                        </DialogTrigger>
-                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                        <DialogHeader>
-                            <DialogTitle>{editingBlog ? 'Edit Blog Post' : 'Create New Blog Post'}</DialogTitle>
-                            <DialogDescription>
-                                {editingBlog ? 'Update your blog post details' : 'Write a new blog post for your website'}
-                            </DialogDescription>
-                        </DialogHeader>
-
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                                    <Input
-                                        required
-                                        placeholder="Enter blog post title"
-                                        value={formData.title}
-                                        onChange={(e) => {
-                                            setFormData({ ...formData, title: e.target.value });
-                                            if (!formData.slug) {
-                                                setFormData(prev => ({ ...prev, slug: generateSlug(e.target.value) }));
-                                            }
-                                        }}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
-                                    <Input
-                                        placeholder="url-friendly-slug"
-                                        value={formData.slug}
-                                        onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Excerpt</label>
-                                <Textarea
-                                    placeholder="Brief description of the blog post"
-                                    value={formData.excerpt}
-                                    onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                                    rows={2}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
-                                <Textarea
-                                    required
-                                    placeholder="Write your blog post content here..."
-                                    value={formData.content}
-                                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                                    rows={8}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Author</label>
-                                    <Input
-                                        placeholder="Author name"
-                                        value={formData.author}
-                                        onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Featured Image URL</label>
-                                    <Input
-                                        type="url"
-                                        placeholder="https://example.com/image.jpg"
-                                        value={formData.image}
-                                        onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Tags (comma separated)</label>
-                                <Input
-                                    placeholder="lighting, smart home, technology"
-                                    value={formData.tags}
-                                    onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                                />
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    id="published"
-                                    checked={formData.published}
-                                    onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
-                                    className="rounded"
-                                />
-                                <label htmlFor="published" className="text-sm font-medium text-gray-700">
-                                    Publish immediately
-                                </label>
-                            </div>
-
-                            <div className="flex justify-end gap-3 pt-4">
-                                <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)}>
-                                    Cancel
+                    {user?.isAdmin && (
+                        <>
+                            <Link href="/admin/blogs/new">
+                                <Button className="bg-blue-600 hover:bg-blue-700">
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    New Blog Post
                                 </Button>
-                                <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-                                    {editingBlog ? 'Update Post' : 'Create Post'}
-                                </Button>
-                            </div>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                            </Link>
+                            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+                                <DialogTrigger asChild>
+                                    <Button variant="outline">
+                                        <FileText className="w-4 h-4 mr-2" />
+                                        Quick Add
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                                    <DialogHeader>
+                                        <DialogTitle>{editingBlog ? 'Edit Blog Post' : 'Create New Blog Post'}</DialogTitle>
+                                        <DialogDescription>
+                                            {editingBlog ? 'Update your blog post details' : 'Write a new blog post for your website'}
+                                        </DialogDescription>
+                                    </DialogHeader>
+
+                                    <form onSubmit={handleSubmit} className="space-y-4">
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                                                <Input
+                                                    required
+                                                    placeholder="Enter blog post title"
+                                                    value={formData.title}
+                                                    onChange={(e) => {
+                                                        setFormData({ ...formData, title: e.target.value });
+                                                        if (!formData.slug) {
+                                                            setFormData(prev => ({ ...prev, slug: generateSlug(e.target.value) }));
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
+                                                <Input
+                                                    placeholder="url-friendly-slug"
+                                                    value={formData.slug}
+                                                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Excerpt</label>
+                                            <Textarea
+                                                placeholder="Brief description of the blog post"
+                                                value={formData.excerpt}
+                                                onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
+                                                rows={2}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+                                            <Textarea
+                                                required
+                                                placeholder="Write your blog post content here..."
+                                                value={formData.content}
+                                                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                                                rows={8}
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Author</label>
+                                                <Input
+                                                    placeholder="Author name"
+                                                    value={formData.author}
+                                                    onChange={(e) => setFormData({ ...formData, author: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Featured Image URL</label>
+                                                <Input
+                                                    type="url"
+                                                    placeholder="https://example.com/image.jpg"
+                                                    value={formData.image}
+                                                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Tags (comma separated)</label>
+                                            <Input
+                                                placeholder="lighting, smart home, technology"
+                                                value={formData.tags}
+                                                onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                id="published"
+                                                checked={formData.published}
+                                                onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
+                                                className="rounded"
+                                            />
+                                            <label htmlFor="published" className="text-sm font-medium text-gray-700">
+                                                Publish immediately
+                                            </label>
+                                        </div>
+
+                                        <div className="flex justify-end gap-3 pt-4">
+                                            <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)}>
+                                                Cancel
+                                            </Button>
+                                            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                                                {editingBlog ? 'Update Post' : 'Create Post'}
+                                            </Button>
+                                        </div>
+                                    </form>
+                                </DialogContent>
+                            </Dialog>
+                        </>
+                    )}
                 </div>
             </div>
 

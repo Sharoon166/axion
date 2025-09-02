@@ -17,9 +17,11 @@ import {
 import { Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 const CategoryPage = () => {
   const router = useRouter();
+  const { user } = useAuth();
   const params = useParams();
   const slug = params?.slug as string;
   const [products, setProducts] = useState<any[]>([]);
@@ -131,9 +133,11 @@ const CategoryPage = () => {
             <Button variant="ghost" className="ml-auto text-gray-500 hover:text-black">
               Clear Filters
             </Button>
-            <Button onClick={() => router.push('/admin/products/new')}>
-              Add Product
-            </Button>
+            {user?.isAdmin && (
+              <Button onClick={() => router.push('/admin/products/new')}>
+                Add Product
+              </Button>
+            )}
           </div>
         </div>
 

@@ -7,6 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import React, { useState, useEffect } from 'react';
 import { getImageUrl } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface BlogPost {
   _id: string;
@@ -56,7 +57,7 @@ export default function BlogPage() {
   const totalPages = Math.ceil(blogPosts.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentItems = blogPosts.slice(startIndex, startIndex + itemsPerPage);
-
+  const { user } = useAuth();
   return (
     <div className="min-h-screen">
       {/* Page Header */}
@@ -70,9 +71,11 @@ export default function BlogPage() {
       <section className="py-20">
         <div className="max-w-[85rem] mx-auto px-4 sm:px-6">
           <div className="flex justify-end mb-4">
-            <Button onClick={() => router.push('/admin/blogs/new')}>
-              Add Blog Post
-            </Button>
+            {user?.role === 'admin' && (
+              <Button onClick={() => router.push('/admin/blogs/new')}>
+                Add Blog Post
+              </Button>
+            )}
           </div>
           {/* Blog Posts Grid */}
           {loading ? (
@@ -122,10 +125,10 @@ export default function BlogPage() {
 
                       {/* Meta Information */}
                       <div className="text-sm text-[var(--color-secondary-text)] space-y-1">
-                        <p>{new Date(post.createdAt).toLocaleDateString('en-US', { 
-                          year: 'numeric', 
-                          month: 'long', 
-                          day: 'numeric' 
+                        <p>{new Date(post.createdAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
                         })}</p>
                         {post.author && <p>By {post.author}</p>}
                       </div>

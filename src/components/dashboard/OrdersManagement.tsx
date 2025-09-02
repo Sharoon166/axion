@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -77,6 +78,7 @@ interface Order {
 }
 
 export default function OrdersManagement() {
+  const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -179,8 +181,7 @@ export default function OrdersManagement() {
   };
 
   const handleOrderClick = (order: Order) => {
-    setSelectedOrder(order);
-    setShowOrderDetails(true);
+    router.push(`/order/${order._id}`);
   };
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {

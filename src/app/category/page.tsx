@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { getImageUrl } from '@/lib/utils';
+import {useAuth} from '@/contexts/AuthContext';
 
 interface Category {
   _id: string;
@@ -22,7 +23,7 @@ const ProductsPage = () => {
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-
+const {user}=useAuth();
   // Fetch categories from API
   useEffect(() => {
     const fetchCategories = async () => {
@@ -58,12 +59,14 @@ const ProductsPage = () => {
       {/* Product Categories */}
       <section>
         <div className="max-w-[85rem] mx-auto px-4 sm:px-6">
+          {user?.role === 'admin' && (
           <Button
             onClick={() => router.push('/category/new')}
             className="mb-6 bg-blue-600 hover:bg-blue-700"
           >
             Add Category
           </Button>
+          )}
 
           {loading ? (
             <div className="text-center py-12">

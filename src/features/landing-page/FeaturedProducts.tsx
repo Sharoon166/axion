@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Product {
   _id: string;
@@ -23,6 +24,7 @@ interface Product {
 
 const FeaturedProducts = () => {
   const router = useRouter();
+  const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -89,11 +91,13 @@ const FeaturedProducts = () => {
             Discover our handpicked collection of premium lighting solutions
           </p>
         </div>
-        <div className="flex justify-end">
-        <Button onClick={() => router.push('/admin/products/new')}>
-          Add Product
-        </Button>
-        </div>
+        {user?.isAdmin && (
+          <div className="flex justify-end">
+            <Button onClick={() => router.push('/admin/products/new')}>
+              Add Product
+            </Button>
+          </div>
+        )}
 
         {products.length === 0 ? (
           <div className="text-center py-12 max-w-[85rem] mx-auto">
@@ -102,9 +106,11 @@ const FeaturedProducts = () => {
               <p className="text-gray-400 mb-6">
                 Get started by adding your first featured product to showcase on the homepage.
               </p>
-              <Button onClick={() => router.push('/admin/products/new')}>
-                Add Product
-              </Button>
+              {user?.isAdmin && (
+                <Button onClick={() => router.push('/admin/products/new')}>
+                  Add Product
+                </Button>
+              )}
             </div>
           </div>
         ) : (

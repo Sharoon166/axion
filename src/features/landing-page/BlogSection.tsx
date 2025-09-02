@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface BlogPost {
   _id: string;
@@ -21,6 +22,7 @@ interface BlogPost {
 
 const BlogSection = () => {
   const router = useRouter();
+  const { user } = useAuth();
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -72,12 +74,14 @@ const BlogSection = () => {
               Insights, tips, and inspiration for lighting up your world.
             </p>
           </div>
-          <Button
-            onClick={() => router.push('/admin/blogs/new')}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            Add Blog Post
-          </Button>
+          {user?.isAdmin && (
+            <Button
+              onClick={() => router.push('/admin/blogs/new')}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Add Blog Post
+            </Button>
+          )}
         </div>
 
         {/* Blog Posts Grid */}
@@ -104,12 +108,14 @@ const BlogSection = () => {
               <p className="text-gray-600 mb-6">
                 Get started by adding your first blog post to share insights and tips.
               </p>
-              <Button
-                onClick={() => router.push('/admin/blogs/new')}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                Add Blog Post
-              </Button>
+              {user?.isAdmin && (
+                <Button
+                  onClick={() => router.push('/admin/blogs/new')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  Add Blog Post
+                </Button>
+              )}
             </div>
           </div>
         ) : (

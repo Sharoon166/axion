@@ -8,6 +8,10 @@ export interface UserData {
   role: 'user' | 'admin';
   image?: string | null;
   isAdmin?: boolean;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  postalCode?: string | null;
 }
 
 export const useLocalAuth = () => {

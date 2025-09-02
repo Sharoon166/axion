@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Product {
   _id: string;
@@ -19,6 +20,7 @@ interface Product {
 }
 
 const SaleSection = () => {
+  const { user } = useAuth();
   const [timeLeft, setTimeLeft] = useState('22:13:49');
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,12 +124,14 @@ const SaleSection = () => {
             <p className="text-gray-600 mb-6">
               Add some featured products to showcase in the sale section.
             </p>
-            <Link
-              href="/admin"
-              className="inline-flex items-center bg-[var(--color-logo)] text-white px-6 py-3 rounded-lg font-medium"
-            >
-              Add Products
-            </Link>
+            {user?.isAdmin && (
+              <Link
+                href="/admin"
+                className="inline-flex items-center bg-[var(--color-logo)] text-white px-6 py-3 rounded-lg font-medium"
+              >
+                Add Products
+              </Link>
+            )}
           </div>
         </div>
       ) : (

@@ -17,6 +17,9 @@ import { motion } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/contexts/CartContext';
+import { getImageUrl } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 import {
   Dialog,
   DialogContent,
@@ -47,6 +50,8 @@ const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user } = useAuth();
+  const { cartItems, getTotalPrice, getTotalItems, updateQuantity, removeFromCart } = useCart();
+  const router = useRouter();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -99,9 +104,6 @@ const Header = () => {
     { name: 'Industrial High Bay', category: 'Industrial' },
   ];
 
-  // Cart items would come from a cart context/state management
-  const cartItems: any[] = [];
-
   const pillTarget = hovered ?? pathname;
 
   return (
@@ -112,7 +114,7 @@ const Header = () => {
       )}
     >
       <div className={cn(
-        "max-w-[85rem] mx-auto my-4 px-4 sm:px-6 py-4 flex items-center justify-between transition-all duration-300 rounded-full sm:backdrop-filter-none sm:shadow-none bg-black/20 sm:bg-black/0 backdrop-blur-sm shadow-lg",
+        "max-w-[85rem] mx-auto my-4 px-4 sm:px-6 py-1 flex items-center justify-between transition-all duration-300 rounded-full sm:backdrop-filter-none sm:shadow-none bg-black/20 sm:bg-black/0 backdrop-blur-sm shadow-lg",
         {
           "bg-black/40": scrolled
         }
@@ -230,9 +232,9 @@ const Header = () => {
                 >
                   <div className="p-1 bg-[var(--color-logo)]/20 rounded-lg relative">
                     <Handbag size={18} />
-                    {cartItems.length > 0 && (
+                    {getTotalItems() > 0 && (
                       <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                        {cartItems.length}
+                        {getTotalItems()}
                       </span>
                     )}
                   </div>
@@ -370,9 +372,9 @@ const Header = () => {
                   size={20}
                   className="text-white/80 group-hover:text-[#E1B857] transition-colors duration-300"
                 />
-                {cartItems.length > 0 && (
+                {getTotalItems() > 0 && (
                   <span className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold bg-white text-black">
-                    {cartItems.length}
+                    {getTotalItems()}
                   </span>
                 )}
               </button>
@@ -386,48 +388,60 @@ const Header = () => {
               <DropdownMenuSeparator style={{ backgroundColor: '#E1B857' }} />
 
               <div className="space-y-3 max-h-64 overflow-y-auto">
-                {cartItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center space-x-3 p-2 rounded-lg hover:bg-[#2CA6A4]/10"
-                  >
-                    <Image
-                      src={item.image}
-                      alt={item.name}
-                      width={40}
-                      height={40}
-                      className="rounded"
-                    />
-                    <div className="flex-1">
-                      <h4 className="font-medium text-sm" style={{ color: '#0C1E33' }}>
-                        {item.name}
-                      </h4>
-                      <p className="text-xs" style={{ color: '#2CA6A4' }}>
-                        ${item.price}
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-2">
+                {cartItems.length === 0 ? (
+                  <p className="text-center py-4 text-gray-500">Your cart is empty</p>
+                ) : (
+                  cartItems.map((item, index) => (
+                    <div
+                      key={`${item._id}-${item.color}-${item.size}-${index}`}
+                      className="flex items-center space-x-3 p-2 rounded-lg hover:bg-[#2CA6A4]/10"
+                    >
+                      <Image
+                        src={getImageUrl(item.image)}
+                        alt={item.name}
+                        width={40}
+                        height={40}
+                        className="rounded object-cover"
+                      />
+                      <div className="flex-1">
+                        <h4 className="font-medium text-sm" style={{ color: '#0C1E33' }}>
+                          {item.name}
+                        </h4>
+                        <p className="text-xs" style={{ color: '#2CA6A4' }}>
+                          Rs. {item.price.toLocaleString()}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {item.color} | {item.size}
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => updateQuantity(item._id, item.quantity - 1)}
+                          className="w-6 h-6 rounded-full flex items-center justify-center"
+                          style={{ backgroundColor: '#E1B857' }}
+                        >
+                          <Minus size={12} style={{ color: '#0C1E33' }} />
+                        </button>
+                        <span className="text-sm" style={{ color: '#0C1E33' }}>
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() => updateQuantity(item._id, item.quantity + 1)}
+                          className="w-6 h-6 rounded-full flex items-center justify-center"
+                          style={{ backgroundColor: '#E1B857' }}
+                        >
+                          <Plus size={12} style={{ color: '#0C1E33' }} />
+                        </button>
+                      </div>
                       <button
-                        className="w-6 h-6 rounded-full flex items-center justify-center"
-                        style={{ backgroundColor: '#E1B857' }}
+                        onClick={() => removeFromCart(item._id)}
+                        className="p-1 hover:bg-red-100 rounded"
                       >
-                        <Minus size={12} style={{ color: '#0C1E33' }} />
-                      </button>
-                      <span className="text-sm" style={{ color: '#0C1E33' }}>
-                        {item.quantity}
-                      </span>
-                      <button
-                        className="w-6 h-6 rounded-full flex items-center justify-center"
-                        style={{ backgroundColor: '#E1B857' }}
-                      >
-                        <Plus size={12} style={{ color: '#0C1E33' }} />
+                        <Trash2 size={14} className="text-red-500" />
                       </button>
                     </div>
-                    <button className="p-1 hover:bg-red-100 rounded">
-                      <Trash2 size={14} className="text-red-500" />
-                    </button>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
 
               <DropdownMenuSeparator style={{ backgroundColor: '#E1B857' }} />
@@ -437,21 +451,33 @@ const Header = () => {
                     Total:
                   </span>
                   <span className="font-bold text-lg" style={{ color: '#2CA6A4' }}>
-                    $
-                    {cartItems
-                      .reduce((sum, item) => sum + item.price * item.quantity, 0)
-                      .toFixed(2)}
+                    Rs. {getTotalPrice().toLocaleString()}
                   </span>
                 </div>
-                <Link
-                  href="/cart"
-                  className="w-full py-2 px-4 rounded-lg text-center block transition-colors duration-200"
-                  style={{ backgroundColor: '#2CA6A4', color: 'white' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#238a88')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#2CA6A4')}
+                <button
+                  onClick={() => {
+                    if (!user) {
+                      router.push('/register');
+                      return;
+                    }
+                    router.push('/order/generate');
+                  }}
+                  disabled={cartItems.length === 0}
+                  className="w-full py-2 px-4 rounded-lg text-center transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: cartItems.length > 0 ? '#2CA6A4' : '#ccc', color: 'white' }}
+                  onMouseEnter={(e) => {
+                    if (cartItems.length > 0) {
+                      e.currentTarget.style.backgroundColor = '#238a88';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (cartItems.length > 0) {
+                      e.currentTarget.style.backgroundColor = '#2CA6A4';
+                    }
+                  }}
                 >
-                  View Cart & Checkout
-                </Link>
+                  Pay Now
+                </button>
               </div>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -21,7 +21,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Percent, Calendar, Tag, Search } from 'lucide-react';
+import { Percent, Calendar, Tag, Search, DollarSign, Users } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Discount {
   id: string;
@@ -39,6 +40,7 @@ interface Discount {
 }
 
 export default function DiscountsManagement() {
+  const { user } = useAuth();
   const [discounts, setDiscounts] = useState<Discount[]>([
     {
       id: '1',
@@ -207,147 +209,149 @@ export default function DiscountsManagement() {
           <h2 className="text-2xl font-bold text-gray-900">Discounts & Promotions</h2>
           <p className="text-gray-600">Manage discount codes and promotional offers</p>
         </div>
-        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Tag className="w-4 h-4 mr-2" />
-              Add Discount
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>{editingDiscount ? 'Edit Discount' : 'Create New Discount'}</DialogTitle>
-              <DialogDescription>
-                {editingDiscount ? 'Update discount details' : 'Create a new discount code or promotion'}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Discount Code</label>
-                  <Input
-                    required
-                    placeholder="e.g., SUMMER25"
-                    value={formData.code}
-                    onChange={(e) => setFormData({...formData, code: e.target.value.toUpperCase()})}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Discount Type</label>
-                  <Select value={formData.type} onValueChange={(value: 'percentage' | 'fixed') => setFormData({...formData, type: value})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="percentage">Percentage (%)</SelectItem>
-                      <SelectItem value="fixed">Fixed Amount (Rs.)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <Textarea
-                  required
-                  placeholder="Brief description of the discount"
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  rows={2}
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {formData.type === 'percentage' ? 'Percentage (%)' : 'Amount (Rs.)'}
-                  </label>
-                  <Input
-                    required
-                    type="number"
-                    placeholder={formData.type === 'percentage' ? '25' : '500'}
-                    value={formData.value}
-                    onChange={(e) => setFormData({...formData, value: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Min Amount (Rs.)</label>
-                  <Input
-                    type="number"
-                    placeholder="1000"
-                    value={formData.minAmount}
-                    onChange={(e) => setFormData({...formData, minAmount: e.target.value})}
-                  />
-                </div>
-                {formData.type === 'percentage' && (
+        {user?.isAdmin && (
+          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+            <DialogTrigger asChild>
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <Tag className="w-4 h-4 mr-2" />
+                Add Discount
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>{editingDiscount ? 'Edit Discount' : 'Create New Discount'}</DialogTitle>
+                <DialogDescription>
+                  {editingDiscount ? 'Update discount details' : 'Create a new discount code or promotion'}
+                </DialogDescription>
+              </DialogHeader>
+              
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Max Discount (Rs.)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Discount Code</label>
                     <Input
-                      type="number"
-                      placeholder="5000"
-                      value={formData.maxDiscount}
-                      onChange={(e) => setFormData({...formData, maxDiscount: e.target.value})}
+                      required
+                      placeholder="e.g., SUMMER25"
+                      value={formData.code}
+                      onChange={(e) => setFormData({...formData, code: e.target.value.toUpperCase()})}
                     />
                   </div>
-                )}
-              </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Discount Type</label>
+                    <Select value={formData.type} onValueChange={(value: 'percentage' | 'fixed') => setFormData({...formData, type: value})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="percentage">Percentage (%)</SelectItem>
+                        <SelectItem value="fixed">Fixed Amount (Rs.)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
 
-              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                  <Input
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <Textarea
                     required
-                    type="date"
-                    value={formData.startDate}
-                    onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+                    placeholder="Brief description of the discount"
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    rows={2}
                   />
                 </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {formData.type === 'percentage' ? 'Percentage (%)' : 'Amount (Rs.)'}
+                    </label>
+                    <Input
+                      required
+                      type="number"
+                      placeholder={formData.type === 'percentage' ? '25' : '500'}
+                      value={formData.value}
+                      onChange={(e) => setFormData({...formData, value: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Min Amount (Rs.)</label>
+                    <Input
+                      type="number"
+                      placeholder="1000"
+                      value={formData.minAmount}
+                      onChange={(e) => setFormData({...formData, minAmount: e.target.value})}
+                    />
+                  </div>
+                  {formData.type === 'percentage' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Max Discount (Rs.)</label>
+                      <Input
+                        type="number"
+                        placeholder="5000"
+                        value={formData.maxDiscount}
+                        onChange={(e) => setFormData({...formData, maxDiscount: e.target.value})}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                    <Input
+                      required
+                      type="date"
+                      value={formData.startDate}
+                      onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                    <Input
+                      required
+                      type="date"
+                      value={formData.endDate}
+                      onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Usage Limit (Optional)</label>
                   <Input
-                    required
-                    type="date"
-                    value={formData.endDate}
-                    onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+                    type="number"
+                    placeholder="100"
+                    value={formData.usageLimit}
+                    onChange={(e) => setFormData({...formData, usageLimit: e.target.value})}
                   />
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Usage Limit (Optional)</label>
-                <Input
-                  type="number"
-                  placeholder="100"
-                  value={formData.usageLimit}
-                  onChange={(e) => setFormData({...formData, usageLimit: e.target.value})}
-                />
-              </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="isActive"
+                    checked={formData.isActive}
+                    onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
+                    className="rounded"
+                  />
+                  <label htmlFor="isActive" className="text-sm font-medium text-gray-700">
+                    Active (users can use this discount)
+                  </label>
+                </div>
 
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="isActive"
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
-                  className="rounded"
-                />
-                <label htmlFor="isActive" className="text-sm font-medium text-gray-700">
-                  Active (users can use this discount)
-                </label>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4">
-                <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-                  {editingDiscount ? 'Update Discount' : 'Create Discount'}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+                <div className="flex justify-end gap-3 pt-4">
+                  <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                    {editingDiscount ? 'Update Discount' : 'Create Discount'}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       {/* Stats Cards */}

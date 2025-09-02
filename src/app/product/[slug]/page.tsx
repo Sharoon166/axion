@@ -1,15 +1,17 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Star, Minus, Plus, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import ProductCard from '@/components/ProductCard';
-import PageHeader from '@/components/PageHeader';
-import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Star, Plus, Minus, ShoppingCart, Heart, Share2, Truck, Shield, RotateCcw } from 'lucide-react';
 import { getImageUrl } from '@/lib/utils';
+import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 // /data/products.ts
 
@@ -34,6 +36,8 @@ export interface Product {
 
 const ProductPage = () => {
   const { slug } = useParams();
+  const router = useRouter();
+  const { addToCart, cartItems, getTotalPrice, getTotalItems } = useCart();
 
   const [selectedImage, setSelectedImage] = useState('');
   const [fetchedproduct, setFetchdProduct] = useState<Product[]>([]);
@@ -43,6 +47,7 @@ const ProductPage = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState('');
   const [selectedSize, setSelectedSize] = useState('');
+  const [showCart, setShowCart] = useState(false);
 
   const fetcheproduct = async () => {
     setLoading(true);
@@ -317,7 +322,26 @@ const ProductPage = () => {
 
               {/* Buttons */}
               <div className="flex gap-4 mt-8">
-                <Button className="w-full bg-blue-900 text-white">Add to Cart</Button>
+                <Button 
+                  className="flex-1 bg-blue-900 text-white hover:bg-blue-800"
+                  onClick={() => {
+                    addToCart({
+                      _id: product._id.toString(),
+                      name: product.name,
+                      price: product.price,
+                      image: product.images[0],
+                      color: selectedColor,
+                      size: selectedSize,
+                      slug: product.slug,
+                      quantity
+                    });
+                    // Show success toast
+                    toast.success(`${product.name} added to cart!`);
+                  }}
+                >
+                  <ShoppingCart className="mr-2 h-4 w-4" />
+                  Add to Cart
+                </Button>
                 <Button variant="outline">
                   <Heart />
                 </Button>
@@ -367,7 +391,18 @@ const ProductPage = () => {
                 price={p.price}
                 img={getImageUrl(p.images[0])}
                 href={`/product/${p.slug}`}
-                onAddToCart={() => { }}
+                onAddToCart={() => {
+                  addToCart({
+                    _id: p._id.toString(),
+                    name: p.name,
+                    price: p.price,
+                    image: p.images[0],
+                    color: p.colors[0],
+                    size: p.sizes[0],
+                    slug: p.slug,
+                    quantity: 1
+                  });
+                }}
               />
             ))}
           </div>

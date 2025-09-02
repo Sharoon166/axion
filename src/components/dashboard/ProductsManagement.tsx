@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { Package, Search } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { getImageUrl } from '@/lib/utils';
 
 interface Product {
@@ -43,6 +44,7 @@ interface Product {
 
 export default function ProductsManagement() {
   const router = useRouter();
+  const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -176,14 +178,16 @@ export default function ProductsManagement() {
           <h2 className="text-2xl font-bold text-gray-900">Product Details</h2>
         </div>
         <div className="flex gap-3">
-          <Link href="/admin/products/new">
-            <Button className="bg-blue-600 hover:bg-blue-700">Add Product</Button>
-          </Link>
-          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-            <DialogTrigger asChild>
-              <Button variant="outline">Quick Add</Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          {user?.isAdmin && (
+            <>
+              <Link href="/admin/products/new">
+                <Button className="bg-blue-600 hover:bg-blue-700">Add Product</Button>
+              </Link>
+              <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+                <DialogTrigger asChild>
+                  <Button variant="outline">Quick Add</Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{editingProduct ? 'Edit Product' : 'Add Product'}</DialogTitle>
                 <DialogDescription>
@@ -392,13 +396,14 @@ export default function ProductsManagement() {
                     Cancel
                   </Button>
                   <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-                    {editingProduct ? 'Update Product' : 'Create Custom Product'}
+                    {editingProduct ? 'Update Product' : 'Add Product'}
                   </Button>
                 </div>
               </form>
-            </DialogContent>
-          </Dialog>
-          <Button variant="destructive">Delete Product</Button>
+                </DialogContent>
+              </Dialog>
+            </>
+          )}
         </div>
       </div>
 

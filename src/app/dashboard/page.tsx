@@ -143,9 +143,9 @@ export default function DashboardRoute() {
           <div className="p-6">
             {/* Admin Profile */}
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full overflow-hidden bg-blue-100 flex items-center justify-center">
                 <Image
-                  src="/about-image.jpg"
+                  src={userData?.image}
                   width={48}
                   height={48}
                   alt="Admin"

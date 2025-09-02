@@ -3,6 +3,7 @@
 import { SessionProvider } from 'next-auth/react';
 import { Toaster } from 'sonner';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { CartProvider } from '@/contexts/CartContext';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -11,8 +12,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
       refetchOnWindowFocus={false}
     >
       <AuthProvider>
-        {children}
-        <Toaster position="top-center" richColors closeButton />
+        <CartProvider>
+          {children}
+          <Toaster position="top-center" richColors closeButton />
+        </CartProvider>
       </AuthProvider>
     </SessionProvider>
   );

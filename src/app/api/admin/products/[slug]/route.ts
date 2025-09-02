@@ -2,11 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Product from '@/models/Products';
 import Category from '@/models/Category';
+import { requireAdmin } from '@/lib/adminAuth';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  // Check admin authorization
+  const authError = await requireAdmin(request);
+  if (authError) return authError;
+
   try {
     await dbConnect();
     const { slug } = await params;
@@ -37,6 +42,10 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  // Check admin authorization
+  const authError = await requireAdmin(request);
+  if (authError) return authError;
+
   try {
     await dbConnect();
     const { slug } = await params;
@@ -94,9 +103,13 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  // Check admin authorization
+  const authError = await requireAdmin(request);
+  if (authError) return authError;
+
   try {
     await dbConnect();
     const { slug } = await params;
