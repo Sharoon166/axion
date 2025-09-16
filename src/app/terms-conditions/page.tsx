@@ -6,20 +6,17 @@ export default function TermsConditionsPage() {
       <PageHeader
         title="Terms &"
         titleHighlight="Conditions"
-        subtitle="Terms governing the use of newOn.pk and its services"
+        subtitle="Terms governing the use of axion and its services"
       />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-[85rem] mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white rounded-lg shadow-sm border p-8">
           <div className="prose prose-lg max-w-none">
-            <p className="text-sm text-gray-500 mb-8">
-              Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-            </p>
 
             <section className="mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Introduction</h2>
               <p className="text-gray-600 leading-relaxed">
-                This page guides our users/traffic/visitors about our terms and policies. The words “our,” “us,” “we,” “website,” “company,” and “site” are referring to <strong>newOn.pk</strong>. By using this site, you agree to comply with the Terms and Conditions, Privacy Policy, Return Policy, and Shipping Policies. These Terms and Conditions are subject to change at any time without prior notice.
+                This page guides our users/traffic/visitors about our terms and policies. The words “our,” “us,” “we,” “website,” “company,” and “site” are referring to <strong>axion</strong>. By using this site, you agree to comply with the Terms and Conditions, Privacy Policy, Return Policy, and Shipping Policies. These Terms and Conditions are subject to change at any time without prior notice.
               </p>
             </section>
 
@@ -43,7 +40,7 @@ export default function TermsConditionsPage() {
             <section className="mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Orders, Delivery, and Pricing</h2>
               <p className="text-gray-600 leading-relaxed mb-4">
-                <strong>newOn.pk</strong> reserves the right to process orders and deliver them at its preference. We hold the right to refuse and cancel any order at any time and shall not be held liable. We do our best to process your orders and deliver the goods on time.
+                <strong>axion</strong> reserves the right to process orders and deliver them at its preference. We hold the right to refuse and cancel any order at any time and shall not be held liable. We do our best to process your orders and deliver the goods on time.
               </p>
               <p className="text-gray-600 leading-relaxed mb-4">
                 Users might be asked to provide additional information along with the basic information required at the time of the order. This is to assure the security of the order and to prevent fraudulent activities.
@@ -56,14 +53,14 @@ export default function TermsConditionsPage() {
             <section className="mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Use of Intellectual Property</h2>
               <p className="text-gray-600 leading-relaxed">
-                Any intellectual property or trademark falling under <strong>newOn.pk</strong> should not be misused, copied, or altered by any means. Such actions may constitute intellectual property theft or misuse, and legal actions might be pursued accordingly.
+                Any intellectual property or trademark falling under <strong>axion</strong> should not be misused, copied, or altered by any means. Such actions may constitute intellectual property theft or misuse, and legal actions might be pursued accordingly.
               </p>
             </section>
 
             <section className="mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Dispute Resolution</h2>
               <p className="text-gray-600 leading-relaxed">
-                It is clarified that <strong>newOn.pk</strong> works hard to assure smooth operations and flow of goods. In case of any dispute, you should contact the management. As the company reserves rights to orders, deliveries, pricing, payment terms, and goods—and they are subject to change at any time—the company cannot be held liable by any means on legal forums. Any dispute shall be resolved between management and customers. We assure you that the management will cooperate and rectify any problems you may face. However, upon finding any fraudulent activity or misuse at the user’s end, the company reserves the right to pursue legal actions and court cases.
+                It is clarified that <strong>axion</strong> works hard to assure smooth operations and flow of goods. In case of any dispute, you should contact the management. As the company reserves rights to orders, deliveries, pricing, payment terms, and goods—and they are subject to change at any time—the company cannot be held liable by any means on legal forums. Any dispute shall be resolved between management and customers. We assure you that the management will cooperate and rectify any problems you may face. However, upon finding any fraudulent activity or misuse at the user’s end, the company reserves the right to pursue legal actions and court cases.
               </p>
             </section>
 
