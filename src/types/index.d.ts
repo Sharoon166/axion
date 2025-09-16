@@ -1,0 +1,155 @@
+// Type definitions for Axion Lighting Solutions
+
+export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  image: string;
+  inStock: boolean;
+  slug: string;
+  discount?: number; 
+}
+
+export interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image: string;
+}
+
+export interface BlogPost {
+  id: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  author: string;
+  publishedAt: string;
+  category: string;
+  image: string;
+  slug: string;
+  date: string;
+  description: string;
+}
+
+// types/index.ts (or wherever you keep types)
+export interface Project {
+  id: string;
+  slug: string;
+  title: string;
+  overview: string;
+  content?: string;
+  keyFeatures?: string;
+  technicalSpecs?: {
+    projectType?: string;
+    location?: string;
+    completion?: string;
+    duration?: string;
+    team?: string;
+  };
+  clientTestimonial?: {
+    text: string;
+    author: string;
+  };
+  category?: string;
+  style?: string;
+  location?: string;
+  date?: string;
+  tags?: string[];
+  features?: string[]; // optional array (legacy)
+  specs?: {
+    type?: string;
+    location?: string;
+    completion?: string;
+    duration?: string;
+    team?: string;
+  };
+  image?: string;       // fallback image
+  images?: string[];    // gallery
+  testimonial?: {
+    text: string;
+    author: string;
+  };
+}
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  isAdmin: boolean;
+  image: string;
+}
+
+export interface OrderItem {
+  name: string;
+  qty: number;
+  quantity: number;
+  image: string;
+  price: number;
+  product: string;
+  color: string;
+  shippingPrice: number;
+  size: string;
+}
+
+interface ShippingAddress {
+  fullName: string;
+  address: string;
+  city: string;
+  postalCode: string;
+  country: string;
+  phone: string;
+}
+export interface SalesData {
+  date: string;   // ISO date string, e.g. "2025-09-05"
+  value: number;  // revenue
+  label: string;  // formatted label for chart, e.g. "Sep 5"
+}
+
+interface OrderData {
+
+  id: string;
+  _id: string;
+  images: string[];
+  slug: string;
+  name: string;
+  status: string;
+  date: string;
+  rating: number;
+  image: string;
+  price: number;
+  user: User | null;
+  orderItems: OrderItem[];
+  shippingAddress: ShippingAddress;
+  paymentMethod: string;
+  itemsPrice: number;
+  shippingPrice: number;
+  taxPrice: number;
+  totalPrice: number;
+  customerEmail: string;
+  isPaid: boolean;
+  paidAt: Date | null;
+  isDelivered: boolean;
+  deliveredAt: Date | null;
+  // New lifecycle fields
+  isConfirmed?: boolean;
+  confirmedAt?: Date | null;
+  isShipped?: boolean;
+  shippedAt?: Date | null;
+  createdAt: Date;
+  images?: string[];
+  isCancelled: boolean;
+  cancelledAt: Date | null;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    isAdmin: boolean;
+    image: string;
+  }
+
+}
