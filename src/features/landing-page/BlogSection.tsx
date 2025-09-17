@@ -54,6 +54,7 @@ const BlogSection = () => {
   useEffect(() => {
     fetchBlogs();
   }, []);
+  console.log(blogPosts)
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
