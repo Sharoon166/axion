@@ -43,16 +43,7 @@ export default function NewProductPage() {
 
   // Predefined subcategories map for known categories
   const PREDEFINED_SUBCATEGORIES: Record<string, string[]> = {
-    // Indoor
-    'indoor': [
-      'Ceiling Lights',
-      'Wall Lights',
-      'Table Lamps',
-      'Floor Lamps',
-      'Chandeliers',
-      'Pendant Lights',
-      'Smart Indoor Lights',
-    ],
+
     'indoor lighting': [
       'Ceiling Lights',
       'Wall Lights',
@@ -62,15 +53,7 @@ export default function NewProductPage() {
       'Pendant Lights',
       'Smart Indoor Lights',
     ],
-    // Outdoor
-    'outdoor': [
-      'Garden Lights',
-      'Wall Mount Lights',
-      'Pathway Lights',
-      'Flood Lights',
-      'Security Lights',
-      'String Lights',
-    ],
+
     'outdoor lighting': [
       'Garden Lights',
       'Wall Mount Lights',
@@ -79,23 +62,7 @@ export default function NewProductPage() {
       'Security Lights',
       'String Lights',
     ],
-    // General Lighting category
-    'lighting': [
-      'LED Bulbs',
-      'Halogen',
-      'Smart Bulbs',
-      'Tube Lights',
-      'Downlights',
-      'Track Lights',
-    ],
-    // Solar
-    'solar': [
-      'Solar Panels',
-      'Solar Street Lights',
-      'Solar Garden Lights',
-      'Solar Flood Lights',
-      'Solar Accessories',
-    ],
+
     'solar lighting': [
       'Solar Panels',
       'Solar Street Lights',
@@ -104,6 +71,7 @@ export default function NewProductPage() {
       'Solar Accessories',
     ],
   };
+
 
   // Shipping & Return policy is now static, so we no longer capture per-product shipping fields
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);

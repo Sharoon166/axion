@@ -22,6 +22,7 @@ interface Category {
   _id: string;
   name: string;
   slug: string;
+  subcategories?: string[];
 }
 
 interface Product {
@@ -61,6 +62,8 @@ export default function EditProductPage() {
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [product, setProduct] = useState<Product | null>(null);
+  const [availableSubcats, setAvailableSubcats] = useState<string[]>([]);
+  const [selectedSubcats, setSelectedSubcats] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -119,6 +122,26 @@ export default function EditProductPage() {
     }
   }, [fetchProduct, productSlug]);
 
+  // Update available subcategories when categories or product category changes
+  useEffect(() => {
+    if (formData.category) {
+      const found = categories.find((c) => c.name === formData.category || c.slug === formData.category);
+      if (found) {
+        const key = (found.slug || found.name).toLowerCase().trim();
+        let mapped = PREDEFINED_SUBCATEGORIES[key];
+        if (!mapped) {
+          if (key.includes('indoor')) mapped = PREDEFINED_SUBCATEGORIES['indoor'] || PREDEFINED_SUBCATEGORIES['indoor lighting'];
+          else if (key.includes('outdoor')) mapped = PREDEFINED_SUBCATEGORIES['outdoor'] || PREDEFINED_SUBCATEGORIES['outdoor lighting'];
+          else if (key.includes('solar')) mapped = PREDEFINED_SUBCATEGORIES['solar'] || PREDEFINED_SUBCATEGORIES['solar lighting'];
+          else if (key.includes('light')) mapped = PREDEFINED_SUBCATEGORIES['lighting'];
+        }
+        const subcats = (mapped && Array.isArray(mapped) ? mapped : found.subcategories || [])
+          .filter(Boolean);
+        setAvailableSubcats(subcats);
+      }
+    }
+  }, [categories, formData.category]);
+
   const fetchCategories = async () => {
     try {
       const result = await api.categories.getAll();
@@ -130,11 +153,62 @@ export default function EditProductPage() {
     }
   };
 
+  // Predefined subcategories map for known categories
+  const PREDEFINED_SUBCATEGORIES: Record<string, string[]> = {
+ 
+    'indoor lighting': [
+      'Ceiling Lights',
+      'Wall Lights',
+      'Table Lamps',
+      'Floor Lamps',
+      'Chandeliers',
+      'Pendant Lights',
+      'Smart Indoor Lights',
+    ],
+   
+    'outdoor lighting': [
+      'Garden Lights',
+      'Wall Mount Lights',
+      'Pathway Lights',
+      'Flood Lights',
+      'Security Lights',
+      'String Lights',
+    ],
+
+    'solar lighting': [
+      'Solar Panels',
+      'Solar Street Lights',
+      'Solar Garden Lights',
+      'Solar Flood Lights',
+      'Solar Accessories',
+    ],
+  };
+
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
+
+    // When category changes, update available subcategories and reset selection
+    if (field === 'category' && typeof value === 'string') {
+      const found = categories.find((c) => c.name === value || c.slug === value);
+      // Normalize key
+      const key = (found?.slug || found?.name || value).toString().toLowerCase().trim();
+      // Try direct match
+      let mapped = PREDEFINED_SUBCATEGORIES[key];
+      // Fallback: include-based heuristics
+      if (!mapped) {
+        if (key.includes('indoor')) mapped = PREDEFINED_SUBCATEGORIES['indoor'] || PREDEFINED_SUBCATEGORIES['indoor lighting'];
+        else if (key.includes('outdoor')) mapped = PREDEFINED_SUBCATEGORIES['outdoor'] || PREDEFINED_SUBCATEGORIES['outdoor lighting'];
+        else if (key.includes('solar')) mapped = PREDEFINED_SUBCATEGORIES['solar'] || PREDEFINED_SUBCATEGORIES['solar lighting'];
+        else if (key.includes('light')) mapped = PREDEFINED_SUBCATEGORIES['lighting'];
+      }
+      const subcats = (mapped && Array.isArray(mapped) ? mapped : found?.subcategories || [])
+        .filter(Boolean);
+      setAvailableSubcats(subcats);
+      setSelectedSubcats([]);
+    }
   };
 
   const handleMultipleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -180,6 +254,11 @@ export default function EditProductPage() {
       // Add form fields
       Object.entries(formData).forEach(([key, value]) => {
         formDataToSend.append(key, String(value));
+      });
+
+      // Add subcategories
+      selectedSubcats.forEach((subcat, index) => {
+        formDataToSend.append(`subcategories[${index}]`, subcat);
       });
 
       // Keep existing non-blob URLs
@@ -470,13 +549,39 @@ export default function EditProductPage() {
                     ))}
                   </select>
                 </div>
-
+                {availableSubcats.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Subcategories</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {availableSubcats.map((subcat) => (
+                        <div key={subcat} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`subcat-${subcat}`}
+                            checked={selectedSubcats.includes(subcat)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedSubcats([...selectedSubcats, subcat]);
+                              } else {
+                                setSelectedSubcats(selectedSubcats.filter((sc) => sc !== subcat));
+                              }
+                            }}
+                          />
+                          <label
+                            htmlFor={`subcat-${subcat}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            {subcat}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
-                    placeholder="Describe your product..."
-                    rows={4}
+                    placeholder="Enter product description"
                     value={formData.description}
                     onChange={(e) => handleInputChange('description', e.target.value)}
                   />
