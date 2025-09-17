@@ -10,6 +10,7 @@ import BlogCard from '@/components/BlogCard';
 
 interface BlogPost {
   _id: string;
+  contant: string;
   title: string;
   slug: string;
   excerpt: string;
@@ -116,6 +117,7 @@ const BlogSection = () => {
               <BlogCard
                 key={post._id}
                 href={`/blog/${post.slug}`}
+                description={post.contant}
                 image={post.image}
                 title={post.title}
                 tag={post.tags && post.tags.length > 0 ? post.tags[0] : undefined}
