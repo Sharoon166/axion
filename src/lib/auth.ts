@@ -39,8 +39,15 @@ declare module 'next-auth/jwt' {
   }
 }
 
+// Ensure we have a valid MongoDB connection
+if (!process.env.MONGODB_URI) {
+  throw new Error('MONGODB_URI environment variable is not set');
+}
+
 export const authOptions = {
-  adapter: MongoDBAdapter(clientPromise),
+  adapter: MongoDBAdapter(clientPromise, {
+    databaseName: process.env.MONGODB_DB || 'axion'
+  }),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -163,7 +170,21 @@ export const authOptions = {
       return session;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET
+  secret: process.env.NEXTAUTH_SECRET,
+  // Enable debug logs in development
+  debug: process.env.NODE_ENV === 'development',
+  // Use secure cookies in production
+  cookies: {
+    sessionToken: {
+      name: `__Secure-next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax' as const,
+        path: '/',
+        secure: process.env.NODE_ENV === 'production'
+      }
+    }
+  }
 };
 
 export const { handlers, auth, signIn, signOut } = NextAuth(authOptions);

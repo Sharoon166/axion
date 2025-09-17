@@ -74,29 +74,55 @@ export const useLocalAuth = () => {
 
       // Get the session data
       const response = await fetch('/api/auth/session');
-      const session = await response.json();
-
-      if (session?.user) {
-
-        const userData = {
-          id: session.user.id,
-          name: session.user.name,
-          email: session.user.email,
-          role: session.user.role || 'user',
-          isAdmin: session.user.isAdmin || false,
-          image: session.user.image || null, // Use user-specific uploaded avatar or backend avatar
-          address: session.user.address || null,
-          phone: session.user.phone || null,
+      
+      if (!response.ok) {
+        console.error('Failed to fetch session:', response.status, response.statusText);
+        return { 
+          success: false, 
+          error: 'Authentication service is currently unavailable. Please try again later.' 
         };
-
-        localStorage.setItem('userData', JSON.stringify(userData));
-        setUser(userData);
       }
+      
+      let session;
+      try {
+        session = await response.json();
+      } catch (error) {
+        console.error('Failed to parse session data:', error);
+        return { 
+          success: false, 
+          error: 'Invalid response from authentication service. Please try again.' 
+        };
+      }
+
+      if (!session?.user) {
+        console.error('No user data in session:', session);
+        return { 
+          success: false, 
+          error: 'Failed to retrieve user data. Please try again.' 
+        };
+      }
+
+      const userData = {
+        id: session.user.id,
+        name: session.user.name,
+        email: session.user.email,
+        role: session.user.role || 'user',
+        isAdmin: session.user.isAdmin || false,
+        image: session.user.image || null,
+        address: session.user.address || null,
+        phone: session.user.phone || null,
+      };
+
+      localStorage.setItem('userData', JSON.stringify(userData));
+      setUser(userData);
 
       return { success: true };
     } catch (error) {
       console.error('Sign in error:', error);
-      return { success: false, error: error instanceof Error ? error.message : 'Sign in failed' };
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Sign in failed' 
+      };
     }
   };
 
