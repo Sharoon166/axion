@@ -21,6 +21,7 @@ import OrdersManagement from '@/components/dashboard/OrdersManagement';
 import ProductsManagement from '@/components/dashboard/ProductsManagement';
 import BlogsManagement from '@/components/dashboard/BlogsManagement';
 import ProjectManagement from '@/components/dashboard/ProjectManagement';
+import Loading from '@/loading';
 
 interface ApiOrder {
   _id?: string;
@@ -92,7 +93,7 @@ export default function DashboardRoute() {
     if (stored) {
       try {
         setUserData(JSON.parse(stored));
-      } catch {}
+      } catch { }
     }
     setLoading(false);
   }, []);
@@ -171,7 +172,7 @@ export default function DashboardRoute() {
     fetchDashboardData();
   }, [userData?.isAdmin]);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className='flex items-center justify-center min-h-screen'><Loading /></div>;
   if (!userData?.isAdmin) redirect('/');
 
   const handleLogout = () => {
@@ -237,11 +238,10 @@ export default function DashboardRoute() {
                 <button
                   key={item.key}
                   onClick={() => (item.key === 'logout' ? handleLogout() : setActiveTab(item.key))}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
-                    item.active
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${item.active
                       ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600'
                       : 'text-gray-600 hover:bg-gray-50'
-                  }`}
+                    }`}
                 >
                   <item.icon className="w-5 h-5" />
                   <span className="font-medium">{item.label}</span>
@@ -282,11 +282,10 @@ export default function DashboardRoute() {
                   <button
                     key={item.key}
                     onClick={() => setActiveTab(item.key)}
-                    className={`flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm transition-colors ${
-                      activeTab === item.key
+                    className={`flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm transition-colors ${activeTab === item.key
                         ? 'bg-blue-50 text-blue-600'
                         : 'text-gray-600 hover:bg-gray-50'
-                    }`}
+                      }`}
                   >
                     <item.icon className="w-4 h-4" />
                     <span className="hidden xs:inline">{item.label}</span>
