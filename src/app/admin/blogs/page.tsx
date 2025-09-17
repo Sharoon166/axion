@@ -11,10 +11,10 @@ import {
   Plus, 
   Edit, 
   Trash2, 
-  Eye,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import BlogCard from '@/components/BlogCard';
+import Loading from '@/loading';
 
 interface Blog {
   _id: string;
@@ -106,9 +106,7 @@ export default function BlogsPage() {
 
         {/* Blogs List */}
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-          </div>
+         <Loading/>
         ) : filteredBlogs.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
@@ -139,13 +137,6 @@ export default function BlogsPage() {
                   description={blog.excerpt || blog.content}
                 />
                 <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => router.push(`/blog/${blog.slug}`)}
-                  >
-                    <Eye className="w-4 h-4" />
-                  </Button>
                   <Button
                     size="sm"
                     variant="outline"

@@ -30,8 +30,12 @@ type BackendProduct = {
   price?: number;
   images?: string[];
   image?: string;
-  category?: string | { name?: string } | null;
-  stock?: number;
+  category: {
+    _id: string;
+    name: string;
+    slug: string;
+  } | null;
+   stock?: number;
   slug: string;
   discount?: number;
 };

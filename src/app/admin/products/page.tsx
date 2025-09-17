@@ -2,15 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent} from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-  Package, 
-  Search, 
-  Plus, 
-  Edit, 
-  Trash2, 
+import {
+  Package,
+  Search,
+  Plus,
   SortAsc,
   SortDesc
 } from 'lucide-react';
@@ -63,30 +61,20 @@ export default function ProductsPage() {
       setLoading(false);
     }
   };
-
-  const handleDelete = async (slug: string) => {
- {
-      const result = await api.products.delete(slug);
-      if (result.success) {
-        setProducts(products.filter(p => p.slug !== slug));
-      }
-    }
-  };
-
   const filteredAndSortedProducts = products
-    .filter(product => 
+    .filter(product =>
       product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.category?.name?.toLowerCase().includes(searchQuery.toLowerCase())
     )
     .sort((a, b) => {
       let aValue = a[sortBy];
       let bValue = b[sortBy];
-      
+
       if (sortBy === 'name') {
         aValue = a.name?.toLowerCase() || '';
         bValue = b.name?.toLowerCase() || '';
       }
-      
+
       if (sortOrder === 'asc') {
         return aValue > bValue ? 1 : -1;
       } else {
@@ -118,7 +106,7 @@ export default function ProductsPage() {
               <h1 className="text-3xl font-bold text-gray-900">Products</h1>
               <p className="text-gray-600 mt-2">Manage your product catalog</p>
             </div>
-            <Button 
+            <Button
               onClick={() => router.push('/admin/products/new')}
               className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
             >
@@ -173,9 +161,9 @@ export default function ProductsPage() {
 
         {/* Products Grid */}
         {loading ? (
-          <div className='flex justify-center items-center h-[70rem]'>
+          <div>
 
-         <Loading/>
+            <Loading />
           </div>
         ) : filteredAndSortedProducts.length === 0 ? (
           <Card>
@@ -186,7 +174,7 @@ export default function ProductsPage() {
                 {searchQuery ? 'Try adjusting your search terms' : 'Get started by adding your first product'}
               </p>
               {!searchQuery && (
-                <Button 
+                <Button
                   onClick={() => router.push('/admin/products/new')}
                   className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
                 >
@@ -208,24 +196,7 @@ export default function ProductsPage() {
                   href={`/product/${product.slug}`}
                   description={product.category?.name || 'Uncategorized'}
                 />
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => router.push(`/admin/products/${product.slug}/edit`)}
-                    className="flex-1"
-                  >
-                    <Edit className="w-4 h-4 mr-1" />
-                    Edit
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => handleDelete(product.slug)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
+                
               </div>
             ))}
           </div>
