@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +19,7 @@ interface Blog {
   title: string;
   slug: string;
   content: string;
+  description?: string;
   excerpt?: string;
   author?: string;
   image?: string;
@@ -38,6 +39,7 @@ export default function EditBlogPage() {
     title: '',
     slug: '',
     content: '',
+    description: '',
     excerpt: '',
     author: '',
     tags: '',
@@ -45,6 +47,7 @@ export default function EditBlogPage() {
   });
   const [image, setImage] = useState<string>('');
   const [newImageFile, setNewImageFile] = useState<File | null>(null);
+  const tiptapRef = useRef<{ processContentOnSubmit?: () => Promise<string> }>(null);
   const fetchBlog = useCallback(async () => {
     try {
       const response = await fetch(`/api/admin/blogs/${blogSlug}`);
@@ -58,6 +61,7 @@ export default function EditBlogPage() {
           title: blogData.title || '',
           slug: blogData.slug || '',
           content: blogData.content || '',
+          description: blogData.description || '',
           excerpt: blogData.excerpt || '',
           author: blogData.author || '',
           tags: blogData.tags?.join(', ') || '',
@@ -122,9 +126,16 @@ export default function EditBlogPage() {
         }
       });
 
-      // Handle image
+      // Process editor content and upload images
+      let processedContent = formData.content;
+      if (tiptapRef.current?.processContentOnSubmit) {
+        processedContent = await tiptapRef.current.processContentOnSubmit();
+        formDataToSend.set('content', processedContent);
+      }
+
+      // Handle cover image upload
       if (newImageFile) {
-        // Upload new image
+        // Upload new image first
         const uploadFormData = new FormData();
         uploadFormData.append('file', newImageFile);
 
@@ -136,6 +147,9 @@ export default function EditBlogPage() {
         if (uploadResponse.ok) {
           const uploadResult = await uploadResponse.json();
           formDataToSend.append('image', uploadResult.url);
+        } else {
+          const errorResult = await uploadResponse.json();
+          throw new Error(`Cover image upload failed: ${errorResult.error || 'Unknown error'}`);
         }
       } else if (image && !image.startsWith('blob:')) {
         // Keep existing image
@@ -281,6 +295,25 @@ export default function EditBlogPage() {
                     />
                   </div>
 
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Description (Max 300 characters)</Label>
+                    <Input
+                      id="description"
+                      placeholder="Brief description of the blog post"
+                      value={formData.description}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value.length <= 300) {
+                          handleInputChange('description', value);
+                        }
+                      }}
+                      maxLength={300}
+                    />
+                    <p className="text-xs text-gray-500">
+                      {formData.description.length}/300 characters
+                    </p>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="author">Author</Label>
@@ -327,6 +360,7 @@ export default function EditBlogPage() {
                   <div className="space-y-2">
                     <Label htmlFor="content">Blog Content *</Label>
                     <TiptapEditor
+                      ref={tiptapRef}
                       content={formData.content}
                       onChange={(html) => handleInputChange('content', html)}
                       placeholder="Write your blog content here..."

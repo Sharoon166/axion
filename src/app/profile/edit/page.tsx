@@ -12,6 +12,7 @@ import PageHeader from '@/components/PageHeader';
 import { Upload, Save, Lock, Eye, EyeOff } from 'lucide-react';
 import { User } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
+import Loading from '@/loading';
 
 export default function EditProfilePage() {
   const { user } = useAuth();
@@ -226,7 +227,7 @@ export default function EditProfilePage() {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className='flex items-center justify-center min-h-screen'><Loading/></div>;
   }
 
   return (

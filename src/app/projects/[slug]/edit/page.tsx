@@ -47,7 +47,6 @@ interface Project {
   style: string;
   location: string;
   date: string;
-  tags: string[];
   images: string[];
   slug: string;
 }
@@ -81,7 +80,6 @@ export default function EditProjectPage() {
     style: '',
     location: '',
     date: '',
-    tags: '',
   });
 
   // Redirect if not admin
@@ -139,7 +137,6 @@ export default function EditProjectPage() {
             style: projectData.style || '',
             location: projectData.location || '',
             date: projectData.date ? projectData.date.split('T')[0] : '',
-            tags: projectData.tags?.join(', ') || '',
           });
           console.log('Set form data:', {
             title: projectData.title || '',
@@ -248,18 +245,17 @@ export default function EditProjectPage() {
         finalImageUrls = existingImages;
       }
 
+      // Don't send date when editing - keep original date
+      const { ...updateData } = formData;
+      
       const response = await fetch(`/api/projects/${slug}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ...formData,
+          ...updateData,
           images: finalImageUrls,
-          tags: formData.tags
-            .split(',')
-            .map((tag) => tag.trim())
-            .filter(Boolean),
         }),
       });
 
@@ -405,9 +401,9 @@ export default function EditProjectPage() {
               <CardHeader>
                 <CardTitle>Project Details</CardTitle>
               </CardHeader>
-              <CardContent className="*:space-y-2">
+              <CardContent className="">
                 <div>
-                  <Label htmlFor="title">Project Title</Label>
+                  <Label htmlFor="title" className='py-2'>Project Title</Label>
                   <Input
                     id="title"
                     name="title"
@@ -419,7 +415,7 @@ export default function EditProjectPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="overview">Overview</Label>
+                  <Label htmlFor="overview" className='py-2'>Overview</Label>
                   <Textarea
                     id="overview"
                     name="overview"
@@ -432,7 +428,7 @@ export default function EditProjectPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="content">Content</Label>
+                  <Label htmlFor="content" className='py-2'>Content</Label>
                   <Textarea
                     id="content"
                     name="content"
@@ -444,7 +440,7 @@ export default function EditProjectPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="category">Category</Label>
+                  <Label htmlFor="category" className='py-2'>Category</Label>
                   <Select
                     value={formData.category}
                     onValueChange={(value) => setFormData((prev) => ({ ...prev, category: value }))}
@@ -462,34 +458,20 @@ export default function EditProjectPage() {
                   </Select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="style">Style</Label>
-                    <Input
-                      id="style"
-                      name="style"
-                      value={formData.style}
-                      onChange={handleChange}
-                      required
-                      placeholder="Modern, Classic, etc."
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="date">Date</Label>
-                    <Input
-                      id="date"
-                      name="date"
-                      type="date"
-                      value={formData.date}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
+                <div>
+                  <Label htmlFor="style" className='py-2'>Style</Label>
+                  <Input
+                    id="style"
+                    name="style"
+                    value={formData.style}
+                    onChange={handleChange}
+                    required
+                    placeholder="Modern, Classic, etc."
+                  />
                 </div>
 
                 <div>
-                  <Label htmlFor="location">Location</Label>
+                  <Label htmlFor="location" className='py-2'>Location</Label>
                   <Input
                     id="location"
                     name="location"
@@ -501,7 +483,7 @@ export default function EditProjectPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="keyFeatures">Key Features</Label>
+                  <Label htmlFor="keyFeatures" className='py-2'>Key Features</Label>
                   <Textarea
                     id="keyFeatures"
                     name="keyFeatures"
@@ -509,17 +491,6 @@ export default function EditProjectPage() {
                     onChange={handleChange}
                     placeholder="List the key features of this project"
                     rows={4}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="tags">Tags</Label>
-                  <Input
-                    id="tags"
-                    name="tags"
-                    value={formData.tags}
-                    onChange={handleChange}
-                    placeholder="Enter tags separated by commas"
                   />
                 </div>
               </CardContent>
@@ -534,7 +505,7 @@ export default function EditProjectPage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="projectType">Project Type</Label>
+                  <Label htmlFor="projectType" className='py-2'>Project Type</Label>
                   <Input
                     id="projectType"
                     name="projectType"
@@ -549,7 +520,7 @@ export default function EditProjectPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="specLocation">Spec Location</Label>
+                  <Label htmlFor="specLocation" className='py-2'>Spec Location</Label>
                   <Input
                     id="specLocation"
                     name="specLocation"
@@ -564,7 +535,7 @@ export default function EditProjectPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="completion">Completion Date</Label>
+                  <Label htmlFor="completion" className='py-2'>Completion Date</Label>
                   <Input
                     id="completion"
                     name="completion"
@@ -579,7 +550,7 @@ export default function EditProjectPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="duration">Duration</Label>
+                  <Label htmlFor="duration" className='py-2'>Duration</Label>
                   <Input
                     id="duration"
                     name="duration"
@@ -594,7 +565,7 @@ export default function EditProjectPage() {
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <Label htmlFor="team">Team</Label>
+                  <Label htmlFor="team" className='py-2'>Team</Label>
                   <Input
                     id="team"
                     name="team"
@@ -619,7 +590,7 @@ export default function EditProjectPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="testimonialText">Testimonial</Label>
+                <Label htmlFor="testimonialText" className='py-2'>Testimonial</Label>
                 <Textarea
                   id="testimonialText"
                   name="testimonialText"
@@ -635,7 +606,7 @@ export default function EditProjectPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="testimonialAuthor">Client Name & Title</Label>
+                <Label htmlFor="testimonialAuthor" className='py-2'>Client Name & Title</Label>
                 <Input
                   id="testimonialAuthor"
                   name="testimonialAuthor"

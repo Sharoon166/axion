@@ -43,14 +43,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
     return () => clearInterval(t);
   }, [saleEndsAt]);
   return (
-    <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden flex flex-col h-[390px]">
+    <div className="bg-white rounded-xl shadow-md group border border-gray-200 overflow-hidden flex flex-col h-[390px]">
       {/* Image */}
       <div className="relative w-full h-40 sm:h-48 md:h-52 flex-shrink-0">
         <Image
           src={getImageUrl(img)}
           alt={name}
           fill
-          className="object-cover"
+          className="object-cover group-hover:scale-105 transition-all duration-200"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
         />
       </div>
@@ -61,7 +61,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           {name}
         </h3>
         <div className="flex-1 min-h-0 mb-3">
-          {description && <p className="text-gray-600 text-sm line-clamp-2">{description}</p>}
+          {description && !isOnSale(discount) && <p className="text-gray-600 text-sm line-clamp-2">{description}</p>}
         </div>
         <div className="mb-4 flex-shrink-0">
           {isOnSale(discount) ? (

@@ -67,7 +67,7 @@ export default function WishlistPage() {
                     name={item.name}
                     price={item.price}
                     img={item?.images?.[0] || item.image || '/product-1.jpg'}
-                    href={`/products/${item.slug}`}
+                    href={`/product/${item.slug}`}
                     description={item.description}
                     discount={item.discount}
                   />
@@ -109,7 +109,7 @@ export default function WishlistPage() {
         {wishlistItems.length > 0 && (
           <div className="mt-12 text-center">
             <Link
-              href="/orders"
+              href="/profile/orders"
               className="inline-flex items-center justify-center border border-[var(--color-logo)] text-[var(--color-logo)] rounded-lg px-6 py-3 font-medium hover:bg-[var(--color-logo)] hover:text-white transition"
             >
              <span>

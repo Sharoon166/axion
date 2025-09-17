@@ -49,14 +49,18 @@ export async function PUT(
     const { slug } = await params;
     const formData = await request.formData();
 
+    // Get image URL (already uploaded by frontend)
+    const imageUrl = formData.get('image') as string | null;
+
     const updateData = {
       title: formData.get('title'),
       content: formData.get('content'),
+      description: formData.get('description'),
       excerpt: formData.get('excerpt'),
       author: formData.get('author'),
       tags: formData.getAll('tags'),
       published: formData.get('published') === 'true',
-      image: formData.get('image'),
+      ...(imageUrl && { image: imageUrl }), // Only update image if we have a new URL
     };
 
     const blog = await Blog.findOneAndUpdate(

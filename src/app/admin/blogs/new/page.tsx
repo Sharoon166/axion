@@ -34,6 +34,7 @@ export default function NewBlogPage() {
     title: '',
     slug: '',
     content: '',
+    description: '',
     category: '',
     tags: '',
     published: false,
@@ -186,6 +187,9 @@ export default function NewBlogPage() {
         if (uploadResponse.ok) {
           const uploadResult = await uploadResponse.json();
           formDataToSend.append('image', uploadResult.url);
+        } else {
+          const errorResult = await uploadResponse.json();
+          throw new Error(`Image upload failed: ${errorResult.error || 'Unknown error'}`);
         }
       }
 
@@ -237,7 +241,7 @@ export default function NewBlogPage() {
           <div className="space-y-6">
             <h2 className="text-xl font-semibold text-gray-900">Blog Information</h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="title" className="text-sm font-medium text-gray-700">
                   Blog Title
@@ -264,6 +268,26 @@ export default function NewBlogPage() {
                   className="w-full"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description" className="text-sm font-medium text-gray-700">
+                Description (Max 300 characters)
+              </Label>
+              <Input
+                id="description"
+                placeholder="Brief description of the blog post"
+                value={formData.description}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value.length <= 300) {
+                    handleInputChange('description', value);
+                  }
+                }}
+                className="w-full"
+                maxLength={300}
+              />
+              <p className="text-xs text-gray-500">{formData.description.length}/300 characters</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

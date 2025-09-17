@@ -137,9 +137,14 @@ const VariantManager: React.FC<VariantManagerProps> = ({ variants, onChange }) =
     >
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">🎨 Different Versions</h3>
-        <Button type="button" onClick={addVariant} className='bg-(--color-logo) text-white hover:bg-(--color-logo)/90' size="sm">
+        <Button
+          type="button"
+          onClick={addVariant}
+          className="bg-(--color-logo) text-white hover:bg-(--color-logo)/90"
+          size="sm"
+        >
           <Plus className="w-4 h-4 mr-2" />
-Add New Version
+          Add New Version
         </Button>
       </div>
 
@@ -158,7 +163,12 @@ Add New Version
               >
                 <Edit className="w-4 h-4" />
               </Button>
-              <Button type="button" variant="destructive" size="sm" onClick={() => removeVariant(variantIndex)}>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={() => removeVariant(variantIndex)}
+              >
                 <Trash2 className="w-4 h-4" />
               </Button>
             </div>
@@ -191,9 +201,14 @@ Add New Version
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h5 className="font-medium">🛍️ Choices</h5>
-              <Button type="button" variant="outline" size="sm" onClick={() => addOption(variantIndex)}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => addOption(variantIndex)}
+              >
                 <Plus className="w-4 h-4 mr-2" />
-Add Choice
+                Add Choice
               </Button>
             </div>
 
@@ -232,7 +247,9 @@ Add Choice
                   editingOption?.optionIndex === optionIndex && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-medium mb-1">Name (what customers see)</label>
+                        <label className="block text-xs font-medium mb-1">
+                          Name (what customers see)
+                        </label>
                         <Input
                           value={option.label}
                           onChange={(e) =>
@@ -242,7 +259,9 @@ Add Choice
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium mb-1">Code (for the computer)</label>
+                        <label className="block text-xs font-medium mb-1">
+                          Code (for the computer)
+                        </label>
                         <Input
                           value={option.value}
                           onChange={(e) =>
@@ -252,7 +271,9 @@ Add Choice
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium mb-1">💰 Extra Cost (+ or -)</label>
+                        <label className="block text-xs font-medium mb-1">
+                          💰 Extra Cost (+ or -)
+                        </label>
                         <Input
                           type="number"
                           step="0.01"
@@ -269,7 +290,9 @@ Add Choice
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium mb-1">📦 How Many Available</label>
+                        <label className="block text-xs font-medium mb-1">
+                          📦 How Many Available
+                        </label>
                         <Input
                           type="number"
                           value={option.stockModifier}
@@ -284,16 +307,6 @@ Add Choice
                           placeholder="Leave 0 to use main stock number"
                         />
                       </div>
-                      <div>
-                        <label className="block text-xs font-medium mb-1">🖼️ Picture Link (optional)</label>
-                        <Input
-                          value={option.image || ''}
-                          onChange={(e) =>
-                            updateOption(variantIndex, optionIndex, 'image', e.target.value)
-                          }
-                          placeholder="Link to picture for this choice"
-                        />
-                      </div>
 
                       <div className="md:col-span-2">
                         <div className="flex items-center justify-between mb-2">
@@ -305,7 +318,7 @@ Add Choice
                             onClick={() => addSpecification(variantIndex, optionIndex)}
                           >
                             <Plus className="w-3 h-3 mr-1" />
-Add Detail
+                            Add Detail
                           </Button>
                         </div>
                         {option.specifications?.map((spec, specIndex) => (

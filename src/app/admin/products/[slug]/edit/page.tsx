@@ -330,7 +330,9 @@ export default function EditProductPage() {
         body: formDataToSend,
       });
 
-      if (response.ok) {
+      const result = await response.json();
+
+      if (response.ok && result.success) {
         // Cleanup object URLs
         previewUrls.forEach((url: string) => {
           if (url.startsWith('blob:')) {
@@ -340,13 +342,18 @@ export default function EditProductPage() {
         // Replace previews with only valid Cloudinary URLs just submitted
         setPreviewUrls(uploadedImageUrls);
         setSelectedFiles([]);
+        
+        const { toast } = await import('sonner');
+        toast.success('Product updated successfully!');
         router.push('/admin/products');
       } else {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.message || 'Failed to update product');
+        const { toast } = await import('sonner');
+        toast.error(result.error || 'Failed to update product');
       }
     } catch (error) {
       console.error('Error updating product:', error);
+      const { toast } = await import('sonner');
+      toast.error(error instanceof Error ? error.message : 'Failed to update product');
     } finally {
       setSaving(false);
     }

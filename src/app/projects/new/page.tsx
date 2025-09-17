@@ -51,8 +51,7 @@ export default function NewProjectPage() {
     category: '',
     style: '',
     location: '',
-    date: '',
-    tags: '',
+    date: new Date().toISOString().split('T')[0], // Set today's date automatically
     images: [],
   });
 
@@ -158,10 +157,7 @@ export default function NewProjectPage() {
         body: JSON.stringify({
           ...formData,
           images: uploadedImageUrls,
-          tags: formData.tags
-            .split(',')
-            .map((tag) => tag.trim())
-            .filter(Boolean),
+          date: formData.date, // Explicitly send today's date
         }),
       });
 
@@ -299,9 +295,11 @@ export default function NewProjectPage() {
               <CardHeader>
                 <CardTitle>Project Details</CardTitle>
               </CardHeader>
-              <CardContent className="*:space-y-2">
+              <CardContent className="">
                 <div>
-                  <Label htmlFor="title">Project Title</Label>
+                  <Label htmlFor="title" className="py-2">
+                    Project Title
+                  </Label>
                   <Input
                     id="title"
                     name="title"
@@ -313,7 +311,9 @@ export default function NewProjectPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="overview">Overview</Label>
+                  <Label htmlFor="overview" className="py-2">
+                    Overview
+                  </Label>
                   <Textarea
                     id="overview"
                     name="overview"
@@ -326,7 +326,9 @@ export default function NewProjectPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="content">Content</Label>
+                  <Label htmlFor="content" className="py-2">
+                    Content
+                  </Label>
                   <Textarea
                     id="content"
                     name="content"
@@ -338,7 +340,9 @@ export default function NewProjectPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="keyFeatures">Key Features</Label>
+                  <Label htmlFor="keyFeatures" className="py-2">
+                    Key Features
+                  </Label>
                   <Textarea
                     id="keyFeatures"
                     name="keyFeatures"
@@ -350,7 +354,9 @@ export default function NewProjectPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="category">Category</Label>
+                  <Label htmlFor="category" className="py-2">
+                    Category
+                  </Label>
                   <Select
                     value={formData.category}
                     onValueChange={(value) => setFormData((prev) => ({ ...prev, category: value }))}
@@ -368,52 +374,17 @@ export default function NewProjectPage() {
                   </Select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="style">Style</Label>
-                    <Input
-                      id="style"
-                      name="style"
-                      value={formData.style}
-                      onChange={handleChange}
-                      required
-                      placeholder="Modern, Classic, etc."
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="date">Date</Label>
-                    <Input
-                      id="date"
-                      name="date"
-                      type="date"
-                      value={formData.date}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                </div>
-
                 <div>
-                  <Label htmlFor="location">Location</Label>
+                  <Label htmlFor="style" className="py-2">
+                    Style
+                  </Label>
                   <Input
-                    id="location"
-                    name="location"
-                    value={formData.location}
+                    id="style"
+                    name="style"
+                    value={formData.style}
                     onChange={handleChange}
                     required
-                    placeholder="Project location"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="tags">Tags</Label>
-                  <Input
-                    id="tags"
-                    name="tags"
-                    value={formData.tags}
-                    onChange={handleChange}
-                    placeholder="Enter tags separated by commas"
+                    placeholder="Modern, Classic, etc."
                   />
                 </div>
               </CardContent>
@@ -428,7 +399,9 @@ export default function NewProjectPage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="projectType">Project Type</Label>
+                  <Label htmlFor="projectType" className="py-2">
+                    Project Type
+                  </Label>
                   <Input
                     id="projectType"
                     name="projectType"
@@ -443,7 +416,9 @@ export default function NewProjectPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="specLocation">Spec Location</Label>
+                  <Label htmlFor="specLocation" className="py-2">
+                    Spec Location
+                  </Label>
                   <Input
                     id="specLocation"
                     name="specLocation"
@@ -458,7 +433,9 @@ export default function NewProjectPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="completion">Completion Date</Label>
+                  <Label htmlFor="completion" className="py-2">
+                    Completion Date
+                  </Label>
                   <Input
                     id="completion"
                     name="completion"
@@ -473,7 +450,9 @@ export default function NewProjectPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="duration">Duration</Label>
+                  <Label htmlFor="duration" className="py-2">
+                    Duration
+                  </Label>
                   <Input
                     id="duration"
                     name="duration"
@@ -488,7 +467,9 @@ export default function NewProjectPage() {
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <Label htmlFor="team">Team</Label>
+                  <Label htmlFor="team" className="py-2">
+                    Team
+                  </Label>
                   <Input
                     id="team"
                     name="team"
@@ -513,7 +494,9 @@ export default function NewProjectPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="testimonialText">Testimonial</Label>
+                <Label htmlFor="testimonialText" className="py-2">
+                  Testimonial
+                </Label>
                 <Textarea
                   id="testimonialText"
                   name="testimonialText"
@@ -529,7 +512,9 @@ export default function NewProjectPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="testimonialAuthor">Client Name & Title</Label>
+                <Label htmlFor="testimonialAuthor" className="py-2">
+                  Client Name & Title
+                </Label>
                 <Input
                   id="testimonialAuthor"
                   name="testimonialAuthor"

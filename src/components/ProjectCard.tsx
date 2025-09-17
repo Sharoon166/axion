@@ -8,9 +8,9 @@ export interface ProjectCardProps {
   image: string;
   title: string;
   category?: string; // e.g., Residential
-  style?: string;    // e.g., Modern
+  style?: string; // e.g., Modern
   location?: string; // e.g., Islamabad, Pakistan
-  date?: string;     // e.g., July 2025
+  date?: string; // e.g., July 2025
   className?: string;
 }
 
@@ -51,14 +51,16 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             {style || ''}
           </p>
         )}
-        <h3 className="text-lg md:text-xl font-bold text-slate-900 mb-3 leading-snug">
+        <h3 className="text-lg md:text-xl font-semibold text-slate-900 mb-3 leading-snug">
           {title}
         </h3>
         {(location || date) && (
           <p className="text-slate-500 text-sm">
             {location || ''}
             {location && date ? '  -  ' : ''}
-            {date || ''}
+            {date
+              ? new Date(date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+              : ''}
           </p>
         )}
       </div>

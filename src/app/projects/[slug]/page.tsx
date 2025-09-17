@@ -53,7 +53,7 @@ const ProjectDetailPage: React.FC = () => {
   return (
     <>
       <PageHeader title="" />
-      <div className="max-w-[85rem] mx-auto px-4 sm:px-6 lg:px-8 py-6 mb-10">
+      <div className="max-w-[85rem] mx-auto px-4 sm:px-6 md:px-12 lg:px-8 py-6 mb-10">
         {/* Hero Section with Title and Main Image */}
         <div className="grid lg:grid-cols-2 gap-8 mb-12">
           {/* Left: Title and Description (second on small screens) */}
@@ -61,7 +61,7 @@ const ProjectDetailPage: React.FC = () => {
             {(() => {
               const title = typeof project.title === 'string' ? project.title.trim() : '';
               if (!title) {
-                return <h1 className="text-4xl font-bold text-gray-900">Project Details</h1>;
+                return <h1 className="text-3xl font-bold text-gray-900">Project Details</h1>;
               }
               const words = title.split(/\s+/);
               const lastWord = words.pop() || '';

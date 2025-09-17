@@ -1,11 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import PageHeader from '@/components/PageHeader';
 import Pagination from '@/components/Pagination';
-// import Image from 'next/image';
-
 import ProductCard from '@/components/ProductCard';
 import {
   Select,
@@ -14,15 +12,15 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/select';
-import { Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Package, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Product } from '@/types';
 import Loading from '@/loading';
 
-type BackendProduct = {
+interface BackendProduct {
   _id?: string;
   id?: string;
   name: string;
@@ -35,25 +33,57 @@ type BackendProduct = {
     name: string;
     slug: string;
   } | null;
-   stock?: number;
+  stock?: number;
   slug: string;
   discount?: number;
-};
+}
 
-const CategoryPage = () => {
+interface Category {
+  _id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  image?: string;
+  productCount?: number;
+}
+
+interface PriceRange {
+  min: number;
+  max: number;
+}
+
+interface Filters {
+  priceRange: PriceRange;
+  selectedCategory: string;
+  sortBy: string;
+}
+
+const CategoryPage: React.FC = () => {
   const router = useRouter();
   const { user } = useAuth();
   const params = useParams();
   const slug = params?.slug as string;
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState('default');
 
-  // Countdown Timer for Sale (HH:MM:SS style)
-  const [timeLeft, setTimeLeft] = React.useState('22:13:49');
-  React.useEffect(() => {
+  // State
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [saleMap, setSaleMap] = useState<Record<string, { percent: number; endsAt: string }>>({});
+  console.log(saleMap)
+  // Filter state
+  const [filters, setFilters] = useState<Filters>({
+    priceRange: { min: 0, max: 100000 },
+    selectedCategory: '',
+    sortBy: 'default',
+  });
+
+  const itemsPerPage = 12;
+
+  // Countdown Timer for Sale
+  const [timeLeft, setTimeLeft] = useState('22:13:49');
+  useEffect(() => {
     if (slug === 'sale') {
-      // Set target time to 22:13:49 from now
       const targetTime = new Date().getTime() + 22 * 60 * 60 * 1000 + 13 * 60 * 1000 + 49 * 1000;
       const timer = setInterval(() => {
         const now = new Date().getTime();
@@ -72,12 +102,28 @@ const CategoryPage = () => {
     }
   }, [slug]);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async (): Promise<void> => {
+      try {
+        const response = await fetch('/api/categories');
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && Array.isArray(result.data)) {
+            setCategories(result.data);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
 
-  // Fetch products based on category
-  React.useEffect(() => {
-    const fetchProducts = async () => {
+    fetchCategories();
+  }, []);
+
+  // Fetch products and sales
+  useEffect(() => {
+    const fetchProductsAndSales = async (): Promise<void> => {
       setLoading(true);
       try {
         let apiUrl = '/api/products';
@@ -87,56 +133,178 @@ const CategoryPage = () => {
           apiUrl += `?category=${slug}`;
         }
 
-        const response = await fetch(apiUrl);
-        if (response.ok) {
-          const result = await response.json();
+        // Fetch both products and sales
+        const [productsResponse, salesResponse] = await Promise.all([
+          fetch(apiUrl),
+          fetch('/api/sale?mode=all'),
+        ]);
+
+        let normalized: Product[] = [];
+        const tmpSaleMap: Record<string, { percent: number; endsAt: string }> = {};
+
+        // Process products
+        if (productsResponse.ok) {
+          const result = await productsResponse.json();
           const list = Array.isArray(result?.data) ? result.data : [];
+
           // Normalize API -> local Product shape
-          const normalized = list.map((p: BackendProduct) => ({
-            id: p._id ?? p.id,
+          normalized = list.map((p: BackendProduct) => ({
+            id: p._id ?? p.id ?? '',
             name: p.name,
             description: p.description ?? '',
             price: p.price ?? 0,
-            // prefer first image in images[], fallback to image
             image: Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : (p.image ?? ''),
             category: typeof p.category === 'string' ? p.category : (p.category?.name ?? ''),
             inStock: typeof p.stock === 'number' ? p.stock > 0 : true,
             slug: p.slug,
+            discount: p.discount || 0,
           }));
-          setProducts(normalized);
         }
+
+        // Process sales and apply to products
+        if (salesResponse.ok) {
+          const salesResult = await salesResponse.json();
+          const sales = Array.isArray(salesResult?.data) ? salesResult.data : [];
+
+          for (const sale of sales) {
+            if (!sale.active || new Date(sale.endsAt) <= new Date()) continue;
+
+            const salePercent = sale.discountPercent || 0;
+            if (salePercent <= 0) continue;
+
+            // Apply to specific products
+            if (Array.isArray(sale.productIds)) {
+              for (const productId of sale.productIds) {
+                tmpSaleMap[productId] = { percent: salePercent, endsAt: sale.endsAt };
+              }
+            }
+
+            // Apply to category products
+            if (Array.isArray(sale.categorySlugs)) {
+              for (const product of normalized) {
+                const productCategorySlug =
+                  typeof product.category === 'string' ? product.category.toLowerCase() : '';
+
+                if (
+                  sale.categorySlugs.some((catSlug: string) =>
+                    productCategorySlug.includes(catSlug.toLowerCase()),
+                  )
+                ) {
+                  const existing = tmpSaleMap[product.id];
+                  if (!existing || salePercent > existing.percent) {
+                    tmpSaleMap[product.id] = { percent: salePercent, endsAt: sale.endsAt };
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // Apply sale discounts to products
+        const productsWithSales = normalized.map((product) => {
+          const saleInfo = tmpSaleMap[product.id];
+          if (saleInfo) {
+            // Use the higher discount between product discount and sale discount
+            const maxDiscount = Math.max(product.discount || 0, saleInfo.percent);
+            return {
+              ...product,
+              discount: maxDiscount,
+              saleEndsAt: saleInfo.endsAt,
+            };
+          }
+          return product;
+        });
+
+        setProducts(productsWithSales);
+        setSaleMap(tmpSaleMap);
       } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error('Error fetching products and sales:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProducts();
+    fetchProductsAndSales();
   }, [slug]);
 
-  const sortedProducts = React.useMemo(() => {
-    // Apply sorting to all products
-    switch (sortBy) {
-      case 'price-low-high':
-        return [...products].sort((a, b) => a.price - b.price);
-      case 'price-high-low':
-        return [...products].sort((a, b) => b.price - a.price);
-      case 'name-a-z':
-        return [...products].sort((a, b) => a.name.localeCompare(b.name));
-      case 'name-z-a':
-        return [...products].sort((a, b) => b.name.localeCompare(a.name));
-      case 'newest':
-        return [...products].reverse(); // Assuming newer products are at the end
-      case 'popularity':
-        return [...products].sort((a, b) => (b.discount || 0) - (a.discount || 0)); // Sort by discount as popularity indicator
-      default:
-        return products;
-    }
-  }, [products, sortBy]);
+  // Filter and sort products
+  const filteredAndSortedProducts = useMemo(() => {
+    let filtered = [...products];
 
+    // Apply price filter
+    filtered = filtered.filter(
+      (product) =>
+        product.price >= filters.priceRange.min && product.price <= filters.priceRange.max,
+    );
+
+    // Apply category filter
+    if (filters.selectedCategory && filters.selectedCategory !== 'all') {
+      filtered = filtered.filter((product) =>
+        product.category.toLowerCase().includes(filters.selectedCategory.toLowerCase()),
+      );
+    }
+
+    // Apply sorting
+    switch (filters.sortBy) {
+      case 'price-low-high':
+        return filtered.sort((a, b) => a.price - b.price);
+      case 'price-high-low':
+        return filtered.sort((a, b) => b.price - a.price);
+      case 'name-a-z':
+        return filtered.sort((a, b) => a.name.localeCompare(b.name));
+      case 'name-z-a':
+        return filtered.sort((a, b) => b.name.localeCompare(a.name));
+      case 'newest':
+        return filtered.reverse();
+      case 'popularity':
+        return filtered.sort((a, b) => (b.discount || 0) - (a.discount || 0));
+      default:
+        return filtered;
+    }
+  }, [products, filters]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredAndSortedProducts.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentItems = sortedProducts.slice(startIndex, startIndex + itemsPerPage);
+  const currentItems = filteredAndSortedProducts.slice(startIndex, startIndex + itemsPerPage);
+
+  // Filter handlers
+  const handleCategoryChange = (categorySlug: string): void => {
+    setFilters((prev) => ({
+      ...prev,
+      selectedCategory: categorySlug,
+    }));
+    setCurrentPage(1);
+  };
+
+  const handlePriceRangeChange = (priceRange: string): void => {
+    const [min, max] = priceRange.split('-').map(Number);
+    setFilters((prev) => ({
+      ...prev,
+      priceRange: { min, max },
+    }));
+    setCurrentPage(1);
+  };
+
+  const handleSortChange = (sortValue: string): void => {
+    setFilters((prev) => ({
+      ...prev,
+      sortBy: sortValue,
+    }));
+    setCurrentPage(1);
+  };
+
+  const clearFilters = (): void => {
+    setFilters({
+      priceRange: { min: 0, max: 100000 },
+      selectedCategory: '',
+      sortBy: 'default',
+    });
+    setCurrentPage(1);
+  };
+
+  const hasActiveFilters =
+    filters.selectedCategory || filters.priceRange.min > 0 || filters.priceRange.max < 100000;
 
   return (
     <div>
@@ -147,7 +315,7 @@ const CategoryPage = () => {
         subtitle="Illuminate every corner with elegance."
       />
 
-      {/* Countdown Timer for Sale (styled like OnSale.tsx) */}
+      {/* Countdown Timer for Sale */}
       {slug === 'sale' && (
         <div className="mt-3 text-red-600 font-semibold flex items-center justify-center gap-2 mb-6">
           <span>⏰ Sale Ends in</span>
@@ -155,21 +323,75 @@ const CategoryPage = () => {
         </div>
       )}
 
-      <div className="max-w-[85rem] mx-auto px-4 sm:px-6 py-10">
-        {/* Sort Controls */}
-        <div className="bg-gray-50 p-4 rounded-xl shadow-sm mb-12">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="max-w-[85rem] mx-auto px-4 sm:px-6 py-6 lg:py-10">
+        {/* Filter and Sort Controls */}
+        <div className="bg-gray-50 p-4 rounded-xl shadow-sm mb-6">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div className="flex items-center gap-4">
-              <h3 className="text-lg font-semibold text-gray-800">Sort Products</h3>
-              <div className="text-sm text-gray-600">Showing {sortedProducts.length} products</div>
+              <h3 className="text-lg font-semibold text-gray-800">Products</h3>
+              <div className="text-sm text-gray-600">
+                Showing {filteredAndSortedProducts.length} of {products.length} products
+              </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
+              {/* Category Filter */}
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                  Category:
+                </label>
+                <Select value={filters.selectedCategory} onValueChange={handleCategoryChange}>
+                  <SelectTrigger className="w-full sm:w-[200px]">
+                    <SelectValue placeholder="All Categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cat">All Categories</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category._id} value={category.slug}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Price Range Filter */}
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                  Price:
+                </label>
+                <Select
+                  value={`${filters.priceRange.min}-${filters.priceRange.max}`}
+                  onValueChange={handlePriceRangeChange}
+                >
+                  <SelectTrigger className="w-full sm:w-[200px]">
+                    <SelectValue
+                      placeholder={
+                        filters.priceRange.min === 0 && filters.priceRange.max === 100000
+                          ? 'All Prices'
+                          : `Rs. ${filters.priceRange.min.toLocaleString()} - Rs. ${filters.priceRange.max.toLocaleString()}`
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0-100000">All Prices</SelectItem>
+                    <SelectItem value="0-3000">Rs. 0 - Rs. 3,000</SelectItem>
+                    <SelectItem value="3000-8000">Rs. 3,000 - Rs. 8,000</SelectItem>
+                    <SelectItem value="8000-15000">Rs. 8,000 - Rs. 15,000</SelectItem>
+                    <SelectItem value="15000-30000">Rs. 15,000 - Rs. 30,000</SelectItem>
+                    <SelectItem value="30000-50000">Rs. 30,000 - Rs. 50,000</SelectItem>
+                    <SelectItem value="50000-100000">Rs. 50,000+</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Sort By */}
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700">Sort by:</label>
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-[200px]">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                  Sort by:
+                </label>
+                <Select value={filters.sortBy} onValueChange={handleSortChange}>
+                  <SelectTrigger className="w-full sm:w-[200px]">
                     <SelectValue placeholder="Default" />
                   </SelectTrigger>
                   <SelectContent>
@@ -184,9 +406,22 @@ const CategoryPage = () => {
                 </Select>
               </div>
 
+              {/* Clear Filters Button */}
+              {hasActiveFilters && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="text-gray-500 hover:text-gray-700 w-full sm:w-auto"
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Clear
+                </Button>
+              )}
+
               {user?.isAdmin && (
                 <Button
-                  className="bg-(--color-logo) hover:bg-(--color-logo)"
+                  className="bg-[var(--color-logo)] hover:bg-[var(--color-logo)]/90 w-full sm:w-auto"
                   onClick={() => router.push('/admin/products/new')}
                 >
                   Add Product
@@ -216,16 +451,17 @@ const CategoryPage = () => {
             </div>
           </div>
         ) : currentItems.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {currentItems.map((item, index) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+            {currentItems.map((item) => (
               <ProductCard
-                key={item.id || index}
+                key={item.id}
                 id={item.id}
                 name={item.name}
                 price={item.price}
                 discount={item.discount}
                 img={item.image || '/prodcut-1.jpg'}
                 href={`/product/${item.slug}`}
+                saleEndsAt={(item as Product & { saleEndsAt?: string }).saleEndsAt}
               />
             ))}
           </div>
@@ -240,11 +476,15 @@ const CategoryPage = () => {
         )}
 
         {/* Pagination */}
-        <Pagination
-          currentPage={currentPage}
-          totalPages={Math.ceil(sortedProducts.length / itemsPerPage)}
-          onPageChange={setCurrentPage}
-        />
+        {totalPages > 0 && (
+          <div className="mt-8">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

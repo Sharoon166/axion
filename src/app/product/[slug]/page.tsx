@@ -1035,7 +1035,7 @@ const ProductPage = () => {
               <div className="prose max-w-none text-gray-700">
                 <h4 className="font-semibold text-gray-800">Shipping</h4>
                 <p>
-                  Any product you purchase from newOn through any platform, including website,
+                  Any product you purchase from Axion through any platform, including website,
                   Facebook, and Instagram, will come with free shipping. We offer shipping services
                   throughout Pakistan and you are automatically eligible for free shipping upon
                   ordering any product(s).

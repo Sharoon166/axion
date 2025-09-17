@@ -167,6 +167,7 @@ const Footer = () => {
             <div className="max-w-7xl mx-auto">
               <div className="flex flex-row justify-between items-center gap-2 sm:gap-8 text-center sm:text-left">
                 <p className="text-xs sm:text-sm">2025 © Axion All Rights Reserved.</p>
+                <p className="text-xs sm:text-sm">Powered By Synctom.</p>
               </div>
             </div>
           </div>

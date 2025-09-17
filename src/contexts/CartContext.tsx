@@ -14,6 +14,7 @@ export interface CartItem {
   slug: string;
   variants?: SelectedVariant[];
   addons?: SelectedAddon[];
+  
 }
 
 interface CartContextType {

@@ -2,15 +2,14 @@ import PageHeader from '@/components/PageHeader';
 
 export default function TermsConditionsPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen mt-10 sm:mt-0">
       <PageHeader
-        title="Terms &"
-        titleHighlight="Conditions"
-        subtitle="Terms governing the use of axion and its services"
+        title="Terms & Conditions"
+        subtitle="Terms governing the use of Axion and its services"
       />
 
-      <div className="max-w-[85rem] mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white rounded-lg shadow-sm border p-8">
+      <div className="max-w-[85rem] mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="p-0 sm:p-8">
           <div className="prose prose-lg max-w-none">
 
             <section className="mb-8">
@@ -40,7 +39,7 @@ export default function TermsConditionsPage() {
             <section className="mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Orders, Delivery, and Pricing</h2>
               <p className="text-gray-600 leading-relaxed mb-4">
-                <strong>axion</strong> reserves the right to process orders and deliver them at its preference. We hold the right to refuse and cancel any order at any time and shall not be held liable. We do our best to process your orders and deliver the goods on time.
+                <strong>Axion</strong> reserves the right to process orders and deliver them at its preference. We hold the right to refuse and cancel any order at any time and shall not be held liable. We do our best to process your orders and deliver the goods on time.
               </p>
               <p className="text-gray-600 leading-relaxed mb-4">
                 Users might be asked to provide additional information along with the basic information required at the time of the order. This is to assure the security of the order and to prevent fraudulent activities.
@@ -53,14 +52,14 @@ export default function TermsConditionsPage() {
             <section className="mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Use of Intellectual Property</h2>
               <p className="text-gray-600 leading-relaxed">
-                Any intellectual property or trademark falling under <strong>axion</strong> should not be misused, copied, or altered by any means. Such actions may constitute intellectual property theft or misuse, and legal actions might be pursued accordingly.
+                Any intellectual property or trademark falling under <strong>Axion</strong> should not be misused, copied, or altered by any means. Such actions may constitute intellectual property theft or misuse, and legal actions might be pursued accordingly.
               </p>
             </section>
 
             <section className="mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Dispute Resolution</h2>
               <p className="text-gray-600 leading-relaxed">
-                It is clarified that <strong>axion</strong> works hard to assure smooth operations and flow of goods. In case of any dispute, you should contact the management. As the company reserves rights to orders, deliveries, pricing, payment terms, and goods—and they are subject to change at any time—the company cannot be held liable by any means on legal forums. Any dispute shall be resolved between management and customers. We assure you that the management will cooperate and rectify any problems you may face. However, upon finding any fraudulent activity or misuse at the user’s end, the company reserves the right to pursue legal actions and court cases.
+                It is clarified that <strong>Axion</strong> works hard to assure smooth operations and flow of goods. In case of any dispute, you should contact the management. As the company reserves rights to orders, deliveries, pricing, payment terms, and goods—and they are subject to change at any time—the company cannot be held liable by any means on legal forums. Any dispute shall be resolved between management and customers. We assure you that the management will cooperate and rectify any problems you may face. However, upon finding any fraudulent activity or misuse at the user’s end, the company reserves the right to pursue legal actions and court cases.
               </p>
             </section>
 

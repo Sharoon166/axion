@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import React from "react";
-import { Button } from "./ui/button";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import React from 'react';
+import { Button } from './ui/button';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 interface PaginationProps {
   currentPage: number;
@@ -18,7 +18,7 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
         disabled={currentPage === 1}
         className="px-3 py-1 border rounded bg-white text-black disabled:opacity-50"
       >
-        <ArrowLeft/>
+        <ArrowLeft />
       </Button>
 
       {[...Array(totalPages)].map((_, index) => {
@@ -28,7 +28,9 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
             key={page}
             onClick={() => onPageChange(page)}
             className={`px-3 py-1 border rounded ${
-              page === currentPage ? "bg-[#0077B6] text-white hover:bg-[#0077B6]" : " bg-black text-white hover:bg-black"
+              page === currentPage
+                ? 'bg-[#0077B6] text-white hover:bg-[#0077B6]'
+                : ' bg-white text-black hover:bg-[#0077B6]'
             }`}
           >
             {page}
@@ -41,7 +43,7 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
         disabled={currentPage === totalPages}
         className="px-3 py-1 border rounded bg-white text-black disabled:opacity-50"
       >
-        <ArrowRight/>
+        <ArrowRight />
       </Button>
     </div>
   );

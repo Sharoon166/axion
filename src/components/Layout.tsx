@@ -14,7 +14,7 @@ const Layout = ({ children }: LayoutProps) => {
   const pathname = usePathname();
 
   // Hide header on dashboard routes
-  const hideHeader = pathname?.startsWith('/dashboard') || pathname?.startsWith('/profile');
+  const hideHeader = pathname?.startsWith('/dashboard')
   return (
     <div className="relative min-h-screen">
       {/* Conditionally render Header */}

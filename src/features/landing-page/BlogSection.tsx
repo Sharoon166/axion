@@ -13,6 +13,7 @@ interface BlogPost {
   content: string;
   title: string;
   slug: string;
+  description?: string;
   excerpt: string;
   image: string;
   author: string;

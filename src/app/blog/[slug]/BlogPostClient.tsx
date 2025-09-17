@@ -53,19 +53,20 @@ export default function BlogPostClient({ slug }: BlogPostClientProps) {
   return (
     <>
       {/* Header Section with PageHeader */}
-      <PageHeader
-        title={post.title?.split(' ').slice(0, -2).join(' ') || 'Blog'}
-        titleHighlight={post.title?.split(' ').slice(-2).join(' ') || 'Post'}
-        subtitle={post.excerpt || ''}
-      />
+      <PageHeader title="" />
       <div className="max-w-[85rem] mx-auto px-4 sm:px-14">
-        <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-gray-500 mb-8">
+        <h1 className="text-4xl font-semibold text-center">{post.title}</h1>
+        <p className="text-center text-gray-500 py-6 text-lg">{post.description}</p>
+        <div className="flex flex-wrap items-center justify-center gap-x-20 text-sm text-gray-500 mb-8">
           <span>{post.author || 'Admin'}</span>
-          <span className="w-1 h-1 bg-gray-400 rounded-full mx-2"></span>
+          <span>|</span>
           <span>
-            {post.date ? new Date(post.date).toLocaleDateString() : new Date().toLocaleDateString()}
+            Pulished on{' '}
+            {post.date
+              ? new Date(post.date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+              : new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
           </span>
-          <span className="w-1 h-1 bg-gray-400 rounded-full mx-2"></span>
+          <span>|</span>
           <span>{post.category || 'BLOG'}</span>
         </div>
 

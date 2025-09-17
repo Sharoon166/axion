@@ -15,19 +15,12 @@ export interface BlogCardProps {
 }
 
 const BlogCard: React.FC<BlogCardProps> = ({ href, image, title, description, className }) => {
-
   return (
     <Link href={href} className={`bg-white rounded-2xl overflow-hidden block ${className || ''}`}>
       {/* Image */}
-      <div className="relative h-44 md:h-80">
+      <div className="relative h-80">
         {image ? (
-          <Image
-            src={getImageUrl(image)}
-            alt={title}
-            fill
-            className="object-cover rounded-lg"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          />
+          <Image src={getImageUrl(image)} alt={title} fill className="object-cover rounded-lg" />
         ) : (
           <div className="w-full h-full bg-gray-200" />
         )}

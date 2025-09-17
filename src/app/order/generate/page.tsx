@@ -22,6 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import Loading from '@/loading';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface CustomerDetails {
   name: string;
@@ -50,7 +52,7 @@ const OrderGeneratePage = () => {
   // Check authentication and pre-fill user data
   useEffect(() => {
     if (!user) {
-      router.push('/register');
+      router.push('/login');
       return;
     }
 
@@ -147,12 +149,7 @@ const OrderGeneratePage = () => {
   // Show loading while checking authentication
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p>Redirecting to login...</p>
-        </div>
-      </div>
+      <Loading/>
     );
   }
 
@@ -270,10 +267,33 @@ const OrderGeneratePage = () => {
                   />
                   <div className="flex-1">
                     <h3 className="font-medium">{item.name}</h3>
-                    <p className="text-sm text-gray-600">
-                      Color: {item.color} | Size: {item.size}
-                    </p>
-                    <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
+                    <div className="text-sm text-gray-600 space-y-1">                      
+                      {/* Show selected variants */}
+                      {item.variants && item.variants.length > 0 && (
+                        <div>
+                          {item.variants.map((variant, idx) => (
+                            <p key={idx}>
+                              {variant.variantName}: {variant.optionValue}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {/* Show selected addons */}
+                      {item.addons && item.addons.length > 0 && (
+                        <div>
+                          <p className="font-medium text-gray-700">Add-ons:</p>
+                          {item.addons.map((addon, idx) => (
+                            <p key={idx} className="ml-2">
+                              • {addon.addonName}: {addon.optionLabel} 
+                              {addon.quantity > 1 && ` (x${addon.quantity})`}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                      
+                      <p className="font-medium">Qty: {item.quantity}</p>
+                    </div>
                   </div>
                   <div className="text-right">
                     <p className="font-semibold">Rs. {(item.price * item.quantity).toLocaleString()}</p>
@@ -299,7 +319,7 @@ const OrderGeneratePage = () => {
 
             <Button
               onClick={handlePayNow}
-              className="w-full mt-6 bg-[var(--color-logo)] text-white py-3"
+              className="w-full mt-6 bg-[var(--color-logo)] text-white hover:bg-(--color-logo)/90 py-3"
               disabled={!validateForm()}
             >
               Pay Now
@@ -308,6 +328,8 @@ const OrderGeneratePage = () => {
         </div>
 
         {/* Payment Dialog */}
+        <ScrollArea className='h-[70vh]'>
+
         <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
           <DialogContent className="max-w-md">
             <DialogHeader>
@@ -336,7 +358,7 @@ const OrderGeneratePage = () => {
               <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
                 <h3 className="font-semibold text-gray-900 mb-2">JazzCash Details</h3>
                 <div className="text-sm text-gray-700 space-y-1">
-                  <p><span className="font-medium">Number:</span> 03001234567</p>
+                  <p><span className="font-medium">Number:</span> {process.env.NEXT_PUBLIC_JAZZCASH}</p>
                   <p><span className="font-medium">Name:</span> Axion Lighting</p>
                 </div>
               </div>
@@ -345,8 +367,7 @@ const OrderGeneratePage = () => {
                 <h3 className="font-semibold text-gray-900 mb-2">Bank Transfer Details</h3>
                 <div className="text-sm text-gray-700 space-y-1">
                   <p><span className="font-medium">Bank:</span> HBL Bank</p>
-                  <p><span className="font-medium">Account:</span> 1234567890123</p>
-                  <p><span className="font-medium">IBAN:</span> PK12HABB0000001234567890</p>
+                  <p><span className="font-medium">Account:</span> {process.env.NEXT_PUBLIC_BANK_ACCOUNT}</p>
                 </div>
               </div>
             )}
@@ -364,7 +385,7 @@ const OrderGeneratePage = () => {
             {/* WhatsApp Confirmation Message */}
             <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
               <p className="text-sm text-gray-700 leading-relaxed">
-                <span className="font-medium">Important:</span> We will confirm your order after you send the receipt of payment to our WhatsApp number which is <span className="font-semibold">+92 300 1234567</span>
+                <span className="font-medium">Important:</span> We will confirm your order after you send the receipt of payment to our WhatsApp number which is <span className="font-semibold">{process.env.NEXT_PUBLIC_WHATSAPP}</span>
               </p>
             </div>
 
@@ -379,13 +400,15 @@ const OrderGeneratePage = () => {
               </Button>
               <Button
                 onClick={handlePaymentConfirm}
-                className="flex-1 bg-green-600 hover:bg-green-700"
+                className="flex-1 bg-(--color-logo) hover:bg-(--color-logo)/90"
               >
                 I Have Paid
               </Button>
             </div>
           </DialogContent>
         </Dialog>
+        </ScrollArea>
+
       </div>
     </div>
   );

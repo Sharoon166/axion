@@ -24,6 +24,7 @@ interface BlogPost {
   _id: string;
   title: string;
   slug: string;
+  description?: string;
   excerpt?: string;
   content: string;
   author?: string;

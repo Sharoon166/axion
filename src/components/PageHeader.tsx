@@ -34,7 +34,7 @@ const PageHeader = ({ title, titleHighlight, subtitle, breadcrumbs }: PageHeader
     })();
 
   return (
-    <div className="w-full bg-white">
+    <div className="w-full bg-white *:capitalize">
       <div className="max-w-[85rem] mx-auto px-4 sm:px-6">
         {/* Breadcrumbs */}
         <div className="hidden sm:block text-md mt-8 font-bold">
@@ -61,8 +61,8 @@ const PageHeader = ({ title, titleHighlight, subtitle, breadcrumbs }: PageHeader
         </div>
 
         {/* Page Title */}
-        <div className="text-center">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl mt-8 font-bold text-black mb-6">
+        <div className="text-center py-2 ">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-black mb-3 sm:mb-4 lg:mb-6 leading-tight">
             {titleHighlight ? (
               <>
                 {title} <span className="text-black">{titleHighlight}</span>
@@ -72,7 +72,7 @@ const PageHeader = ({ title, titleHighlight, subtitle, breadcrumbs }: PageHeader
             )}
           </h1>
           {subtitle && (
-            <p className="text-xl md:text-2xl text-black max-w-3xl mx-auto leading-relaxed">
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl text-gray-700 max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto leading-relaxed px-4">
               {subtitle}
             </p>
           )}

@@ -2,15 +2,14 @@ import PageHeader from '@/components/PageHeader';
 
 export default function PrivacyPolicyPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen mt-10 sm:mt-0">
       <PageHeader
-        title="Privacy"
-        titleHighlight="Policy"
+        title="Privacy Policy"
         subtitle="Overview of what we collect, how we use it, and your rights"
       />
 
-      <div className="max-w-[85rem] mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white rounded-lg shadow-sm border p-8">
+     <div className="max-w-[85rem] mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="p-0 sm:p-8">
           <div className="prose prose-lg max-w-none">
             <section className="mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Privacy Policy</h2>

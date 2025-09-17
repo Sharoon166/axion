@@ -12,6 +12,7 @@ import {
   Minus,
   Menu,
   LogOut,
+  Edit,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
@@ -191,7 +192,7 @@ const Header = () => {
 
                 {/* Mobile Cart Dropdown */}
                 {mobileCartOpen && (
-                  <div className="mt-2 p-3 bg-[#F5F3EB] rounded-lg border w-full max-w-full overflow-hidden">
+                  <div className="mt-2 p-3  rounded-lg border w-full max-w-full overflow-hidden">
                     <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
                       {cartItems.length === 0 ? (
                         <p className="text-center py-4 text-gray-500">Your cart is empty</p>
@@ -209,14 +210,14 @@ const Header = () => {
                               className="rounded object-cover"
                             />
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-sm truncate" style={{ color: '#0C1E33' }}>
+                              <h4
+                                className="font-medium text-sm truncate"
+                                style={{ color: '#0C1E33' }}
+                              >
                                 {item.name}
                               </h4>
                               <p className="text-xs text-[var(--color-logo)]">
                                 Rs. {item.price.toLocaleString()}
-                              </p>
-                              <p className="text-xs text-gray-500 truncate">
-                                {item.color} | {item.size}
                               </p>
                             </div>
                             <div className="flex items-center gap-2 flex-shrink-0">
@@ -359,68 +360,68 @@ const Header = () => {
                         setSearchOpen(false);
                       }
                     }}
-                >
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                  <input
-                    type="text"
-                    placeholder="Search for products..."
-                    className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2CA6A4]"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                  <button
-                    type="submit"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-sm rounded-md bg-[var(--color-logo)] text-white hover:bg-[var(--color-logo)]/90"
                   >
-                    Search
-                  </button>
-                </form>
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                    <input
+                      type="text"
+                      placeholder="Search for products..."
+                      className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2CA6A4]"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    <button
+                      type="submit"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-sm rounded-md bg-[var(--color-logo)] text-white hover:bg-[var(--color-logo)]/90"
+                    >
+                      Search
+                    </button>
+                  </form>
 
-                <div>
-                  <h3 className="flex items-center gap-2 font-medium mb-3 text-[#0C1E33]">
-                    <Clock size={16} className="text-[#E1B857]" />
-                    Recent Searches
-                  </h3>
-                  <div className="space-y-2">
-                    {recentSearches.map((search, index) => (
-                      <button
-                        key={index}
-                        className="w-full text-left p-3 rounded-lg hover:bg-[#2CA6A4]/10"
-                        onClick={() => {
-                          router.push(`/search?q=${encodeURIComponent(search)}`);
-                          setSearchOpen(false);
-                        }}
-                      >
-                        <div className="font-medium text-[#0C1E33]">{search}</div>
-                      </button>
-                    ))}
+                  <div>
+                    <h3 className="flex items-center gap-2 font-medium mb-3 text-[#0C1E33]">
+                      <Clock size={16} className="text-[#E1B857]" />
+                      Recent Searches
+                    </h3>
+                    <div className="space-y-2">
+                      {recentSearches.map((search, index) => (
+                        <button
+                          key={index}
+                          className="w-full text-left p-3 rounded-lg hover:bg-[#2CA6A4]/10"
+                          onClick={() => {
+                            router.push(`/search?q=${encodeURIComponent(search)}`);
+                            setSearchOpen(false);
+                          }}
+                        >
+                          <div className="font-medium text-[#0C1E33]">{search}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="flex items-center gap-2 font-medium mb-3 text-[#0C1E33]">
+                      <Star size={16} className="text-[#E1B857]" />
+                      Popular Products
+                    </h3>
+                    <div className="space-y-2">
+                      {popularProducts.map((product, index) => (
+                        <button
+                          key={index}
+                          className="w-full text-left p-3 rounded-lg hover:bg-[#2CA6A4]/10"
+                          onClick={() => {
+                            router.push(`/search?q=${encodeURIComponent(product.name)}`);
+                            setSearchOpen(false);
+                          }}
+                        >
+                          <div className="font-medium text-[#0C1E33]">{product.name}</div>
+                          <div className="text-sm text-[#2CA6A4]">{product.category}</div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
-
-                <div>
-                  <h3 className="flex items-center gap-2 font-medium mb-3 text-[#0C1E33]">
-                    <Star size={16} className="text-[#E1B857]" />
-                    Popular Products
-                  </h3>
-                  <div className="space-y-2">
-                    {popularProducts.map((product, index) => (
-                      <button
-                        key={index}
-                        className="w-full text-left p-3 rounded-lg hover:bg-[#2CA6A4]/10"
-                        onClick={() => {
-                          router.push(`/search?q=${encodeURIComponent(product.name)}`);
-                          setSearchOpen(false);
-                        }}
-                      >
-                        <div className="font-medium text-[#0C1E33]">{product.name}</div>
-                        <div className="text-sm text-[#2CA6A4]">{product.category}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </ScrollArea>
-          </DialogContent>
+              </ScrollArea>
+            </DialogContent>
           </Dialog>
 
           {/* Cart Dropdown */}
@@ -438,11 +439,7 @@ const Header = () => {
                 )}
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent
-              className="w-80 p-4"
-              style={{ backgroundColor: '#F5F3EB' }}
-              align="end"
-            >
+            <DropdownMenuContent className="w-80 p-4" align="end">
               <DropdownMenuLabel style={{ color: '#0C1E33' }}>Shopping Cart</DropdownMenuLabel>
               <DropdownMenuSeparator style={{ backgroundColor: '#a5afc2' }} />
 
@@ -468,9 +465,6 @@ const Header = () => {
                         </h4>
                         <p className="text-xs text-[var(--color-logo)]">
                           Rs. {item.price.toLocaleString()}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {item.color} | {item.size}
                         </p>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -572,6 +566,29 @@ const ProfileDropdown = ({ userData }: { userData: HeaderUser | null }) => {
     );
   }
 
+  const menuItems = [
+    {
+      name: 'Profile',
+      href: userData.isAdmin ? '/dashboard' : '/profile',
+      icon: <UserRound size={16} />
+    },
+    {
+      name: 'Orders',
+      href: '/orders',
+      icon: <Clock size={16} />
+    },
+    {
+      name: 'Wishlist',
+      href: '/wishlist',
+      icon: <Star size={16} />
+    },
+    {
+      name:'Edit Profile',
+      href:'/profile/edit',
+      icon:<Edit size={16}/>
+    }
+  ];
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -582,29 +599,40 @@ const ProfileDropdown = ({ userData }: { userData: HeaderUser | null }) => {
           />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56 mt-2" align="end">
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{userData?.name}</p>
-            <p className="text-xs leading-none text-muted-foreground">{userData?.email}</p>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <Link href={userData.isAdmin ? '/dashboard' : '/profile'}>
-          <DropdownMenuLabel className="cursor-pointer hover:bg-gray-100 rounded-sm px-2 py-1.5">
-            Profile
-          </DropdownMenuLabel>
-        </Link>
-        <DropdownMenuSeparator />
+      <DropdownMenuContent className="w-64 p-3 mt-2" align="end">
+        <div className="px-2 py-1.5">
+          <p className="text-sm font-medium">{userData?.name}</p>
+          <p className="text-xs text-muted-foreground truncate">{userData?.email}</p>
+        </div>
+        
+        <DropdownMenuSeparator className="my-2" />
+        
+        <div className="grid grid-cols-2 gap-2 mb-2">
+          {menuItems.map((item) => (
+            <Link 
+              key={item.name}
+              href={item.href}
+              className="flex flex-col items-center p-2 rounded-md hover:bg-gray-100 transition-colors"
+            >
+              <div className="p-1.5 bg-gray-100 rounded-full mb-1.5">
+                {item.icon}
+              </div>
+              <span className="text-xs text-center">{item.name}</span>
+            </Link>
+          ))}
+        </div>
+
+        <DropdownMenuSeparator className="my-2" />
+        
         <button
           onClick={() => {
             localStorage.removeItem('userData');
             window.location.href = '/';
           }}
-          className="w-full text-left px-2 py-1.5 text-sm hover:bg-gray-100 rounded-sm cursor-pointer flex items-center gap-2"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm hover:bg-gray-100 rounded-md transition-colors"
         >
           <LogOut size={16} />
-          Logout
+          Sign out
         </button>
       </DropdownMenuContent>
     </DropdownMenu>

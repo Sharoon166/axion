@@ -66,26 +66,11 @@ const TiptapEditor = forwardRef(function TiptapEditor(
     codeBlockStyle: 'fenced',
   });
 
-
-  // Image upload handler for paste/insert
-  const uploadImageToCloudinary = async (file: File) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    try {
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await res.json();
-      if (data.success && data.url) {
-        return data.url;
-      } else {
-        throw new Error('Upload failed');
-      }
-    } catch {
-      toast.error('Image upload failed');
-      return null;
-    }
+  // Store images locally until submit
+  const addLocalImage = (file: File) => {
+    const localUrl = URL.createObjectURL(file);
+    setLocalImages((prev) => [...prev, { file, localUrl }]);
+    return localUrl;
   };
 
   // Tiptap editor instance
@@ -143,11 +128,16 @@ const TiptapEditor = forwardRef(function TiptapEditor(
               const file = item.getAsFile();
               if (file) {
                 event.preventDefault();
-                uploadImageToCloudinary(file).then((url) => {
-                  if (url) {
-                    editor?.chain().focus().setImage({ src: url }).run();
-                  }
-                });
+                if (file.size > 5 * 1024 * 1024) {
+                  toast.error('Image size should be less than 5MB');
+                  return true;
+                }
+                if (!file.type.startsWith('image/')) {
+                  toast.error('Please select a valid image file');
+                  return true;
+                }
+                const localUrl = addLocalImage(file);
+                editor?.chain().focus().setImage({ src: localUrl }).run();
                 return true;
               }
             }
@@ -161,11 +151,16 @@ const TiptapEditor = forwardRef(function TiptapEditor(
           for (const file of files) {
             if (file.type.startsWith('image/')) {
               event.preventDefault();
-              uploadImageToCloudinary(file).then((url) => {
-                if (url) {
-                  editor?.chain().focus().setImage({ src: url }).run();
-                }
-              });
+              if (file.size > 5 * 1024 * 1024) {
+                toast.error('Image size should be less than 5MB');
+                return true;
+              }
+              if (!file.type.startsWith('image/')) {
+                toast.error('Please select a valid image file');
+                return true;
+              }
+              const localUrl = addLocalImage(file);
+              editor?.chain().focus().setImage({ src: localUrl }).run();
               return true;
             }
           }
@@ -181,19 +176,39 @@ const TiptapEditor = forwardRef(function TiptapEditor(
       if (!editor) return '';
       const html = editor.getHTML();
       let updatedHtml = html;
+
+      // Upload all local images to Cloudinary
       for (const { file, localUrl } of localImages) {
         const formData = new FormData();
         formData.append('file', file);
         try {
-          const res = await fetch('/api/upload', { method: 'POST', body: formData });
+          const res = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!res.ok) {
+            throw new Error(`Upload failed: ${res.status}`);
+          }
+
           const data = await res.json();
           if (data.success && data.url) {
+            // Replace the local URL with the Cloudinary URL
             updatedHtml = updatedHtml.replaceAll(localUrl, data.url);
+            // Clean up the local URL
+            URL.revokeObjectURL(localUrl);
+          } else {
+            throw new Error(data.error || 'Upload failed');
           }
-        } catch {
-          toast.error('Image upload failed');
+        } catch (error) {
+          console.error('Image upload failed:', error);
+          toast.error(`Image upload failed`);
+          // Keep the local URL if upload fails
         }
       }
+
+      // Clear local images after processing
+      setLocalImages([]);
       return updatedHtml;
     },
   }));
@@ -218,8 +233,7 @@ const TiptapEditor = forwardRef(function TiptapEditor(
           toast.error('Please select a valid image file');
           return;
         }
-        const localUrl = URL.createObjectURL(file);
-        setLocalImages((prev) => [...prev, { file, localUrl }]);
+        const localUrl = addLocalImage(file);
         editor.chain().focus().setImage({ src: localUrl }).run();
       }
     };
@@ -464,7 +478,7 @@ const TiptapEditor = forwardRef(function TiptapEditor(
         </div>
       </div>
       {/* Editor Content */}
-      <EditorContent editor={editor} className='*:mx-4' />
+      <EditorContent editor={editor} className="*:mx-4" />
       {/* ...other UI elements, dialogs, etc... */}
     </div>
   );

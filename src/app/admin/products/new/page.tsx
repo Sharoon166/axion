@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, Upload, X, Package, Save } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 import VariantManager from '@/components/admin/VariantManager';
 import AddonManager from '@/components/admin/AddonManager';
 import { Variant, Addon } from '@/lib/productVariants';
@@ -226,15 +227,24 @@ export default function NewProductPage() {
         formDataToSend.append('addons', JSON.stringify(coercedAddons));
       }
 
-      const result = await api.products.create(formDataToSend);
+      // Create product directly without using the API helper to avoid double toasts
+      const response = await fetch('/api/products', {
+        method: 'POST',
+        body: formDataToSend,
+      });
 
-      if (result.success) {
+      const result = await response.json();
+
+      if (response.ok && result.success) {
         // Cleanup object URLs
         previewUrls.forEach((url) => {
           URL.revokeObjectURL(url);
         });
 
+        toast.success('Product created successfully!');
         router.push('/admin/products');
+      } else {
+        toast.error(result.error || 'Failed to create product');
       }
     } catch (error) {
       console.error('Error creating product:', error);
