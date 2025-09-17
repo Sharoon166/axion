@@ -53,6 +53,34 @@ interface Product {
   };
 }
 
+// Predefined subcategories map for known categories (module scope so hooks don't depend on it)
+const PREDEFINED_SUBCATEGORIES: Record<string, string[]> = {
+  'indoor lighting': [
+    'Ceiling Lights',
+    'Wall Lights',
+    'Table Lamps',
+    'Floor Lamps',
+    'Chandeliers',
+    'Pendant Lights',
+    'Smart Indoor Lights',
+  ],
+  'outdoor lighting': [
+    'Garden Lights',
+    'Wall Mount Lights',
+    'Pathway Lights',
+    'Flood Lights',
+    'Security Lights',
+    'String Lights',
+  ],
+  'solar lighting': [
+    'Solar Panels',
+    'Solar Street Lights',
+    'Solar Garden Lights',
+    'Solar Flood Lights',
+    'Solar Accessories',
+  ],
+};
+
 export default function EditProductPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -153,36 +181,7 @@ export default function EditProductPage() {
     }
   };
 
-  // Predefined subcategories map for known categories
-  const PREDEFINED_SUBCATEGORIES: Record<string, string[]> = {
- 
-    'indoor lighting': [
-      'Ceiling Lights',
-      'Wall Lights',
-      'Table Lamps',
-      'Floor Lamps',
-      'Chandeliers',
-      'Pendant Lights',
-      'Smart Indoor Lights',
-    ],
-   
-    'outdoor lighting': [
-      'Garden Lights',
-      'Wall Mount Lights',
-      'Pathway Lights',
-      'Flood Lights',
-      'Security Lights',
-      'String Lights',
-    ],
-
-    'solar lighting': [
-      'Solar Panels',
-      'Solar Street Lights',
-      'Solar Garden Lights',
-      'Solar Flood Lights',
-      'Solar Accessories',
-    ],
-  };
+  // (constants moved to module scope)
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({

@@ -56,13 +56,7 @@ const BlogSection = () => {
   }, []);
   console.log(blogPosts)
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
+
   return (
     <section className="py-12 sm:py-16 lg:py-20">
       <div className="max-w-[85rem] mx-auto px-4 sm:px-6">

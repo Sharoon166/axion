@@ -2,24 +2,21 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { Card, CardContent} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { 
   Package, 
   Search, 
   Plus, 
   Edit, 
   Trash2, 
-  Eye,
   SortAsc,
   SortDesc
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { getImageUrl } from '@/lib/utils';
 import Loading from '@/loading';
+import ProductCard from '@/components/ProductCard';
 
 interface Product {
   _id: string;
@@ -202,72 +199,34 @@ export default function ProductsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredAndSortedProducts.map((product) => (
-              <Card key={product._id} className="group hover:shadow-lg transition-shadow">
-                <CardContent className="p-0">
-                  {/* Product Image */}
-                  <div className="relative aspect-square bg-gray-100 rounded-t-lg overflow-hidden">
-                    <Image
-                      src={getImageUrl(product.images[0])}
-                      alt={product.name}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-200"
-                    />
-                    {product.featured && (
-                      <Badge className="absolute top-2 left-2 bg-blue-600">
-                        Featured
-                      </Badge>
-                    )}
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => router.push(`/product/${product.slug}`)}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Product Info */}
-                  <div className="p-4">
-                    <div className="mb-2">
-                      <h3 className="font-semibold text-gray-900 truncate">{product.name}</h3>
-                      <p className="text-sm text-gray-500">{product.category?.name || 'Uncategorized'}</p>
-                    </div>
-
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-lg font-bold text-gray-900">
-                        ${product.price?.toFixed(2)}
-                      </span>
-                      <Badge 
-                        variant={product.stock > 10 ? 'default' : product.stock > 0 ? 'secondary' : 'destructive'}
-                      >
-                        {product.stock} in stock
-                      </Badge>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => router.push(`/admin/products/${product.slug}/edit`)}
-                        className="flex-1"
-                      >
-                        <Edit className="w-4 h-4 mr-1" />
-                        Edit
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleDelete(product.slug)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <div key={product._id} className="space-y-2">
+                <ProductCard
+                  id={product._id}
+                  name={product.name}
+                  price={product.price}
+                  img={product.images?.[0] || ''}
+                  href={`/product/${product.slug}`}
+                  description={product.category?.name || 'Uncategorized'}
+                />
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => router.push(`/admin/products/${product.slug}/edit`)}
+                    className="flex-1"
+                  >
+                    <Edit className="w-4 h-4 mr-1" />
+                    Edit
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => handleDelete(product.slug)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
             ))}
           </div>
         )}
