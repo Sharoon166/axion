@@ -43,16 +43,24 @@ export const useLocalAuth = () => {
     try {
       const result = await nextAuthSignIn('credentials', {
         redirect: false,
-        email,
-        password,
+        email: email.trim(),
+        password: password.trim(),
       });
 
       if (result?.error) {
+        console.error('NextAuth sign in error:', result.error);
         // Map common NextAuth errors to user-friendly messages
-        let errorMessage = result.error;
-        if (result.error === 'CredentialsSignin' || result.error === 'configuration') {
-          errorMessage = 'Wrong credentials';
+        let errorMessage = 'Invalid email or password';
+        
+        // Add more specific error messages based on the error type
+        if (result.error.includes('No account found')) {
+          errorMessage = 'No account found with this email';
+        } else if (result.error.includes('password')) {
+          errorMessage = 'Invalid password';
+        } else if (result.error.includes('configuration')) {
+          errorMessage = 'Authentication service is not properly configured';
         }
+        
         return { success: false, error: errorMessage };
       }
 

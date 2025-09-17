@@ -33,19 +33,25 @@ export default function LoginPage() {
     e.preventDefault();
     if (isLoading) return;
 
+    // Basic validation
+    if (!loginData.email || !loginData.password) {
+      toast.error('Please enter both email and password');
+      return;
+    }
+
     setIsLoading(true);
     const toastId = toast.loading('Signing in...');
 
     try {
-      const result = await signIn(loginData.email.trim(), loginData.password.trim());
+      const result = await signIn(loginData.email, loginData.password);
 
-      if (result.success) {
+      if (result?.success) {
         toast.success('Login successful! Redirecting...', { id: toastId });
         router.push('/');
         router.refresh();
       } else {
-        toast.error('Wrong Credentials', { id: toastId });
-        return;
+        // Show the specific error message from the signIn function
+        toast.error(result?.error || 'Login failed. Please try again.', { id: toastId });
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -224,14 +230,20 @@ export default function LoginPage() {
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     required
                     className="w-full pl-12 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     placeholder="Password"
                     value={loginData.password}
                     onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
                   />
-                  <Eye className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
                 </div>
                 <button
                   type="submit"
