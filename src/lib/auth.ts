@@ -118,8 +118,23 @@ export const authOptions = {
     strategy: 'jwt' as const,
   },
   pages: {
-    signIn: '/login', // Custom sign-in page
-    error: '/login', // Error code passed in query string as ?error=
+    signIn: '/login',
+    error: '/login', // Redirect back to login on error
+    signOut: '/login',
+    verifyRequest: '/login',
+    newUser: '/signup'
+  },
+  debug: process.env.NODE_ENV === 'development',
+  logger: {
+    error: (code, metadata) => {
+      console.error('Auth error:', { code, metadata });
+    },
+    warn: (code) => {
+      console.warn('Auth warning:', code);
+    },
+    debug: (code, metadata) => {
+      console.log('Auth debug:', { code, metadata });
+    }
   },
   callbacks: {
     async jwt({ token, user }: { token: import('next-auth/jwt').JWT; user?: import('next-auth').User }) {

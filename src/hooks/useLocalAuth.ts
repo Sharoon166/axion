@@ -41,24 +41,32 @@ export const useLocalAuth = () => {
 
   const signIn = async (email: string, password: string) => {
     try {
+      // Basic validation
+      if (!email || !password) {
+        return { success: false, error: 'Please enter both email and password' };
+      }
+
       const result = await nextAuthSignIn('credentials', {
         redirect: false,
         email: email.trim(),
         password: password.trim(),
+        callbackUrl: '/',
       });
 
       if (result?.error) {
         console.error('NextAuth sign in error:', result.error);
+        
         // Map common NextAuth errors to user-friendly messages
         let errorMessage = 'Invalid email or password';
         
-        // Add more specific error messages based on the error type
         if (result.error.includes('No account found')) {
           errorMessage = 'No account found with this email';
         } else if (result.error.includes('password')) {
           errorMessage = 'Invalid password';
         } else if (result.error.includes('configuration')) {
           errorMessage = 'Authentication service is not properly configured';
+        } else if (result.error.includes('CallbackRouteError')) {
+          errorMessage = 'Authentication service error. Please try again later.';
         }
         
         return { success: false, error: errorMessage };

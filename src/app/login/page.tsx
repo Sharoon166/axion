@@ -33,6 +33,9 @@ export default function LoginPage() {
     e.preventDefault();
     if (isLoading) return;
 
+    // Clear any previous errors
+    setLoginData(prev => ({ ...prev, error: '' }));
+
     // Basic validation
     if (!loginData.email || !loginData.password) {
       toast.error('Please enter both email and password');
@@ -47,11 +50,14 @@ export default function LoginPage() {
 
       if (result?.success) {
         toast.success('Login successful! Redirecting...', { id: toastId });
-        router.push('/');
+        // Use replace instead of push to prevent going back to login page
+        router.replace('/');
         router.refresh();
       } else {
         // Show the specific error message from the signIn function
-        toast.error(result?.error || 'Login failed. Please try again.', { id: toastId });
+        const errorMessage = result?.error || 'Login failed. Please check your credentials and try again.';
+        toast.error(errorMessage, { id: toastId });
+        setLoginData(prev => ({ ...prev, error: errorMessage }));
       }
     } catch (error) {
       console.error('Login error:', error);
