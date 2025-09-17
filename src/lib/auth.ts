@@ -124,16 +124,15 @@ export const authOptions = {
     verifyRequest: '/login',
     newUser: '/signup'
   },
-  debug: process.env.NODE_ENV === 'development',
   logger: {
-    error: (code: string, metadata?: unknown) => {
-      console.error('Auth error:', { code, metadata });
+    error: (error: Error) => {
+      console.error('Auth error:', error);
     },
-    warn: (code: string) => {
-      console.warn('Auth warning:', code);
+    warn: (message: string) => {
+      console.warn('Auth warning:', message);
     },
-    debug: (code: string, metadata?: unknown) => {
-      console.log('Auth debug:', { code, metadata });
+    debug: (message: string, metadata?: unknown) => {
+      console.log('Auth debug:', { message, metadata });
     }
   },
   callbacks: {
@@ -164,8 +163,7 @@ export const authOptions = {
       return session;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET,
-  debug: process.env.NODE_ENV === 'development',
+  secret: process.env.NEXTAUTH_SECRET
 };
 
 export const { handlers, auth, signIn, signOut } = NextAuth(authOptions);
