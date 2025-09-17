@@ -507,16 +507,11 @@ const ProductPage = () => {
                     <motion.img
                       key={selectedImage}
                       src={selectedImage || galleryImages[0]}
-                      alt={product?.name}
-                      initial={{ opacity: 0, x: 60, scale: 0.95 }}
-                      animate={{ opacity: 1, x: 0, scale: 1 }}
-                      exit={{ opacity: 0, x: -60, scale: 0.95 }}
-                      transition={{
-                        type: 'spring',
-                        stiffness: 300,
-                        damping: 30,
-                        duration: 0.5,
-                      }}
+                      alt={fetchedproduct[0]?.name || 'Product image'}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.3 }}
                       className="rounded-xl shadow-lg object-cover mx-auto"
                       style={{ width: 600, height: 500 }}
                     />
