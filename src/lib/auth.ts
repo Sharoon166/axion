@@ -118,8 +118,8 @@ export const authOptions = {
     strategy: 'jwt' as const,
   },
   pages: {
-    signIn: '/auth/signin', // Custom sign-in page
-    error: '/auth/error', // Error code passed in query string as ?error=
+    signIn: '/login', // Custom sign-in page
+    error: '/login', // Error code passed in query string as ?error=
   },
   callbacks: {
     async jwt({ token, user }: { token: import('next-auth/jwt').JWT; user?: import('next-auth').User }) {
