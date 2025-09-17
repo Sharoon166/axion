@@ -126,13 +126,13 @@ export const authOptions = {
   },
   debug: process.env.NODE_ENV === 'development',
   logger: {
-    error: (code, metadata) => {
+    error: (code: string, metadata?: unknown) => {
       console.error('Auth error:', { code, metadata });
     },
-    warn: (code) => {
+    warn: (code: string) => {
       console.warn('Auth warning:', code);
     },
-    debug: (code, metadata) => {
+    debug: (code: string, metadata?: unknown) => {
       console.log('Auth debug:', { code, metadata });
     }
   },
