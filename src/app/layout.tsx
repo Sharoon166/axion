@@ -5,6 +5,7 @@ import Layout from '@/components/Layout';
 import { Providers } from './providers';
 
 import './globals.css';
+import FloatingIcon from '@/components/FloatingIcon';
 const poppins = Poppins({
   variable: '--font-poppins',
   subsets: ['latin'],
@@ -58,7 +59,9 @@ export default function RootLayout({
       <body className={`${poppins.variable} font-poppins`}>
         <Providers>
           <Layout>{children}</Layout>
+
         </Providers>
+        <FloatingIcon/>
       </body>
     </html>
   );

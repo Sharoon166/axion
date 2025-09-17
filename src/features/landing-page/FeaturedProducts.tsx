@@ -97,7 +97,7 @@ const FeaturedProducts = () => {
             <div className=" rounded-lg p-8">
               <h3 className="text-xl font-semibold mb-4">No Featured Products Yet</h3>
               {user?.isAdmin && (
-                <Button onClick={() => router.push('/admin/products/new')}>
+                <Button className='bg-(--color-logo) hover:bg-(--color-logo)/90' onClick={() => router.push('/admin/products/new')}>
                   Add Product
                 </Button>
               )}
