@@ -10,7 +10,7 @@ import BlogCard from '@/components/BlogCard';
 
 interface BlogPost {
   _id: string;
-  contant: string;
+  content: string;
   title: string;
   slug: string;
   excerpt: string;
@@ -105,7 +105,7 @@ const BlogSection = () => {
               {user?.isAdmin && (
                 <Button
                   onClick={() => router.push('/admin/blogs/new')}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="bg-(--color-logo) hover:bg-(--color-logo)/90 text-white"
                 >
                   Add Blog Post
                 </Button>
@@ -118,11 +118,9 @@ const BlogSection = () => {
               <BlogCard
                 key={post._id}
                 href={`/blog/${post.slug}`}
-                description={post.contant}
+                description={post.content}
                 image={post.image}
                 title={post.title}
-                tag={post.tags && post.tags.length > 0 ? post.tags[0] : undefined}
-                date={formatDate(post.createdAt)}
               />
             ))}
           </div>
