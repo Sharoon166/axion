@@ -55,8 +55,8 @@ export default function BlogPostClient({ slug }: BlogPostClientProps) {
       {/* Header Section with PageHeader */}
       <PageHeader title="" />
       <div className="max-w-[85rem] mx-auto px-4 sm:px-14">
-        <h1 className="text-4xl font-semibold text-center">{post.title}</h1>
-        <p className="text-center text-gray-500 py-6 text-clamp-2 sm:text-clamp-0 text-lg">{post.description}</p>
+        <h1 className="sm:text-4xl text-2xl font-semibold text-center">{post.title}</h1>
+        <p className="text-center text-gray-500 py-6 text-sm sm:text-lg">{post.description}</p>
         <div className="flex flex-wrap items-center justify-center sm:gap-x-20 gap-2 text-sm text-gray-500 mb-8">
           <span>{post.author || 'Admin'}</span>
           <span>|</span>
