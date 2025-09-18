@@ -93,7 +93,7 @@ const ProjectsPage: React.FC = () => {
         subtitle="Showcasing our finest lighting installations and creative solutions."
       />
 
-      <div className="max-w-[85rem] mx-auto px-4 py-8">
+      <div className="max-w-[85rem] mx-auto px-8 sm:px-6 py-8">
         {/* Filters and Add Button */}
         <div className="flex flex-wrap justify-between items-center gap-4 mb-10">
           <div className="flex flex-wrap gap-3">

@@ -54,7 +54,7 @@ const ProductsPage = () => {
 
       {/* Product Categories */}
       <section>
-        <div className="max-w-[60rem] xl:max-w-[85rem] mx-auto mt-10 px-4 sm:px-6">
+        <div className="max-w-[85rem] mx-auto mt-10 px-8 sm:px-6">
           {loading ? (
             <Loading />
           ) : categories.length > 0 ? (

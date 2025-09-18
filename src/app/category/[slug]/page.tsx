@@ -323,7 +323,7 @@ const CategoryPage: React.FC = () => {
         </div>
       )}
 
-      <div className="max-w-[85rem] mx-auto px-4 sm:px-6 py-6 lg:py-10">
+      <div className="max-w-[85rem] mx-auto px-8 sm:px-6 py-6 lg:py-10">
         {/* Filter and Sort Controls */}
         <div className="bg-gray-50 p-4 rounded-xl shadow-sm mb-6">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">

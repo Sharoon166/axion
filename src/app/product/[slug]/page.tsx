@@ -488,7 +488,7 @@ const ProductPage = () => {
   }
 
   return (
-    <div className="max-w-[85rem] mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-10">
+    <div className="max-w-[85rem] mx-auto px-8 sm:px-6  py-6 md:py-10">
       <PageHeader title="" subtitle={''} />
       {fetchedproduct.map((product: Product) => {
         const galleryImages = product.images.map((img) => getImageUrl(img));
@@ -1122,7 +1122,7 @@ const ProductPage = () => {
       {relatedProducts.length > 0 && (
         <>
           <h2 className="text-2xl font-bold mt-12 mb-6">You may also like</h2>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
             {relatedProducts.map((p) => (
               <ProductCard
                 key={`related-${p._id}-${p.slug}`}

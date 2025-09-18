@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect,  useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
@@ -41,7 +41,7 @@ const SaleSection = () => {
   // Fetch all active sales and resolve products + per-product mapping
   const fetchSaleProducts = async () => {
     try {
-      setLoading(true);
+      // setLoading(true);
 
       // Fetch all active sales
       const saleRes = await fetch('/api/sale?mode=all');
@@ -133,11 +133,11 @@ const SaleSection = () => {
 
   useEffect(() => {
     fetchSaleProducts();
-    const interval = setInterval(fetchSaleProducts, 30000); // refresh every 30s
+    const interval = setInterval(fetchSaleProducts, 30 * 1000); // refresh every 30s
     return () => clearInterval(interval);
   }, []);
 
-  
+
   return (
     <section className="py-8 sm:py-10 px-4 sm:px-5 bg-gray-50 text-center">
       <h2 className="text-2xl sm:text-3xl font-bold">
@@ -147,7 +147,7 @@ const SaleSection = () => {
         Limited-time deals on our best lights, don&apos;t miss out.
       </p>
 
-      
+
       {/* Products Grid */}
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-8 sm:mt-10">

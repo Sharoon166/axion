@@ -15,7 +15,7 @@ import {
   Edit,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { getImageUrl } from '@/lib/utils';
@@ -48,6 +48,27 @@ const Header = () => {
   const router = useRouter();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [hasSaleItems, setHasSaleItems] = useState(false);
+
+  // Check for active sale items on component mount
+  useEffect(() => {
+    const checkSaleItems = async () => {
+      try {
+        const res = await fetch('/api/sale');
+        const data = await res.json();
+        if (data?.success && data.data) {
+          const hasProducts = data.data.productIds?.length > 0;
+          const hasCategories = Array.isArray(data.data.categorySlugs) && data.data.categorySlugs.length > 0;
+          setHasSaleItems(hasProducts || hasCategories);
+        }
+      } catch (error) {
+        console.error('Error checking sale items:', error);
+        setHasSaleItems(false);
+      }
+    };
+
+    checkSaleItems();
+  }, []);
 
   const navLinks = [
     { name: 'Home', href: '/' },
@@ -56,8 +77,8 @@ const Header = () => {
     { name: 'About', href: '/about' },
     { name: 'Blog', href: '/blog' },
     { name: 'Contact', href: '/contact' },
-    { name: 'On Sale', href: '/sale' },
-  ];
+    ...(hasSaleItems ? [{ name: 'Sale', href: '/sale', className: 'text-red-600 font-semibold' }] : []),
+  ].filter(Boolean);
 
   const adminLinks = [{ name: 'Dashboard', href: '/dashboard' }, ...navLinks];
 
@@ -109,7 +130,7 @@ const Header = () => {
                     href={link.href}
                     className={`relative px-1 py-2 block transition-colors ${isTarget ? 'text-[var(--color-logo)] font-semibold' : 'text-slate-700 hover:text-[var(--color-logo)]'}`}
                   >
-                    {link.name}
+                    {link.name} 
                   </Link>
                 </li>
               );
@@ -379,7 +400,7 @@ const Header = () => {
 
                   <div>
                     <h3 className="flex items-center gap-2 font-medium mb-3 text-[#0C1E33]">
-                      <Clock size={16} className="text-[#E1B857]" />
+                      <Clock size={16} className="text-[var(--color-logo)]" />
                       Recent Searches
                     </h3>
                     <div className="space-y-2">
@@ -400,7 +421,7 @@ const Header = () => {
 
                   <div>
                     <h3 className="flex items-center gap-2 font-medium mb-3 text-[#0C1E33]">
-                      <Star size={16} className="text-[#E1B857]" />
+                      <Star size={16} className="text-[var(--color-logo)]" />
                       Popular Products
                     </h3>
                     <div className="space-y-2">
@@ -550,6 +571,7 @@ interface HeaderUser {
   name?: string | null;
   email?: string | null;
   isAdmin?: boolean;
+  image?: string | null;
 }
 
 const ProfileDropdown = ({ userData }: { userData: HeaderUser | null }) => {
@@ -594,11 +616,12 @@ const ProfileDropdown = ({ userData }: { userData: HeaderUser | null }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="group relative p-2 rounded-md transition-all duration-300 hover:bg-slate-100">
-          <UserRound
-            size={20}
-            className="text-slate-700 group-hover:text-[#0C1E33] transition-colors duration-300"
-          />
+        <button className="group relative p-2 rounded-full overflow-hidden transition-all duration-300 hover:bg-slate-100">
+          <div
+            className=" overflow-hidden rounded-full size-2 "
+          >
+            <Image src={userData?.image || '/placeholder.png'} alt={userData?.name || 'user picture'} className='object-cover object-center' fill />
+          </div>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-64 p-3 mt-2" align="end">

@@ -61,7 +61,7 @@ export default function SalePage() {
         const res = await fetch('/api/products');
         const json = await res.json();
         if (json.success && Array.isArray(json.data)) setAllProducts(json.data);
-      } catch {}
+      } catch { }
     };
     load();
   }, []);
@@ -69,7 +69,7 @@ export default function SalePage() {
   // Fetch sale config and products
   const fetchSale = async () => {
     try {
-      setLoading(true);
+      // setLoading(true);
       const res = await fetch('/api/sale');
       const json = await res.json();
       if (json.success) {
@@ -100,7 +100,7 @@ export default function SalePage() {
 
   useEffect(() => {
     fetchSale();
-    const id = setInterval(fetchSale, 30000);
+    const id = setInterval(fetchSale, 30 * 1000); // Refetch after 30s
     return () => clearInterval(id);
   }, []);
 
@@ -134,7 +134,7 @@ export default function SalePage() {
       if (ct.includes('application/json')) {
         try {
           json = await res.json();
-        } catch {}
+        } catch { }
       }
 
       const parsed =
@@ -157,7 +157,7 @@ export default function SalePage() {
     }
   };
   return (
-    <section className="max-w-[85rem] mx-auto px-4 sm:px-6 py-8">
+    <section className="max-w-[85rem] mx-auto px-8 sm:px-6 py-8">
       <PageHeader title="Sale" />
       <div className="flex items-center justify-between">
         {isAdmin && (
@@ -241,7 +241,7 @@ export default function SalePage() {
                             {label}
                             <button
                               aria-label={`Remove ${label}`}
-                              
+
                               onClick={() =>
                                 setSelectedProductIds((prev) => prev.filter((pid) => pid !== id))
                               }

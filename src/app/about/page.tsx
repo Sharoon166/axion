@@ -32,15 +32,14 @@ export default function AboutPage() {
       <PageHeader
         title="About"
         titleHighlight="Axion"
-        subtitle="A team of experts crafting lighting solutions that elevate your experience"
       />
-      <div className="max-w-[85rem] mx-auto px-4 sm:px-6">
+      <div className="max-w-[85rem] mx-auto px-8 sm:px-6">
         <section className="py-12 sm:py-20">
           <div className=" grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             {/* Story & Text */}
             <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-[black] mb-6">Our Story</h2>
-              <div className="space-y-5 text-black/80 sm:text-lg text-[var(--color-secondary-text)] leading-relaxed mb-8">
+              <h2 className="text-xl sm:text-3xl font-bold text-[black]">Our Story</h2>
+              <div className="space-y-5 text-black/80 sm:text-lg leading-relaxed mb-8">
                 <p>
                   Axion Lighting was founded to bring modern, world‑class lighting to Pakistan.
                   After experiencing the gap firsthand, our founder—an English graduate—teamed up

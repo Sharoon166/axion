@@ -37,7 +37,7 @@ const PageHeader = ({ title, titleHighlight, subtitle, breadcrumbs }: PageHeader
     <div className="w-full bg-white *:capitalize">
       <div className="max-w-[85rem] mx-auto px-4 sm:px-6">
         {/* Breadcrumbs */}
-        <div className="hidden sm:block text-md mt-8 font-bold">
+        <div className="text-sm sm:text-md mt-8 font-semibold">
           {defaultBreadcrumbs.map((crumb, index) => {
             const isLast = index === defaultBreadcrumbs.length - 1;
             return (
@@ -62,7 +62,7 @@ const PageHeader = ({ title, titleHighlight, subtitle, breadcrumbs }: PageHeader
 
         {/* Page Title */}
         <div className="text-center py-2 ">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-black mb-3 sm:mb-4 lg:mb-6 leading-tight">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-black  leading-tight">
             {titleHighlight ? (
               <>
                 {title} <span className="text-black">{titleHighlight}</span>
@@ -72,7 +72,7 @@ const PageHeader = ({ title, titleHighlight, subtitle, breadcrumbs }: PageHeader
             )}
           </h1>
           {subtitle && (
-            <p className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl text-gray-700 max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto leading-relaxed px-4">
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl  text-gray-700 max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto leading-relaxed px-4">
               {subtitle}
             </p>
           )}

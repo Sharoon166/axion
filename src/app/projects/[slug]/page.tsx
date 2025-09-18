@@ -53,7 +53,7 @@ const ProjectDetailPage: React.FC = () => {
   return (
     <>
       <PageHeader title="" />
-      <div className="max-w-[85rem] mx-auto px-4 sm:px-6 md:px-12 lg:px-8 py-6 mb-10">
+      <div className="max-w-[85rem] mx-auto px-8 sm:px-6 md:px-12 lg:px-8 py-6 mb-10">
         {/* Hero Section with Title and Main Image */}
         <div className="grid lg:grid-cols-2 gap-8 mb-12">
           {/* Left: Title and Description (second on small screens) */}
@@ -67,7 +67,7 @@ const ProjectDetailPage: React.FC = () => {
               const lastWord = words.pop() || '';
               const mainTitle = words.join(' ');
               return (
-                <h1 className="text-4xl font-bold text-gray-900">
+                <h1 className="text-2xl sm:text-4xl font-bold text-gray-900">
                   {mainTitle} {lastWord}
                 </h1>
               );
@@ -129,7 +129,7 @@ const ProjectDetailPage: React.FC = () => {
           {/* Right: Main Project Image + Thumbnails (first on small screens) */}
           <div className="order-1 lg:order-2">
             {/* Main Image with Slide Animation (auto height) */}
-            <div className="w-full mb-4 overflow-hidden aspect-video rounded-2xl shadow-lg">
+            <div className="w-full mb-4 overflow-hidden h-[20rem] sm:h-[25rem] md:h-[30rem] rounded-2xl">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={selectedImage}
@@ -168,12 +168,11 @@ const ProjectDetailPage: React.FC = () => {
           </div>
         </div>
 
-
         {/* Client Testimonial Section */}
         {(project.clientTestimonial?.text || project.testimonial?.text) && (
           <section className="mt-16 text-center bg-gray-50 rounded-2xl p-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-6">What Our Client Says</h2>
-            <blockquote className="text-lg text-gray-700 italic max-w-3xl mx-auto mb-6">
+            <h2 className="text-2xl sm:text-3xl  font-bold text-gray-900 mb-6">What Our Client Says</h2>
+            <blockquote className="text-md sm:text-lg text-gray-700 italic max-w-3xl mx-auto mb-6">
               {project.clientTestimonial?.text || project.testimonial?.text}
             </blockquote>
             {(project.clientTestimonial?.author || project.testimonial?.author) && (

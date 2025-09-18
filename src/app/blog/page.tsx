@@ -68,7 +68,7 @@ export default function BlogPage() {
   return (
     <>
       <PageHeader title="Blog" subtitle="Insights, updates, and stories from the Axion team" />
-      <div className="max-w-[85rem] mx-auto px-4 sm:px-6 md:px-8">
+      <div className="max-w-[85rem] mx-auto px-8 sm:px-6">
         {blogs.length === 0 ? (
           <div className="mt-8 text-center text-gray-600">No blog posts found.</div>
         ) : (
