@@ -573,20 +573,22 @@ const ProfileDropdown = ({ userData }: { userData: HeaderUser | null }) => {
       icon: <UserRound size={16} />
     },
     {
-      name: 'Orders',
-      href: '/orders',
-      icon: <Clock size={16} />
+      name: 'Edit Profile',
+      href: '/profile/edit',
+      icon: <Edit size={16} />
     },
-    {
-      name: 'Wishlist',
-      href: '/wishlist',
-      icon: <Star size={16} />
-    },
-    {
-      name:'Edit Profile',
-      href:'/profile/edit',
-      icon:<Edit size={16}/>
-    }
+    ...(userData.isAdmin ? [] : [
+      {
+        name: 'Orders',
+        href: '/orders',
+        icon: <Clock size={16} />
+      },
+      {
+        name: 'Wishlist',
+        href: '/wishlist',
+        icon: <Star size={16} />
+      }
+    ])
   ];
 
   return (
@@ -604,12 +606,12 @@ const ProfileDropdown = ({ userData }: { userData: HeaderUser | null }) => {
           <p className="text-sm font-medium">{userData?.name}</p>
           <p className="text-xs text-muted-foreground truncate">{userData?.email}</p>
         </div>
-        
+
         <DropdownMenuSeparator className="my-2" />
-        
+
         <div className="grid grid-cols-2 gap-2 mb-2">
           {menuItems.map((item) => (
-            <Link 
+            <Link
               key={item.name}
               href={item.href}
               className="flex flex-col items-center p-2 rounded-md hover:bg-gray-100 transition-colors"
@@ -623,7 +625,7 @@ const ProfileDropdown = ({ userData }: { userData: HeaderUser | null }) => {
         </div>
 
         <DropdownMenuSeparator className="my-2" />
-        
+
         <button
           onClick={() => {
             localStorage.removeItem('userData');
