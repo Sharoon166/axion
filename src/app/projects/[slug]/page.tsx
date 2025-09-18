@@ -129,7 +129,7 @@ const ProjectDetailPage: React.FC = () => {
           {/* Right: Main Project Image + Thumbnails (first on small screens) */}
           <div className="order-1 lg:order-2">
             {/* Main Image with Slide Animation (auto height) */}
-            <div className="w-full mb-4 overflow-hidden h-[450px] rounded-2xl shadow-lg">
+            <div className="w-full mb-4 overflow-hidden aspect-video rounded-2xl shadow-lg">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={selectedImage}
