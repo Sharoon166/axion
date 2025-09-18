@@ -651,7 +651,8 @@ const ProfileDropdown = ({ userData }: { userData: HeaderUser | null }) => {
 
         <button
           onClick={() => {
-            localStorage.removeItem('userData');
+            // localStorage.removeItem('userData');
+            localStorage.clear();
             window.location.href = '/';
           }}
           className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm hover:bg-gray-100 rounded-md transition-colors"

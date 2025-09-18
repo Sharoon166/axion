@@ -49,7 +49,7 @@ export async function PUT(
       keyFeatures: body.keyFeatures,
       technicalSpecs: {
         projectType: body.technicalSpecs?.projectType || '',
-        location: body.technicalSpecs?.location || '',
+        // location: body.technicalSpecs?.location || '',
         completion: body.technicalSpecs?.completion || '',
         duration: body.technicalSpecs?.duration || '',
         team: body.technicalSpecs?.team || '',
@@ -58,7 +58,7 @@ export async function PUT(
         text: body.clientTestimonial?.text || '',
         author: body.clientTestimonial?.author || '',
       },
-      location: body.location,
+      location: body.location || '',
       date: body.date,
       images: body.images || [],
       featured: body.featured || false,

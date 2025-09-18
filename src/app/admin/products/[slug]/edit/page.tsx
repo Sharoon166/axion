@@ -82,14 +82,16 @@ const PREDEFINED_SUBCATEGORIES: Record<string, string[]> = {
 };
 
 export default function EditProductPage() {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const params = useParams();
   const productSlug = params.slug as string;
 
   const [saving, setSaving] = useState(false);
+  const [isPageLoading, setIsPageLoading] = useState(true);
+  const [error, setError] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
-  const [product, setProduct] = useState<Product | null>(null);
+  const [, setProduct] = useState<Product | null>(null);
   const [availableSubcats, setAvailableSubcats] = useState<string[]>([]);
   const [selectedSubcats, setSelectedSubcats] = useState<string[]>([]);
   const [formData, setFormData] = useState({
@@ -114,6 +116,7 @@ export default function EditProductPage() {
 
   const fetchProduct = useCallback(async () => {
     try {
+      setIsPageLoading(true);
       const response = await fetch(`/api/admin/products/${productSlug}`);
       if (response.ok) {
         const result = await response.json();
@@ -137,10 +140,16 @@ export default function EditProductPage() {
           setSizes(productData.sizes || []);
           setVariants(productData.variants || []);
           setAddons(productData.addons || []);
+          if (productData.subcategories) {
+            setSelectedSubcats(productData.subcategories);
+          }
         }
       }
     } catch (error) {
       console.error('Error fetching product:', error);
+      setError('Failed to load product. Please try again.');
+    } finally {
+      setIsPageLoading(false);
     }
   }, [productSlug]);
   useEffect(() => {
@@ -342,7 +351,7 @@ export default function EditProductPage() {
         // Replace previews with only valid Cloudinary URLs just submitted
         setPreviewUrls(uploadedImageUrls);
         setSelectedFiles([]);
-        
+
         const { toast } = await import('sonner');
         toast.success('Product updated successfully!');
         router.push('/admin/products');
@@ -359,26 +368,28 @@ export default function EditProductPage() {
     }
   };
 
-  if (loading) {
+  if (isPageLoading || authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loading />
+      <Loading />
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="text-red-500">{error}</div>
+        <Button
+          onClick={() => window.location.reload()}
+          className="mt-4"
+          variant="outline"
+        >
+          Try Again
+        </Button>
       </div>
     );
   }
 
-  if (!product) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Product not found</h2>
-          <Button onClick={() => router.push('/admin/products')}>Back to Products</Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!loading && user?.role !== 'admin') {
+  if (!authLoading && user?.role !== 'admin') {
     if (typeof window !== 'undefined') {
       router.replace('/');
     }

@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       keyFeatures: body.keyFeatures || '',
       technicalSpecs: {
         projectType: body.technicalSpecs?.projectType || '',
-        location: body.technicalSpecs?.location || '',
+        // location: body.technicalSpecs?.location || '',
         completion: body.technicalSpecs?.completion || '',
         duration: body.technicalSpecs?.duration || '',
         team: body.technicalSpecs?.team || '',
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
         text: body.clientTestimonial?.text || '',
         author: body.clientTestimonial?.author || '',
       },
-      location: body.location,
+      location: body.location || '',
       date: body.date,
       featured: body.featured || false,
       images: body.images || [],

@@ -11,7 +11,7 @@ const projectSchema = new mongoose.Schema(
     keyFeatures: { type: String, default: '' },
     technicalSpecs: {
       projectType: { type: String, default: '' },
-      location: { type: String, default: '' },
+      // location: { type: String, default: '' },
       completion: { type: String, default: '' },
       duration: { type: String, default: '' },
       team: { type: String, default: '' },

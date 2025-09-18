@@ -62,7 +62,7 @@ const PageHeader = ({ title, titleHighlight, subtitle, breadcrumbs }: PageHeader
 
         {/* Page Title */}
         <div className="text-center py-2 ">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-black  leading-tight">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold text-black  leading-tight">
             {titleHighlight ? (
               <>
                 {title} <span className="text-black">{titleHighlight}</span>

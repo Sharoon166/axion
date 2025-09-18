@@ -122,11 +122,11 @@ export default function ProfilePage() {
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden bg-gray-100">
                 <Image
-                  src={userData?.avatar || userData?.image || '/about-image.jpg'}
+                  src={userData?.image || '/about-image.jpg'}
                   alt={userData?.name || 'User'}
                   width={80}
                   height={80}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full min-size-4 object-cover"
                 />
               </div>
               <div>

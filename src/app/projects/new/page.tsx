@@ -416,17 +416,17 @@ export default function NewProjectPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="specLocation" className="py-2">
-                    Spec Location
+                  <Label htmlFor="location" className="py-2">
+                    Location
                   </Label>
                   <Input
-                    id="specLocation"
-                    name="specLocation"
-                    value={formData.technicalSpecs.location}
+                    id="location"
+                    name="location"
+                    value={formData.location}
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
-                        technicalSpecs: { ...prev.technicalSpecs, location: e.target.value },
+                        location: e.target.value,
                       }))
                     }
                     placeholder="Islamabad, Pakistan"
