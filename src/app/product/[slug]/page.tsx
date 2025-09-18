@@ -1058,7 +1058,7 @@ const ProductPage = () => {
                 <p className="mt-4">
                   If you have any query regarding your orders or you are having trouble dealing with
                   a parcel/shipment, you can contact us at{' '}
-                  <span className="font-semibold">(+92) 343 9227883</span>.
+                  <span className="font-semibold">{process.env.NEXT_PUBLIC_WHATSAPP}</span>.
                 </p>
                 <p className="mt-4">
                   For the full policy, see our{' '}
