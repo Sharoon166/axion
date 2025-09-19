@@ -12,8 +12,8 @@ import {
   SelectItem,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Package, X } from 'lucide-react';
 import Loading from '@/loading';
+import { Package, X } from 'lucide-react';
 
 interface Category {
   _id: string;
@@ -32,6 +32,7 @@ interface Filters {
 interface Product {
   _id: string;
   id: string;
+  rating?: number;
   name: string;
   description: string;
   price: number;
@@ -270,9 +271,9 @@ const ProductsPage: React.FC = () => {
                           id={product._id}
                           name={product.name}
                           price={product.price || 0}
-                          img={product.images?.[0] || ''}
+                          rating={product.rating}
+                          img={product.images || []}
                           href={`/product/${product.slug}`}
-                          description={product.description}
                           discount={product.discount}
                         />
                       ))}

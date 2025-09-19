@@ -126,11 +126,15 @@ export default function ProductsManagement() {
                   Add Product
                 </Button>
               </Link>
+              <Link href="/sale" className="w-full sm:w-auto">
+                <Button className="bg-[#0077B6] hover:bg-[#0077B6]/90 w-full sm:w-auto">
+                  Add Sale
+                </Button>
+              </Link>
             </>
           )}
         </div>
       </div>
-
 
       {/* Mobile Filter Toggle */}
       <div className="lg:hidden">
@@ -177,7 +181,7 @@ export default function ProductsManagement() {
           </div>
 
           {loading ? (
-           <Loading/>
+            <Loading />
           ) : (
             <div className="overflow-x-auto">
               {/* Desktop Table */}
@@ -189,7 +193,6 @@ export default function ProductsManagement() {
                     <th className="text-left py-3 px-4 font-medium text-gray-600">Category</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-600">Stock</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-600">Price</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Featured</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-600">Actions</th>
                   </tr>
                 </thead>
@@ -244,22 +247,12 @@ export default function ProductsManagement() {
                         <td className="py-4 px-4 font-semibold text-gray-900">
                           Rs.{productItem.price?.toLocaleString()}
                         </td>
-                        <td className="py-4 px-4">
-                          {productItem.featured ? (
-                            <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                              Featured
-                            </span>
-                          ) : (
-                            <span className="text-gray-400 text-sm">-</span>
-                          )}
-                        </td>
-                       
+
                         <td className="py-4 px-4">
                           <div className="flex items-center gap-2">
                             <Link href={`/admin/products/${productItem.slug}/edit`}>
                               <Button variant="outline" size="sm">
                                 <Edit className="w-4 h-4" />
-                                
                               </Button>
                             </Link>
                             <Button

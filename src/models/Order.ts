@@ -13,6 +13,9 @@ const orderSchema = new mongoose.Schema(
         size: { type: String, required: false },
         image: { type: String, required: true },
         price: { type: Number, required: true },
+        // Optional sale metadata per item
+        saleName: { type: String, required: false },
+        salePercent: { type: Number, required: false },
         product: {
           type: String,
           required: true,
@@ -53,15 +56,15 @@ const orderSchema = new mongoose.Schema(
       amount: Number,
       reason: String,
       processedAt: Date,
-      status: { type: String, enum: ['pending', 'processed', 'failed'], default: 'pending' }
+      status: { type: String, enum: ['pending', 'processed', 'failed'], default: 'pending' },
     },
     shipping: {
       trackingNumber: String,
       carrier: String,
-      updatedAt: Date
-    }
+      updatedAt: Date,
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.models.Order || mongoose.model('Order', orderSchema);

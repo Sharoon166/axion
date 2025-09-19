@@ -192,9 +192,9 @@ export default function ProductsPage() {
                   id={product._id}
                   name={product.name}
                   price={product.price}
-                  img={product.images?.[0] || ''}
+                  img={product.images || []}
                   href={`/product/${product.slug}`}
-                  description={product.category?.name || 'Uncategorized'}
+                  rating={product.rating}
                 />
                 
               </div>

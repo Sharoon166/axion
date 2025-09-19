@@ -52,13 +52,12 @@ export default function BlogPostClient({ slug }: BlogPostClientProps) {
 
   return (
     <>
-      {/* Header Section with PageHeader */}
       <PageHeader title="" />
       <div className="max-w-[85rem] mx-auto px-8 sm:px-14">
-        <h1 className="sm:text-4xl text-2xl font-semibold text-center">{post.title}</h1>
-        <p className="text-center text-gray-500 py-6 text-sm sm:text-lg">{post.description}</p>
+        <h1 className="sm:text-3xl text-2xl font-semibold capitalize mt-2 text-center">{post.title}</h1>
+        <p className="text-center text-gray-500 py-2 text-sm sm:text-lg">{post.description}</p>
         <div className="flex flex-wrap items-center justify-center sm:gap-x-20 gap-2 text-sm text-gray-500 mb-8">
-          <span>{post.author || 'Admin'}</span>
+          <span> By {post.author || 'Admin'}</span>
           <span>|</span>
           <span>
             Pulished on{' '}
@@ -67,7 +66,7 @@ export default function BlogPostClient({ slug }: BlogPostClientProps) {
               : new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
           </span>
           <span>|</span>
-          <span>{post.category || 'BLOG'}</span>
+          <span className='capitalize'>Category: {post.tags?.join(', ') || 'BLOG'}</span>
         </div>
 
         {/* Hero Image Section */}

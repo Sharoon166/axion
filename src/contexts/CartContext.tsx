@@ -14,6 +14,9 @@ export interface CartItem {
   slug: string;
   variants?: SelectedVariant[];
   addons?: SelectedAddon[];
+  // Optional sale metadata for display in order flows
+  saleName?: string;
+  salePercent?: number;
   
 }
 

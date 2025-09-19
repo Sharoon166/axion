@@ -7,7 +7,6 @@ import { Plus, Trash2, Edit } from 'lucide-react';
 import { Variant, VariantOption } from '@/lib/productVariants';
 import { ChromePicker } from 'react-color';
 
-// Define the ColorResult type inline since we're having issues with the module
 type RGBColor = {
   r: number;
   g: number;
@@ -48,6 +47,9 @@ const VariantManager: React.FC<VariantManagerProps> = ({ variants, onChange }) =
     variantIndex: number;
     optionIndex: number;
   } | null>(null);
+  // Temporary input buffers to allow clearing '0' while typing
+  const [tempPriceInputs, setTempPriceInputs] = useState<Record<string, string>>({});
+  const [tempStockInputs, setTempStockInputs] = useState<Record<string, string>>({});
 
   const detectTypeFromName = (name: string): Variant['type'] => {
     const n = name.toLowerCase();
@@ -57,25 +59,27 @@ const VariantManager: React.FC<VariantManagerProps> = ({ variants, onChange }) =
 
   const isColorValue = (value: string): boolean => {
     // Check if the value is a valid hex color, rgb, or rgba
-    const colorRegex = /^(#([0-9A-F]{3}){1,2}$|rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)|rgba\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*[01]?\d?\d?\s*\))$/i;
+    const colorRegex =
+      /^(#([0-9A-F]{3}){1,2}$|rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)|rgba\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*[01]?\d?\d?\s*\))$/i;
     return colorRegex.test(value);
   };
 
   const handleColorChange = (color: ColorResult, variantIndex: number, optionIndex: number) => {
     const updated = [...variants];
     const option = updated[variantIndex].options[optionIndex];
-    
+
     // Format color based on alpha
-    const colorValue = color.rgb.a === 1 
-      ? `rgb(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b})` 
-      : `rgba(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b}, ${color.rgb.a})`;
-    
+    const colorValue =
+      color.rgb.a === 1
+        ? `rgb(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b})`
+        : `rgba(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b}, ${color.rgb.a})`;
+
     option.value = colorValue;
-    option.label = colorValue; // Update label to match value for color variants
-    
+
     // Add or update the color in specifications
-    const colorSpecIndex = option.specifications?.findIndex(spec => spec.name.toLowerCase() === 'color') ?? -1;
-    
+    const colorSpecIndex =
+      option.specifications?.findIndex((spec) => spec.name.toLowerCase() === 'color') ?? -1;
+
     if (colorSpecIndex >= 0) {
       option.specifications![colorSpecIndex].value = colorValue;
     } else {
@@ -84,10 +88,10 @@ const VariantManager: React.FC<VariantManagerProps> = ({ variants, onChange }) =
       }
       option.specifications.push({
         name: 'Color',
-        value: colorValue
+        value: colorValue,
       });
     }
-    
+
     onChange(updated);
   };
 
@@ -125,7 +129,7 @@ const VariantManager: React.FC<VariantManagerProps> = ({ variants, onChange }) =
   const addOption = (variantIndex: number) => {
     const variant = variants[variantIndex];
     const isColorVariant = variant.type === 'color';
-    
+
     const newOption: VariantOption = {
       label: isColorVariant ? '#000000' : '',
       value: isColorVariant ? '#000000' : '',
@@ -133,14 +137,14 @@ const VariantManager: React.FC<VariantManagerProps> = ({ variants, onChange }) =
       stockModifier: 0,
       specifications: isColorVariant ? [{ name: 'Color', value: '#000000' }] : [],
     };
-    
+
     const updated = [...variants];
     updated[variantIndex].options.push(newOption);
     onChange(updated);
-    
+
     const newOptionIndex = updated[variantIndex].options.length - 1;
     setEditingOption({ variantIndex, optionIndex: newOptionIndex });
-    
+
     if (isColorVariant) {
       setShowColorPicker({ variantIndex, optionIndex: newOptionIndex });
     }
@@ -329,9 +333,31 @@ const VariantManager: React.FC<VariantManagerProps> = ({ variants, onChange }) =
                         </label>
                         <Input
                           value={option.label}
-                          onChange={(e) =>
-                            updateOption(variantIndex, optionIndex, 'label', e.target.value)
-                          }
+                          onChange={(e) => {
+                            const newLabel = e.target.value;
+                            // Basic label update
+                            updateOption(variantIndex, optionIndex, 'label', newLabel);
+                            // Special handling: if this is a color variant and label is 'RGB', we shouldn't require a specific color value
+                            if (variant.type === 'color') {
+                              const isRGB = newLabel.trim().toLowerCase() === 'rgb';
+                              if (isRGB) {
+                                // Clear code value and set specification to 'RGB'
+                                const updated = [...variants];
+                                const opt = updated[variantIndex].options[optionIndex];
+                                opt.value = 'RGB';
+                                if (!opt.specifications) opt.specifications = [];
+                                const colorSpecIndex = opt.specifications.findIndex(
+                                  (s) => s.name.toLowerCase() === 'color',
+                                );
+                                if (colorSpecIndex >= 0) {
+                                  opt.specifications[colorSpecIndex].value = 'RGB';
+                                } else {
+                                  opt.specifications.push({ name: 'Color', value: 'RGB' });
+                                }
+                                onChange(updated);
+                              }
+                            }
+                          }}
                           placeholder="Like: Red, Large, Cotton"
                         />
                       </div>
@@ -344,54 +370,101 @@ const VariantManager: React.FC<VariantManagerProps> = ({ variants, onChange }) =
                             value={option.value}
                             onChange={(e) => {
                               updateOption(variantIndex, optionIndex, 'value', e.target.value);
-                              updateOption(variantIndex, optionIndex, 'label', e.target.value);
                             }}
-                            placeholder={variant.type === 'color' ? 'e.g., #FF0000 or rgb(255,0,0)' : 'Enter value'}
+                            placeholder={
+                              variant.type === 'color'
+                                ? option.label.trim().toLowerCase() === 'rgb'
+                                  ? 'No code needed for RGB'
+                                  : 'e.g., #FF0000 or rgb(255,0,0)'
+                                : 'Enter value'
+                            }
+                            disabled={
+                              variant.type === 'color' &&
+                              option.label.trim().toLowerCase() === 'rgb'
+                            }
                             className={variant.type === 'color' ? 'pl-10' : ''}
                           />
                           {variant.type === 'color' && (
                             <>
-                              <div 
-                                className="absolute left-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded border border-gray-300 cursor-pointer"
-                                style={{ backgroundColor: isColorValue(option.value) ? option.value : '#ffffff' }}
-                                onClick={() => setShowColorPicker({
-                                  variantIndex,
-                                  optionIndex,
-                                })}
-                              />
-                              {showColorPicker?.variantIndex === variantIndex && showColorPicker?.optionIndex === optionIndex && (
-                                <div className="absolute z-10 mt-1">
-                                  <div className="fixed inset-0" onClick={() => setShowColorPicker(null)} />
-                                  <ChromePicker
-                                    color={isColorValue(option.value) ? option.value : '#000000'}
-                                    onChange={(color: ColorResult) => handleColorChange(color, variantIndex, optionIndex)}
-                                  />
-                                </div>
-                              )}
-                              <button 
-                                type="button"
-                                className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 cursor-pointer"
-                                title="Pick color from screen"
-                                onClick={() => {
-                                  if ('EyeDropper' in window) {
-                                    const eyeDropper = new EyeDropper();
-                                    eyeDropper.open()
-                                      .then((result) => {
-                                        updateOption(variantIndex, optionIndex, 'value', result.sRGBHex);
-                                        updateOption(variantIndex, optionIndex, 'label', result.sRGBHex);
-                                      })
-                                      .catch(() => {
-                                        // User canceled or failed
-                                      });
-                                  } else {
-                                    // Fallback for browsers that don't support EyeDropper API
-                                    setShowColorPicker({
-                                      variantIndex,
-                                      optionIndex,
-                                    });
-                                  }
-                                }}
-                              />
+                              {(() => {
+                                const isRGBName = option.label.trim().toLowerCase() === 'rgb';
+                                return (
+                                  <>
+                                    <div
+                                      className="absolute left-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded border border-gray-300 cursor-pointer"
+                                      style={
+                                        isRGBName
+                                          ? {
+                                              background:
+                                                'linear-gradient(135deg, #ff6b6b 0%, #4dff88 50%, #6ba8ff 100%)',
+                                            }
+                                          : {
+                                              backgroundColor: isColorValue(option.value)
+                                                ? option.value
+                                                : '#ffffff',
+                                            }
+                                      }
+                                      onClick={() => {
+                                        if (!isRGBName) {
+                                          setShowColorPicker({
+                                            variantIndex,
+                                            optionIndex,
+                                          });
+                                        }
+                                      }}
+                                    />
+                                    {!isRGBName &&
+                                      showColorPicker?.variantIndex === variantIndex &&
+                                      showColorPicker?.optionIndex === optionIndex && (
+                                        <div className="absolute z-10 mt-1">
+                                          <div
+                                            className="fixed inset-0"
+                                            onClick={() => setShowColorPicker(null)}
+                                          />
+                                          <ChromePicker
+                                            color={
+                                              isColorValue(option.value) ? option.value : '#000000'
+                                            }
+                                            onChange={(color: ColorResult) =>
+                                              handleColorChange(color, variantIndex, optionIndex)
+                                            }
+                                          />
+                                        </div>
+                                      )}
+                                    {!isRGBName && (
+                                      <button
+                                        type="button"
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 cursor-pointer"
+                                        title="Pick color from screen"
+                                        onClick={() => {
+                                          if ('EyeDropper' in window) {
+                                            const eyeDropper = new EyeDropper();
+                                            eyeDropper
+                                              .open()
+                                              .then((result) => {
+                                                updateOption(
+                                                  variantIndex,
+                                                  optionIndex,
+                                                  'value',
+                                                  result.sRGBHex,
+                                                );
+                                              })
+                                              .catch(() => {
+                                                // User canceled or failed
+                                              });
+                                          } else {
+                                            // Fallback for browsers that don't support EyeDropper API
+                                            setShowColorPicker({
+                                              variantIndex,
+                                              optionIndex,
+                                            });
+                                          }
+                                        }}
+                                      />
+                                    )}
+                                  </>
+                                );
+                              })()}
                             </>
                           )}
                         </div>
@@ -401,17 +474,31 @@ const VariantManager: React.FC<VariantManagerProps> = ({ variants, onChange }) =
                           💰 Extra Cost (+ or -)
                         </label>
                         <Input
-                          type="number"
-                          step="0.01"
-                          value={option.priceModifier}
-                          onChange={(e) =>
+                          type="text"
+                          inputMode="decimal"
+                          value={
+                            tempPriceInputs[`${variantIndex}-${optionIndex}`] ??
+                            String(option.priceModifier ?? 0)
+                          }
+                          onChange={(e) => {
+                            const key = `${variantIndex}-${optionIndex}`;
+                            setTempPriceInputs((prev) => ({ ...prev, [key]: e.target.value }));
+                          }}
+                          onBlur={(e) => {
+                            const key = `${variantIndex}-${optionIndex}`;
+                            const raw = e.target.value.trim();
+                            const num = raw === '' ? 0 : parseFloat(raw);
                             updateOption(
                               variantIndex,
                               optionIndex,
                               'priceModifier',
-                              parseFloat(e.target.value) || 0,
-                            )
-                          }
+                              isNaN(num) ? 0 : num,
+                            );
+                            setTempPriceInputs(({ [key]: _, ...rest }) => {
+                              console.log(_);
+                              return rest;
+                            });
+                          }}
                           placeholder="0 = same price, 10 = $10 more"
                         />
                       </div>
@@ -420,16 +507,31 @@ const VariantManager: React.FC<VariantManagerProps> = ({ variants, onChange }) =
                           📦 How Many Available
                         </label>
                         <Input
-                          type="number"
-                          value={option.stockModifier}
-                          onChange={(e) =>
+                          type="text"
+                          inputMode="numeric"
+                          value={
+                            tempStockInputs[`${variantIndex}-${optionIndex}`] ??
+                            String(option.stockModifier ?? 0)
+                          }
+                          onChange={(e) => {
+                            const key = `${variantIndex}-${optionIndex}`;
+                            setTempStockInputs((prev) => ({ ...prev, [key]: e.target.value }));
+                          }}
+                          onBlur={(e) => {
+                            const key = `${variantIndex}-${optionIndex}`;
+                            const raw = e.target.value.trim();
+                            const num = raw === '' ? 0 : parseInt(raw, 10);
                             updateOption(
                               variantIndex,
                               optionIndex,
                               'stockModifier',
-                              parseInt(e.target.value) || 0,
-                            )
-                          }
+                              isNaN(num) ? 0 : num,
+                            );
+                            setTempStockInputs(({ [key]: _, ...rest }) => {
+                              console.log(_);
+                              return rest;
+                            });
+                          }}
                           placeholder="Leave 0 to use main stock number"
                         />
                       </div>

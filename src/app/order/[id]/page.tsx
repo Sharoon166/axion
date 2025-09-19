@@ -6,9 +6,12 @@ import DownloadPDFButton from '@/app/order/[id]/DownloadPDFButton';
 
 async function getOrderById(orderId: string) {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/orders/${orderId}`, {
-      cache: 'no-store'
-    });
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/orders/${orderId}`,
+      {
+        cache: 'no-store',
+      },
+    );
 
     if (!response.ok) {
       return { success: false, error: 'Order not found' };
@@ -34,7 +37,6 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
   }
   const order: OrderData = res.data;
 
-
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
       <div className="max-w-6xl mx-auto">
@@ -42,7 +44,9 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Orders Details</h1>
-            <p className="text-sm sm:text-base text-gray-600">Order ID: #{String(id || '').slice(-6)}</p>
+            <p className="text-sm sm:text-base text-gray-600">
+              Order ID: #{String(id || '').slice(-6)}
+            </p>
           </div>
           <div className="w-full sm:w-auto">
             <DownloadPDFButton order={order} orderId={id} />
@@ -61,7 +65,13 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
                 <div className="space-y-3 text-sm">
                   <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
                     <span className="text-gray-600 font-medium">Order Date:</span>
-                    <span className="text-gray-900">{new Date(order.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                    <span className="text-gray-900">
+                      {new Date(order.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </span>
                   </div>
                   <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
                     <span className="text-gray-600 font-medium">Payment Method:</span>
@@ -89,28 +99,79 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
                   {[
                     {
                       status: 'Ordered',
-                      date: new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ', ' + new Date(order.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
-                      completed: true
+                      date:
+                        new Date(order.createdAt).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        }) +
+                        ', ' +
+                        new Date(order.createdAt).toLocaleTimeString('en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: true,
+                        }),
+                      completed: true,
                     },
                     {
                       status: 'Confirmed',
-                      date: order.confirmedAt ? new Date(order.confirmedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ', ' + new Date(order.confirmedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'Pending',
-                      completed: Boolean(order.isConfirmed)
+                      date: order.confirmedAt
+                        ? new Date(order.confirmedAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          }) +
+                          ', ' +
+                          new Date(order.confirmedAt).toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true,
+                          })
+                        : 'Pending',
+                      completed: Boolean(order.isConfirmed),
                     },
                     {
                       status: 'Shipped',
-                      date: order.shippedAt ? new Date(order.shippedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ', ' + new Date(order.shippedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : (order.isConfirmed ? 'In Progress' : 'Pending'),
-                      completed: Boolean(order.isShipped) && !order.isDelivered
+                      date: order.shippedAt
+                        ? new Date(order.shippedAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          }) +
+                          ', ' +
+                          new Date(order.shippedAt).toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true,
+                          })
+                        : order.isConfirmed
+                          ? 'In Progress'
+                          : 'Pending',
+                      completed: Boolean(order.isShipped) && !order.isDelivered,
                     },
                     {
                       status: 'Delivered',
-                      date: order.deliveredAt ? new Date(order.deliveredAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ', ' + new Date(order.deliveredAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'Pending',
-                      completed: Boolean(order.isDelivered)
-                    }
+                      date: order.deliveredAt
+                        ? new Date(order.deliveredAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          }) +
+                          ', ' +
+                          new Date(order.deliveredAt).toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true,
+                          })
+                        : 'Pending',
+                      completed: Boolean(order.isDelivered),
+                    },
                   ].map((item, index, steps) => (
                     <div key={index} className="flex items-start gap-4">
                       <div className="relative flex flex-col items-center">
-                        <div className={`w-3 h-3 rounded-full z-10 ${item.completed ? 'bg-blue-600' : 'bg-gray-300'}`} />
+                        <div
+                          className={`w-3 h-3 rounded-full z-10 ${item.completed ? 'bg-blue-600' : 'bg-gray-300'}`}
+                        />
                         {index < steps.length - 1 && (
                           <div className="absolute top-3 left-1/2 w-0.5 h-full -translate-x-1/2 bg-gray-200">
                             <div
@@ -122,7 +183,9 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
                       </div>
                       <div className="flex-1 pb-8 -mt-1">
                         <div className="flex justify-between items-center">
-                          <span className={`font-medium ${item.completed ? 'text-gray-900' : 'text-gray-500'}`}>
+                          <span
+                            className={`font-medium ${item.completed ? 'text-gray-900' : 'text-gray-500'}`}
+                          >
                             {item.status}
                           </span>
                           <span className="text-sm text-gray-500">{item.date}</span>
@@ -134,7 +197,6 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
               </CardContent>
             </Card>
 
-            {/* Products */}
             <Card>
               <CardHeader>
                 <CardTitle>Products</CardTitle>
@@ -143,12 +205,13 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
                 {/* Desktop Table View */}
                 <div className="hidden md:block">
                   <div className="overflow-x-auto">
-                    <table className="w-full min-w-[600px]">
+                    <table className="w-full min-w-[700px]">
                       <thead>
                         <tr className="border-b text-left text-sm text-gray-600">
                           <th className="pb-3">Product</th>
                           <th className="pb-3">Name</th>
                           <th className="pb-3">Quantity</th>
+                          <th className="pb-3">Sale</th>
                           <th className="pb-3">Product Price</th>
                           <th className="pb-3">Total Price</th>
                         </tr>
@@ -169,8 +232,21 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
                             </td>
                             <td className="py-4 font-medium">{item.name}</td>
                             <td className="py-4">{item.qty}</td>
+                            <td className="py-4">
+                              {typeof item.salePercent === 'number' &&
+                              item.salePercent > 0 ? (
+                                <span className="text-green-700 font-medium">
+                                  {item.saleName ? `${item.saleName}: ` : ''}
+                                  {item.salePercent}% OFF
+                                </span>
+                              ) : (
+                                <span className="text-gray-400">—</span>
+                              )}
+                            </td>
                             <td className="py-4">Rs. {item.price?.toLocaleString()}</td>
-                            <td className="py-4 font-semibold">Rs. {(item.price * item.qty)?.toLocaleString()}</td>
+                            <td className="py-4 font-semibold">
+                              Rs. {(item.price * item.qty)?.toLocaleString()}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -199,13 +275,27 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
                               <span className="text-gray-600">Quantity:</span>
                               <span className="font-medium">{item.qty}</span>
                             </div>
+                            {typeof item.salePercent === 'number' &&
+                              item.salePercent > 0 && (
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Sale:</span>
+                                  <span className="font-medium text-green-700">
+                                    {item.saleName ? `${item.saleName}: ` : ''}
+                                    {item.salePercent}% OFF
+                                  </span>
+                                </div>
+                              )}
                             <div className="flex justify-between">
                               <span className="text-gray-600">Unit Price:</span>
-                              <span className="font-medium">Rs. {item.price?.toLocaleString()}</span>
+                              <span className="font-medium">
+                                Rs. {item.price?.toLocaleString()}
+                              </span>
                             </div>
                             <div className="flex justify-between border-t pt-1">
                               <span className="text-gray-600 font-medium">Total:</span>
-                              <span className="font-semibold text-green-600">Rs. {(item.price * item.qty)?.toLocaleString()}</span>
+                              <span className="font-semibold text-green-600">
+                                Rs. {(item.price * item.qty)?.toLocaleString()}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -217,7 +307,10 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
                 <div className="mt-6 flex justify-end">
                   <div className="text-right">
                     <p className="text-lg sm:text-xl font-bold">
-                      Total: <span className="text-xl sm:text-2xl text-(--color-logo)">Rs. {order.totalPrice?.toLocaleString()}</span>
+                      Total:{' '}
+                      <span className="text-xl sm:text-2xl text-(--color-logo)">
+                        Rs. {order.totalPrice?.toLocaleString()}
+                      </span>
                     </p>
                   </div>
                 </div>
@@ -250,7 +343,9 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
                   <div className="bg-gray-50 p-3 rounded-lg">
                     <p className="font-medium text-gray-900">{order.shippingAddress?.fullName}</p>
                     <p className="text-gray-700">{order.shippingAddress?.address}</p>
-                    <p className="text-gray-700">{order.shippingAddress?.city}, {order.shippingAddress?.postalCode}</p>
+                    <p className="text-gray-700">
+                      {order.shippingAddress?.city}, {order.shippingAddress?.postalCode}
+                    </p>
                     <p className="text-gray-700">{order.shippingAddress?.country || 'Pakistan'}</p>
                   </div>
                 </div>

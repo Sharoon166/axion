@@ -236,16 +236,6 @@ const AddonManager: React.FC<AddonManagerProps> = ({ addons, onChange }) => {
                           rows={2}
                         />
                       </div>
-                      <div>
-                        <label className="block text-xs font-medium mb-1">Image URL</label>
-                        <Input
-                          value={option.image || ''}
-                          onChange={(e) =>
-                            updateOption(addonIndex, optionIndex, 'image', e.target.value)
-                          }
-                          placeholder="Optional image for this add-on"
-                        />
-                      </div>
                     </div>
                   )}
 

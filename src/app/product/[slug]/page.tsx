@@ -30,7 +30,13 @@ import {
   getVariantImage,
 } from '@/lib/productVariants';
 import { useAuth } from '@/contexts/AuthContext';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 
 // /data/products.ts
 
@@ -105,19 +111,17 @@ const ProductPage = () => {
   );
   const [reviewsFetched, setReviewsFetched] = useState(false);
   const [salePercent, setSalePercent] = useState(0);
+  const [saleName, setSaleName] = useState<string | null>(null);
   const [saleEndsAt, setSaleEndsAt] = useState<string | null>(null);
   const [saleTimeLeft, setSaleTimeLeft] = useState<string | null>(null);
-  const [selectedReview, setSelectedReview] = useState<
-    | {
-      userId: string;
-      userName: string;
-      userEmail: string;
-      rating: number;
-      comment: string;
-      createdAt: string;
-    }
-    | null
-  >(null);
+  const [selectedReview, setSelectedReview] = useState<{
+    userId: string;
+    userName: string;
+    userEmail: string;
+    rating: number;
+    comment: string;
+    createdAt: string;
+  } | null>(null);
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
 
   // Convert URLs inside plain text into clickable links
@@ -166,26 +170,53 @@ const ProductPage = () => {
     });
   };
 
-  // Create product configuration for price calculations
-  const createProductConfiguration = (product: Product): ProductConfiguration => {
-    // Use variants as defined in data so UI can render swatches/tags and allow unselection if not required
-    const variants = product.variants || [];
-    const forcedAddons = (product.addons || []).map((a) => ({
-      ...a,
-      type: 'checkbox' as const,
-      required: false,
-    }));
+  // Replace the createProductConfiguration function with this corrected version
+  const createProductConfiguration = useCallback(
+    (product: Product): ProductConfiguration => {
+      const variants = product.variants || [];
+      const forcedAddons = (product.addons || []).map((a) => ({
+        ...a,
+        required: true,
+      }));
 
-    return {
-      basePrice: product.price,
-      baseStock: product.stock,
-      selectedVariants,
-      selectedAddons,
-      variants,
-      addons: forcedAddons,
-    };
-  };
+      // Mark selected options in addons
+      const addonsWithSelections = forcedAddons.map((addon) => ({
+        ...addon,
+        options: addon.options.map((option) => ({
+          ...option,
+          selected: selectedAddons.some(
+            (sa) =>
+              sa.addonName === addon.name && sa.optionLabel === option.label && sa.quantity > 0,
+          ),
+          quantity:
+            selectedAddons.find(
+              (sa) => sa.addonName === addon.name && sa.optionLabel === option.label,
+            )?.quantity || 0,
+        })),
+      }));
 
+      // Process variants with selections
+      const variantsWithSelections = variants.map((v) => ({
+        ...v,
+        options: v.options.map((o) => ({
+          ...o,
+          selected: selectedVariants.some(
+            (sv) => sv.variantName === v.name && sv.optionValue === o.value,
+          ),
+        })),
+      }));
+
+      return {
+        variants: variantsWithSelections,
+        addons: addonsWithSelections,
+        basePrice: product.price,
+        baseStock: product.stock,
+        selectedVariants: selectedVariants,
+        selectedAddons: selectedAddons,
+      };
+    },
+    [selectedVariants, selectedAddons],
+  );
   const fetchRelatedProducts = useCallback(
     async (category: string) => {
       try {
@@ -283,6 +314,7 @@ const ProductPage = () => {
     if (fetchedproduct.length === 0) {
       setSalePercent(0);
       setSaleEndsAt(null);
+      setSaleName(null);
       return;
     }
     const p = fetchedproduct[0] as Product;
@@ -295,6 +327,7 @@ const ProductPage = () => {
         if (!j?.success || !Array.isArray(j.data)) {
           setSalePercent(0);
           setSaleEndsAt(null);
+          setSaleName(null);
           return;
         }
         const activeSales = j.data as Array<{
@@ -303,8 +336,9 @@ const ProductPage = () => {
           categorySlugs?: string[];
           discountPercent?: number;
           endsAt: string;
+          name?: string;
         }>;
-        let best: { percent: number; endsAt: string } | null = null;
+        let best: { percent: number; endsAt: string; name?: string } | null = null;
         for (const s of activeSales) {
           const appliesById = Array.isArray(s.productIds) && s.productIds.includes(productId);
           const appliesByCat =
@@ -312,24 +346,27 @@ const ProductPage = () => {
           if (!appliesById && !appliesByCat) continue;
           const pct = typeof s.discountPercent === 'number' ? s.discountPercent : 0;
           const endsAt = s.endsAt;
-          if (!best) best = { percent: pct, endsAt };
+          if (!best) best = { percent: pct, endsAt, name: s.name };
           else if (
             pct > best.percent ||
             (pct === best.percent && new Date(endsAt).getTime() < new Date(best.endsAt).getTime())
           ) {
-            best = { percent: pct, endsAt };
+            best = { percent: pct, endsAt, name: s.name };
           }
         }
         if (best) {
           setSalePercent(best.percent);
           setSaleEndsAt(best.endsAt);
+          setSaleName(best.name ?? null);
         } else {
           setSalePercent(0);
           setSaleEndsAt(null);
+          setSaleName(null);
         }
       } catch {
         setSalePercent(0);
         setSaleEndsAt(null);
+        setSaleName(null);
       }
     })();
   }, [fetchedproduct]);
@@ -401,11 +438,11 @@ const ProductPage = () => {
           prev.map((product) =>
             product.slug === productSlug
               ? {
-                ...product,
-                reviews: result.data.reviews || [],
-                rating: result.data.rating || 0,
-                numReviews: result.data.numReviews || 0,
-              }
+                  ...product,
+                  reviews: result.data.reviews || [],
+                  rating: result.data.rating || 0,
+                  numReviews: result.data.numReviews || 0,
+                }
               : product,
           ),
         );
@@ -457,6 +494,22 @@ const ProductPage = () => {
       toast.error('Failed to submit review');
     }
   };
+  useEffect(() => {
+    if (fetchedproduct.length > 0) {
+      const product = fetchedproduct[0];
+      const config = createProductConfiguration(product);
+      const availableStock = calculateAvailableStock(config);
+
+      // If current quantity exceeds available stock, reset to available stock
+      if (quantity > availableStock && availableStock > 0) {
+        setQuantity(availableStock);
+      } else if (availableStock === 0 && quantity > 0) {
+        setQuantity(0);
+      } else if (quantity === 0 && availableStock > 0) {
+        setQuantity(1);
+      }
+    }
+  }, [selectedVariants, selectedAddons, fetchedproduct, quantity, createProductConfiguration]);
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -514,7 +567,7 @@ const ProductPage = () => {
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.3 }}
                         className="rounded-xl shadow-lg object-cover mx-auto"
-                        style={{ width: 600, height: 500 }}
+                        style={{ width: 600, height: 300 }}
                       />
                     </AnimatePresence>
                   </div>
@@ -529,10 +582,11 @@ const ProductPage = () => {
                         width={70}
                         height={70}
                         onClick={() => setSelectedImage(img)}
-                        className={`rounded-lg cursor-pointer border transition-all duration-200 shadow-sm hover:scale-105 ${selectedImage === img
-                          ? 'border-blue-600 ring-2 ring-blue-300'
-                          : 'border-gray-300'
-                          }`}
+                        className={`rounded-lg cursor-pointer border transition-all duration-200 shadow-sm hover:scale-105 ${
+                          selectedImage === img
+                            ? 'border-blue-600 ring-2 ring-blue-300'
+                            : 'border-gray-300'
+                        }`}
                         style={{
                           boxShadow: selectedImage === img ? '0 0 0 2px #2563eb' : undefined,
                         }}
@@ -632,10 +686,11 @@ const ProductPage = () => {
                           {product.colors.map((c, index) => (
                             <button
                               key={`color-${c}-${index}`}
-                              className={`w-10 h-10 rounded-full border-2 shadow-md hover:scale-110 transition-all duration-200 ${selectedColor === c
-                                ? 'ring-2 ring-blue-600 ring-offset-2 border-blue-600'
-                                : 'border-gray-300 hover:border-gray-400'
-                                }`}
+                              className={`w-10 h-10 rounded-full border-2 shadow-md hover:scale-110 transition-all duration-200 ${
+                                selectedColor === c
+                                  ? 'ring-2 ring-blue-600 ring-offset-2 border-blue-600'
+                                  : 'border-gray-300 hover:border-gray-400'
+                              }`}
                               style={{
                                 backgroundColor: c,
                                 boxShadow:
@@ -659,10 +714,11 @@ const ProductPage = () => {
                           {product.sizes.map((s, index) => (
                             <button
                               key={`size-${s}-${index}`}
-                              className={`px-4 py-2 border rounded-lg ${selectedSize === s
-                                ? 'border-blue-600 text-blue-600'
-                                : 'border-gray-300'
-                                }`}
+                              className={`px-4 py-2 border rounded-lg ${
+                                selectedSize === s
+                                  ? 'border-blue-600 text-blue-600'
+                                  : 'border-gray-300'
+                              }`}
                               onClick={() => setSelectedSize(s)}
                             >
                               {s}
@@ -694,7 +750,7 @@ const ProductPage = () => {
 
                 {/* Price Summary */}
                 {(product?.variants && product.variants.length > 0) ||
-                  (product?.addons && product.addons.length > 0) ? (
+                (product?.addons && product.addons.length > 0) ? (
                   <PriceSummary
                     configuration={createProductConfiguration(product)}
                     basePrice={product.price}
@@ -710,6 +766,7 @@ const ProductPage = () => {
                     <button
                       onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                       className="p-2 border rounded"
+                      disabled={quantity <= 1}
                     >
                       <Minus />
                     </button>
@@ -759,7 +816,9 @@ const ProductPage = () => {
                       // Validate required variants
                       const variantValidation = validateRequiredVariants(config);
                       if (!variantValidation.isValid) {
-                        toast.error(`Please select: ${variantValidation.missingVariants.join(', ')}`);
+                        toast.error(
+                          `Please select: ${variantValidation.missingVariants.join(', ')}`,
+                        );
                         return;
                       }
 
@@ -799,6 +858,18 @@ const ProductPage = () => {
                         return discountedBase + variantAdjustment + addonsTotal;
                       })();
 
+                      // Convert selectedVariants optionValue from internal value -> display label for cart
+                      const variantsForCart = (selectedVariants || []).map((sv) => {
+                        const variantDef = (product.variants || []).find(
+                          (v) => v.name === sv.variantName,
+                        );
+                        const opt = variantDef?.options.find((o) => o.value === sv.optionValue);
+                        return {
+                          variantName: sv.variantName,
+                          optionValue: opt?.label || sv.optionValue,
+                        };
+                      });
+
                       addToCart({
                         _id: product._id.toString(),
                         name: product.name,
@@ -808,8 +879,10 @@ const ProductPage = () => {
                         size: selectedSize,
                         slug: product.slug,
                         quantity: cappedQty,
-                        variants: selectedVariants,
+                        variants: variantsForCart,
                         addons: selectedAddons,
+                        saleName: saleName ?? undefined,
+                        salePercent: salePercent || undefined,
                       });
                       // Show success toast
                       toast.success(`${product.name} added to cart!`);
@@ -827,9 +900,9 @@ const ProductPage = () => {
                         name: product.name,
                         price: isOnSale(Math.max(product.discount || 0, salePercent || 0))
                           ? calculateSalePrice(
-                            product.price,
-                            Math.max(product.discount || 0, salePercent || 0),
-                          )
+                              product.price,
+                              Math.max(product.discount || 0, salePercent || 0),
+                            )
                           : product.price,
                         image: product.images[0],
                         images: product.images,
@@ -867,8 +940,9 @@ const ProductPage = () => {
             {['description', 'reviews', 'shipping'].map((tab) => (
               <button
                 key={`tab-${tab}`}
-                className={`pb-3 font-semibold capitalize ${activeTab === tab ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'
-                  }`}
+                className={`pb-3 font-semibold capitalize ${
+                  activeTab === tab ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'
+                }`}
                 onClick={() => setActiveTab(tab)}
               >
                 {tab}
@@ -893,7 +967,9 @@ const ProductPage = () => {
                             key={`avg-star-${i}`}
                             size={20}
                             fill={
-                              i < Math.round(fetchedproduct[0]?.rating || 0) ? 'currentColor' : 'none'
+                              i < Math.round(fetchedproduct[0]?.rating || 0)
+                                ? 'currentColor'
+                                : 'none'
                             }
                           />
                         ))}
@@ -1025,7 +1101,9 @@ const ProductPage = () => {
                       </svg>
                     </div>
                     <p className="text-gray-600 text-lg">No reviews yet</p>
-                    <p className="text-gray-500 text-sm mt-1">Be the first to review this product!</p>
+                    <p className="text-gray-500 text-sm mt-1">
+                      Be the first to review this product!
+                    </p>
                   </div>
                 )}
               </div>
@@ -1037,9 +1115,9 @@ const ProductPage = () => {
                   <h4 className="font-semibold text-gray-800">Shipping</h4>
                   <p>
                     Any product you purchase from Axion through any platform, including website,
-                    Facebook, and Instagram, will come with free shipping. We offer shipping services
-                    throughout Pakistan and you are automatically eligible for free shipping upon
-                    ordering any product(s).
+                    Facebook, and Instagram, will come with free shipping. We offer shipping
+                    services throughout Pakistan and you are automatically eligible for free
+                    shipping upon ordering any product(s).
                   </p>
                   <h4 className="font-semibold text-gray-800 mt-4">Return policy</h4>
                   <p>
@@ -1057,15 +1135,15 @@ const ProductPage = () => {
                     <li>We request you to allow for slight deviation in measurement data.</li>
                   </ol>
                   <p className="mt-4">
-                    If you have any query regarding your orders or you are having trouble dealing with
-                    a parcel/shipment, you can contact us at{' '}
+                    If you have any query regarding your orders or you are having trouble dealing
+                    with a parcel/shipment, you can contact us at{' '}
                     <span className="font-semibold">{process.env.NEXT_PUBLIC_WHATSAPP}</span>.
                   </p>
                   <p className="mt-4">
                     For the full policy, see our{' '}
-                    <a href="/shipping-policy" className="text-blue-600 underline">
+                    <Link href="/shipping-policy" className="text-blue-600 underline">
                       Shipping and Return Policy
-                    </a>{' '}
+                    </Link>{' '}
                     page.
                   </p>
                 </div>
@@ -1130,8 +1208,8 @@ const ProductPage = () => {
                   id={p._id.toString()}
                   name={p.name}
                   price={p.price}
-                  description={p.description}
-                  img={p.images?.[0] || ''}
+                  img={p.images || []}
+                  rating={p.rating}
                   href={`/product/${p.slug}`}
                   discount={p.discount}
                 />
@@ -1140,7 +1218,7 @@ const ProductPage = () => {
             <div className="mt-6 text-center">
               <Link
                 href={`/category/${fetchedproduct[0]?.category || ''}`}
-                className="inline-block px-5 py-2 rounded-md bg-(--color-logo) hover:bg-(--color-logo-hover)/90 text-white"
+                className="inline-block px-5 py-2 rounded-md bg-(--color-logo) hover:bg-(--color-logo)/90 text-white"
               >
                 View more in this category
               </Link>
@@ -1184,8 +1262,9 @@ const ProductPage = () => {
                       <button
                         key={star}
                         onClick={() => setReviewData((prev) => ({ ...prev, rating: star }))}
-                        className={`text-3xl transition-all duration-200 transform hover:scale-110 ${star <= reviewData.rating ? 'text-yellow-400' : 'text-gray-300'
-                          } hover:text-yellow-400`}
+                        className={`text-3xl transition-all duration-200 transform hover:scale-110 ${
+                          star <= reviewData.rating ? 'text-yellow-400' : 'text-gray-300'
+                        } hover:text-yellow-400`}
                       >
                         ★
                       </button>
@@ -1200,7 +1279,9 @@ const ProductPage = () => {
                   </label>
                   <textarea
                     value={reviewData.comment}
-                    onChange={(e) => setReviewData((prev) => ({ ...prev, comment: e.target.value }))}
+                    onChange={(e) =>
+                      setReviewData((prev) => ({ ...prev, comment: e.target.value }))
+                    }
                     placeholder="Share your thoughts about this product..."
                     className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
                     rows={4}

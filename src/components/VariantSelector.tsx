@@ -37,6 +37,7 @@ const VariantSelector: React.FC<VariantSelectorProps> = ({
         {variant.options.map((option, index) => {
           const current = getSelectedValue(variant.name);
           const isSelected = current === option.value;
+          const isRGB = (option.label || '').trim().toLowerCase() === 'rgb' || (option.value || '').trim().toLowerCase() === 'rgb';
           return (
             <button
               key={`${variant.name}-${option.value}-${index}`}
@@ -45,13 +46,19 @@ const VariantSelector: React.FC<VariantSelectorProps> = ({
                   ? 'ring-2 ring-blue-600 ring-offset-2 border-blue-600'
                   : 'border-gray-300 hover:border-gray-400'
               }`}
-              style={{
-                backgroundColor: option.value,
-                boxShadow:
-                  option.value === '#ffffff' || option.value === 'white'
-                    ? 'inset 0 0 0 1px #e5e7eb'
-                    : undefined,
-              }}
+              style={
+                isRGB
+                  ? {
+                      background: 'linear-gradient(135deg, #ff6b6b 0%, #4dff88 50%, #6ba8ff 100%)',
+                    }
+                  : {
+                      backgroundColor: option.value,
+                      boxShadow:
+                        option.value === '#ffffff' || option.value === 'white'
+                          ? 'inset 0 0 0 1px #e5e7eb'
+                          : undefined,
+                    }
+              }
               onClick={() => onVariantChange(variant.name, isSelected ? '' : option.value)}
               aria-pressed={isSelected}
               title={`${variant.name}: ${option.label}`}

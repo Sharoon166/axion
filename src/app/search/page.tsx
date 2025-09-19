@@ -19,6 +19,7 @@ type Product = {
   price: number;
   description?: string;
   images: string[];
+  rating?: number;
   category?: ProductCategory | null;
   discount?: number;
   saleEndsAt?: string;
@@ -166,9 +167,9 @@ function SearchComponent(): ReactElement {
                   id={product._id}
                   name={product.name}
                   price={product.price}
-                  img={product.images?.[0] ?? ''}
+                  img={product.images ?? []}
                   href={`/product/${product.slug}`}
-                  description={product.description}
+                  rating={product.rating}
                   discount={product.discount}
                   saleEndsAt={product.saleEndsAt}
                 />

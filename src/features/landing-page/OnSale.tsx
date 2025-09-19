@@ -14,7 +14,9 @@ interface Product {
   slug: string;
   featured?: boolean;
   discount?: number;
+  rating?: number;
   category?: {
+
     name: string;
     slug: string;
   } | null;
@@ -247,8 +249,8 @@ const SaleSection = () => {
                   id={product._id}
                   name={product.name}
                   price={product.price}
-                  img={product.images?.[0] ?? ''}
-                  description={product.description}
+                  img={product.images}
+                  rating={product.rating}
                   href={`/product/${product.slug}`}
                   discount={percent}
                   saleEndsAt={saleMap[product._id]?.endsAt}

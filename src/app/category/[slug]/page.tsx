@@ -402,7 +402,8 @@ const CategoryPage: React.FC = () => {
                 name={item.name}
                 price={item.price}
                 discount={item.discount}
-                img={item.image || '/prodcut-1.jpg'}
+                img={item.images || []}
+                rating={item.rating}
                 href={`/product/${item.slug}`}
                 saleEndsAt={(item as Product & { saleEndsAt?: string }).saleEndsAt}
               />

@@ -1,19 +1,7 @@
 'use client';
 import Image from 'next/image';
 import Link from 'next/link';
-import {
-  Search,
-  Handbag,
-  UserRound,
-  Clock,
-  Star,
-  Trash2,
-  Plus,
-  Minus,
-  Menu,
-  LogOut,
-  Edit,
-} from 'lucide-react';
+import { Search, Handbag, UserRound, Clock, Star, Trash2, Menu, LogOut, Edit } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -44,7 +32,7 @@ const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileCartOpen, setMobileCartOpen] = useState(false);
   const { user } = useAuth();
-  const { cartItems, getTotalPrice, getTotalItems, updateQuantity, removeFromCart } = useCart();
+  const { cartItems, getTotalPrice, getTotalItems, removeFromCart } = useCart();
   const router = useRouter();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -107,9 +95,11 @@ const Header = () => {
                 >
                   <Link
                     href={link.href}
-                    className={`relative px-1 py-2 block transition-colors ${isTarget ? 'text-[var(--color-logo)] font-semibold' :
-                        link.className || 'text-slate-700 hover:text-[var(--color-logo)]'
-                      }`}
+                    className={`relative px-1 py-2 block transition-colors ${
+                      isTarget
+                        ? 'text-[var(--color-logo)] font-semibold'
+                        : link.className || 'text-slate-700 hover:text-[var(--color-logo)]'
+                    }`}
                   >
                     {link.name}
                   </Link>
@@ -155,7 +145,7 @@ const Header = () => {
                       {
                         'bg-slate-100 font-semibold': pathname === link.href,
                       },
-                      link.className
+                      link.className,
                     )}
                   >
                     {link.name}
@@ -220,27 +210,8 @@ const Header = () => {
                                 {item.name}
                               </h4>
                               <p className="text-xs text-[var(--color-logo)]">
-                                Rs. {item.price.toLocaleString()}
+                                Rs. {item.price.toLocaleString()} x {item.quantity}
                               </p>
-                            </div>
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              <button
-                                onClick={() => updateQuantity(item._id, item.quantity - 1)}
-                                className="w-6 h-6 rounded-full flex items-center justify-center"
-                                style={{ backgroundColor: '#a5afc2' }}
-                              >
-                                <Minus size={12} style={{ color: '#ffffff' }} />
-                              </button>
-                              <span className="text-sm" style={{ color: '#0C1E33' }}>
-                                {item.quantity}
-                              </span>
-                              <button
-                                onClick={() => updateQuantity(item._id, item.quantity + 1)}
-                                className="w-6 h-6 rounded-full flex items-center justify-center"
-                                style={{ backgroundColor: '#a5afc2' }}
-                              >
-                                <Plus size={12} style={{ color: '#ffffff' }} />
-                              </button>
                             </div>
                             <button
                               onClick={() => removeFromCart(item._id)}
@@ -467,27 +438,8 @@ const Header = () => {
                           {item.name}
                         </h4>
                         <p className="text-xs text-[var(--color-logo)]">
-                          Rs. {item.price.toLocaleString()}
+                          Rs. {item.price.toLocaleString()} x {item.quantity}
                         </p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => updateQuantity(item._id, item.quantity - 1)}
-                          className="w-6 h-6 rounded-full flex items-center justify-center"
-                          style={{ backgroundColor: '#a5afc2' }}
-                        >
-                          <Minus size={12} style={{ color: '#ffffff' }} />
-                        </button>
-                        <span className="text-sm" style={{ color: '#0C1E33' }}>
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() => updateQuantity(item._id, item.quantity + 1)}
-                          className="w-6 h-6 rounded-full flex items-center justify-center"
-                          style={{ backgroundColor: '#a5afc2' }}
-                        >
-                          <Plus size={12} style={{ color: '#ffffff' }} />
-                        </button>
                       </div>
                       <button
                         onClick={() => removeFromCart(item._id)}
@@ -523,16 +475,6 @@ const Header = () => {
                   style={{
                     backgroundColor: cartItems.length > 0 ? '#0077B6' : '#ccc',
                     color: 'white',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (cartItems.length > 0) {
-                      e.currentTarget.style.backgroundColor = '#0077B6';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (cartItems.length > 0) {
-                      e.currentTarget.style.backgroundColor = '#0077B6';
-                    }
                   }}
                 >
                   Pay Now
@@ -574,41 +516,46 @@ const ProfileDropdown = ({ userData }: { userData: HeaderUser | null }) => {
     {
       name: 'Profile',
       href: userData.isAdmin ? '/dashboard' : '/profile',
-      icon: <UserRound size={16} />
+      icon: <UserRound size={16} />,
     },
     {
       name: 'Edit Profile',
       href: '/profile/edit',
-      icon: <Edit size={16} />
+      icon: <Edit size={16} />,
     },
-    ...(userData.isAdmin ? [] : [
-      {
-        name: 'Orders',
-        href: '/orders',
-        icon: <Clock size={16} />
-      },
-      {
-        name: 'Wishlist',
-        href: '/wishlist',
-        icon: <Star size={16} />
-      }
-    ])
+    ...(userData.isAdmin
+      ? []
+      : [
+          {
+            name: 'Orders',
+            href: '/profile/orders',
+            icon: <Clock size={16} />,
+          },
+          {
+            name: 'Wishlist',
+            href: '/profile/wishlist',
+            icon: <Star size={16} />,
+          },
+        ]),
   ];
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="group relative p-2 m-2 rounded-full overflow-hidden transition-all duration-300 hover:bg-slate-100">
-          <div
-            className=" overflow-hidden rounded-full size-2 "
-          >
-            <Image src={userData?.image || '/placeholder.png'} alt={userData?.name || 'user picture'} className='object-cover object-center' fill />
+          <div className=" overflow-hidden rounded-full size-2 ">
+            <Image
+              src={userData?.image || '/placeholder.png'}
+              alt={userData?.name || 'user picture'}
+              className="object-cover object-center"
+              fill
+            />
           </div>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-64 p-3 mt-2" align="end">
         <div className="px-2 py-1.5">
-          <p className="text-sm font-medium">{userData?.name}</p>
+          <p className="text-sm font-medium"> Welcome {userData?.name}</p>
           <p className="text-xs text-muted-foreground truncate">{userData?.email}</p>
         </div>
 
@@ -621,9 +568,7 @@ const ProfileDropdown = ({ userData }: { userData: HeaderUser | null }) => {
               href={item.href}
               className="flex flex-col items-center p-2 rounded-md hover:bg-gray-100 transition-colors"
             >
-              <div className="p-1.5 bg-gray-100 rounded-full mb-1.5">
-                {item.icon}
-              </div>
+              <div className="p-1.5 bg-gray-100 rounded-full mb-1.5">{item.icon}</div>
               <span className="text-xs text-center">{item.name}</span>
             </Link>
           ))}
@@ -633,7 +578,6 @@ const ProfileDropdown = ({ userData }: { userData: HeaderUser | null }) => {
 
         <button
           onClick={() => {
-            // localStorage.removeItem('userData');
             localStorage.clear();
             window.location.href = '/';
           }}

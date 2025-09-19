@@ -40,7 +40,12 @@ export async function POST(request: NextRequest) {
     } catch {
       return NextResponse.json({ success: false, error: 'Invalid JSON body' }, { status: 400 });
     }
-    const { categorySlugs, productIds, endsAt, discountPercent } = (body || {}) as { categorySlugs?: string[]; productIds?: string[]; endsAt?: string; discountPercent?: number };
+    const { name, categorySlugs, productIds, endsAt, discountPercent } = (body || {}) as { name?: string; categorySlugs?: string[]; productIds?: string[]; endsAt?: string; discountPercent?: number };
+
+    const saleName = typeof name === 'string' ? name.trim() : '';
+    if (!saleName) {
+      return NextResponse.json({ success: false, error: 'Sale name is required' }, { status: 400 });
+    }
 
     const catList = Array.isArray(categorySlugs) ? categorySlugs.filter(Boolean) : [];
     const prodList = Array.isArray(productIds) ? productIds.filter(Boolean) : [];
@@ -56,14 +61,15 @@ export async function POST(request: NextRequest) {
 
     const pct = typeof discountPercent === 'number' && discountPercent >= 0 ? Math.min(95, Math.max(0, Math.round(discountPercent))) : 0;
     console.log('Creating sale with discountPercent:', pct); // Debug log
-    const created = await Sale.create({ categorySlugs: catList, productIds: prodList, endsAt: ends, discountPercent: pct, active: true });
-
-    // In case of a stale cached schema (without productIds), explicitly set it and return a lean doc
-    if (prodList.length > 0) {
+    const created = await Sale.create({ name: saleName, categorySlugs: catList, productIds: prodList, endsAt: ends, discountPercent: pct, active: true });
+    if (prodList.length > 0 || saleName) {
       try {
-        await Sale.updateOne({ _id: created._id }, { $set: { productIds: prodList } }, { strict: false });
+        const setDoc: Record<string, string[] | string> = {};
+        if (prodList.length > 0) setDoc.productIds = prodList;
+        if (saleName) setDoc.name = saleName;
+        await Sale.updateOne({ _id: created._id }, { $set: setDoc }, { strict: false });
       } catch (e) {
-        console.warn('Warning: failed to set productIds via updateOne', e);
+        console.warn('Warning: failed to set fields via updateOne', e);
       }
     }
 

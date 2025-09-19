@@ -15,6 +15,7 @@ interface Product {
   price: number;
   images: string[];
   slug: string;
+  rating?: number;
   featured?: boolean;
   discount?: number;
   category?: {
@@ -113,8 +114,8 @@ const FeaturedProducts = () => {
                   name={product.name}
                   price={product.price}
                   discount={product.discount}
-                  img={(product.images && product.images[0]) ? product.images[0] : ''}
-                  description={product.description}
+                  img={product.images}
+                  rating={product.rating}
                   href={`/product/${product.slug}`}
                 />
               ))}

@@ -55,7 +55,7 @@ const AddonSelector: React.FC<AddonSelectorProps> = ({
     }
 
     return (
-      <div key={addon.name} className="mt-6 p-4 border border-gray-200 rounded-lg">
+      <div key={addon.name} className="mt-6 p-4  border border-gray-200 rounded-lg">
         <h4 className="font-semibold flex items-center gap-2 mb-3">
           {addon.name}
           {addon.required && <span className="text-red-500 text-sm">*</span>}
@@ -63,7 +63,7 @@ const AddonSelector: React.FC<AddonSelectorProps> = ({
         {addon.description && (
           <p className="text-gray-600 text-sm mb-3">{addon.description}</p>
         )}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {options.map((option, index) => {
             const isSelected = isAddonSelected(addon.name, option.label);
             return (

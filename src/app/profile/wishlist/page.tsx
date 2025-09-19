@@ -33,6 +33,7 @@ export default function WishlistPage() {
     name: string;
     slug: string;
     price: number;
+    rating?: number;
     image?: string;
     images?: string[];
     description?: string;
@@ -51,7 +52,7 @@ export default function WishlistPage() {
         {paginatedItems.length > 0 ? (
           <>
             {/* Wishlist Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
               {paginatedItems.map((item: WishlistItem) => (
                 <div key={item._id} className="relative group">
                   {/* Remove Button Overlay */}
@@ -66,9 +67,9 @@ export default function WishlistPage() {
                     id={item._id}
                     name={item.name}
                     price={item.price}
-                    img={item?.images?.[0] || item.image || '/product-1.jpg'}
+                    img={item?.images|| []}
+                    rating={item.rating}
                     href={`/product/${item.slug}`}
-                    description={item.description}
                     discount={item.discount}
                   />
                 </div>

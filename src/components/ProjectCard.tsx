@@ -18,7 +18,6 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   href,
   image,
   title,
-  category,
   style,
   location,
   date,
@@ -42,13 +41,10 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
         />
       </div>
 
-      {/* Content */}
-      <div className="p-5 md:p-6">
-        {(category || style) && (
-          <p className="text-slate-600 text-sm mb-2">
-            {category || ''}
-            {category && style ? ' - ' : ''}
-            {style || ''}
+      <div className="p-2 md:p-4">
+        {(style) && (
+          <p className="text-slate-600 capitalize text-sm mb-2">
+            {style.split(',').join(' - ') || ''}
           </p>
         )}
         <h3 className="text-lg md:text-xl font-semibold text-slate-900 mb-3 leading-snug">

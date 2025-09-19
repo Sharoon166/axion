@@ -7,6 +7,7 @@ export interface Product {
   description: string;
   price: number;
   category: string;
+  rating: number;
   image: string;
   inStock: boolean;
   images: string[];
@@ -23,6 +24,7 @@ export interface CartItem {
 }
 
 export interface BlogPost {
+  tags: string[];
   id: string;
   title: string;
   excerpt: string;
@@ -86,6 +88,8 @@ export interface User {
 }
 
 export interface OrderItem {
+  saleName?: string;
+  salePercent?: number;
   name: string;
   qty: number;
   quantity: number;

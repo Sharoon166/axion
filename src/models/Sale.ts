@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const saleSchema = new mongoose.Schema(
   {
+    name: { type: String, required: true },
     categorySlugs: { type: [String], default: [] },
     productIds: { type: [String], default: [] },
     endsAt: { type: Date, required: true },

@@ -69,14 +69,14 @@ const OrderGeneratePage = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setCustomerDetails(prev => ({
+    setCustomerDetails((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const validateForm = () => {
-    return Object.values(customerDetails).every(value => value.trim() !== '');
+    return Object.values(customerDetails).every((value) => value.trim() !== '');
   };
 
   const handlePayNow = () => {
@@ -90,7 +90,7 @@ const OrderGeneratePage = () => {
   const handlePaymentConfirm = async () => {
     const orderData = {
       user: user?.id || null,
-      orderItems: cartItems.map(item => ({
+      orderItems: cartItems.map((item) => ({
         product: item._id,
         name: item.name,
         qty: item.quantity,
@@ -98,23 +98,26 @@ const OrderGeneratePage = () => {
         price: item.price,
         color: item.color || '',
         size: item.size || 'Standard',
-        image: item.image
+        image: item.image,
+        variants: item.variants || [],
+        saleName: item.saleName || undefined,
+        salePercent: typeof item.salePercent === 'number' ? item.salePercent : undefined,
       })),
       shippingAddress: {
         fullName: customerDetails.name,
         address: customerDetails.address,
         city: customerDetails.city,
         postalCode: customerDetails.postalCode,
-        phone: customerDetails.phone
+        phone: customerDetails.phone,
       },
       paymentMethod: paymentMethod === 'jazzcash' ? 'JazzCash' : 'Bank Transfer',
       itemsPrice: getTotalPrice(),
-      shippingPrice: 200,
+      shippingPrice: 0,
       taxPrice: 0,
-      totalPrice: getTotalPrice() + 200,
+      totalPrice: getTotalPrice(),
       customerEmail: customerDetails.email,
       isPaid: true,
-      paidAt: new Date().toISOString()
+      paidAt: new Date().toISOString(),
     };
 
     const orderPromise = fetch('/api/orders', {
@@ -136,8 +139,7 @@ const OrderGeneratePage = () => {
       success: () => {
         clearCart();
         setShowPaymentDialog(false);
-        setTimeout(() => router.push('/'), 1500);
-        return 'Order placed successfully! Redirecting to home...';
+        return 'Order placed successfully!';
       },
       error: (error) => {
         setShowPaymentDialog(false);
@@ -148,9 +150,7 @@ const OrderGeneratePage = () => {
 
   // Show loading while checking authentication
   if (!user) {
-    return (
-      <Loading/>
-    );
+    return <Loading />;
   }
 
   if (cartItems.length === 0) {
@@ -158,7 +158,12 @@ const OrderGeneratePage = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Your cart is empty</h1>
-          <Button onClick={() => router.push('/')}>Continue Shopping</Button>
+          <Button
+            onClick={() => router.push('/')}
+            className="bg-(--color-logo) hover:bg-(--color-logo)/90 text-white"
+          >
+            Continue Shopping
+          </Button>
         </div>
       </div>
     );
@@ -166,14 +171,13 @@ const OrderGeneratePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
+      <div className="max-w-[85rem] mx-auto px-4">
         <h1 className="text-3xl font-bold mb-8">Complete Your Order</h1>
-        
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Customer Details Form */}
           <div className="bg-white p-6 rounded-lg shadow">
             <h2 className="text-xl font-semibold mb-6">Shipping Information</h2>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">Full Name *</label>
@@ -186,7 +190,7 @@ const OrderGeneratePage = () => {
                   placeholder="Enter your full name"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium mb-2">Email Address *</label>
                 <input
@@ -198,7 +202,7 @@ const OrderGeneratePage = () => {
                   placeholder="Enter your email"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium mb-2">Phone Number *</label>
                 <input
@@ -210,7 +214,7 @@ const OrderGeneratePage = () => {
                   placeholder="Enter your phone number"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium mb-2">Address *</label>
                 <textarea
@@ -222,7 +226,7 @@ const OrderGeneratePage = () => {
                   placeholder="Enter your complete address"
                 />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">City *</label>
@@ -235,7 +239,7 @@ const OrderGeneratePage = () => {
                     placeholder="City"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium mb-2">Postal Code *</label>
                   <input
@@ -254,10 +258,13 @@ const OrderGeneratePage = () => {
           {/* Order Summary */}
           <div className="bg-white p-6 rounded-lg shadow">
             <h2 className="text-xl font-semibold mb-6">Order Summary</h2>
-            
+
             <div className="space-y-4 mb-6">
               {cartItems.map((item, index) => (
-                <div key={`${item._id}-${item.color}-${item.size}-${index}`} className="flex items-center space-x-4 p-3 border rounded-lg">
+                <div
+                  key={`${item._id}-${item.color}-${item.size}-${index}`}
+                  className="flex items-center space-x-4 p-3 border rounded-lg"
+                >
                   <Image
                     src={getImageUrl(item.image)}
                     alt={item.name}
@@ -267,7 +274,17 @@ const OrderGeneratePage = () => {
                   />
                   <div className="flex-1">
                     <h3 className="font-medium">{item.name}</h3>
-                    <div className="text-sm text-gray-600 space-y-1">                      
+                    <div className="text-sm text-gray-600 space-y-1">
+                      {/* Show sale info (if applied) */}
+                      {typeof item.salePercent === 'number' && item.salePercent > 0 && (
+                        <div>
+                          <p className="text-green-700 font-medium">
+                            Sale{item.saleName ? `: ${item.saleName}` : ''} — {item.salePercent}%
+                            OFF
+                          </p>
+                        </div>
+                      )}
+
                       {/* Show selected variants */}
                       {item.variants && item.variants.length > 0 && (
                         <div>
@@ -278,25 +295,27 @@ const OrderGeneratePage = () => {
                           ))}
                         </div>
                       )}
-                      
+
                       {/* Show selected addons */}
                       {item.addons && item.addons.length > 0 && (
                         <div>
                           <p className="font-medium text-gray-700">Add-ons:</p>
                           {item.addons.map((addon, idx) => (
                             <p key={idx} className="ml-2">
-                              • {addon.addonName}: {addon.optionLabel} 
+                              • {addon.addonName}: {addon.optionLabel}
                               {addon.quantity > 1 && ` (x${addon.quantity})`}
                             </p>
                           ))}
                         </div>
                       )}
-                      
+
                       <p className="font-medium">Qty: {item.quantity}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold">Rs. {(item.price * item.quantity).toLocaleString()}</p>
+                    <p className="font-semibold">
+                      Rs. {(item.price * item.quantity).toLocaleString()}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -309,11 +328,11 @@ const OrderGeneratePage = () => {
               </div>
               <div className="flex justify-between">
                 <span>Shipping:</span>
-                <span>Rs. 200</span>
+                <span>Rs. 0</span>
               </div>
               <div className="flex justify-between font-bold text-lg border-t pt-2">
                 <span>Total:</span>
-                <span className='text-[var(--color-logo)]'>{(getTotalPrice() + 200).toLocaleString()}</span>
+                <span className="text-[var(--color-logo)]">{getTotalPrice().toLocaleString()}</span>
               </div>
             </div>
 
@@ -328,87 +347,100 @@ const OrderGeneratePage = () => {
         </div>
 
         {/* Payment Dialog */}
-        <ScrollArea className='h-[70vh]'>
+        <ScrollArea className="h-[70vh]">
+          <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Choose Payment Method</DialogTitle>
+                <DialogDescription>
+                  Select a method and follow the instructions below.
+                </DialogDescription>
+              </DialogHeader>
 
-        <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Choose Payment Method</DialogTitle>
-              <DialogDescription>
-                Select a method and follow the instructions below.
-              </DialogDescription>
-            </DialogHeader>
+              {/* Payment Method Select */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium">Payment Method</label>
+                <Select
+                  value={paymentMethod}
+                  onValueChange={(v: 'jazzcash' | 'bank') => setPaymentMethod(v)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="jazzcash">JazzCash</SelectItem>
+                    <SelectItem value="bank">Bank Transfer</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Payment Method Select */}
-            <div className="space-y-3">
-              <label className="text-sm font-medium">Payment Method</label>
-              <Select value={paymentMethod} onValueChange={(v: 'jazzcash' | 'bank') => setPaymentMethod(v)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a method" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="jazzcash">JazzCash</SelectItem>
-                  <SelectItem value="bank">Bank Transfer</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              {/* Method Details */}
+              {paymentMethod === 'jazzcash' ? (
+                <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                  <h3 className="font-semibold text-gray-900 mb-2">JazzCash Details</h3>
+                  <div className="text-sm text-gray-700 space-y-1">
+                    <p>
+                      <span className="font-medium">Number:</span>{' '}
+                      {process.env.NEXT_PUBLIC_JAZZCASH}
+                    </p>
+                    <p>
+                      <span className="font-medium">Name:</span> Axion Lighting
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                  <h3 className="font-semibold text-gray-900 mb-2">Bank Transfer Details</h3>
+                  <div className="text-sm text-gray-700 space-y-1">
+                    <p>
+                      <span className="font-medium">Bank:</span> HBL Bank
+                    </p>
+                    <p>
+                      <span className="font-medium">Account:</span>{' '}
+                      {process.env.NEXT_PUBLIC_BANK_ACCOUNT}
+                    </p>
+                  </div>
+                </div>
+              )}
 
-            {/* Method Details */}
-            {paymentMethod === 'jazzcash' ? (
-              <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                <h3 className="font-semibold text-gray-900 mb-2">JazzCash Details</h3>
-                <div className="text-sm text-gray-700 space-y-1">
-                  <p><span className="font-medium">Number:</span> {process.env.NEXT_PUBLIC_JAZZCASH}</p>
-                  <p><span className="font-medium">Name:</span> Axion Lighting</p>
+              {/* Total */}
+              <div className="mt-4 p-4 border border-gray-300 rounded-lg bg-white">
+                <div className="flex justify-between items-center">
+                  <span className="font-semibold text-gray-900">Total Amount</span>
+                  <span className="text-lg font-bold text-gray-900">
+                    Rs. {getTotalPrice().toLocaleString()}
+                  </span>
                 </div>
               </div>
-            ) : (
+
+              {/* WhatsApp Confirmation Message */}
               <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                <h3 className="font-semibold text-gray-900 mb-2">Bank Transfer Details</h3>
-                <div className="text-sm text-gray-700 space-y-1">
-                  <p><span className="font-medium">Bank:</span> HBL Bank</p>
-                  <p><span className="font-medium">Account:</span> {process.env.NEXT_PUBLIC_BANK_ACCOUNT}</p>
-                </div>
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  <span className="font-medium">Important:</span> We will confirm your order after
+                  you send the receipt of payment to our WhatsApp number which is{' '}
+                  <span className="font-semibold">{process.env.NEXT_PUBLIC_WHATSAPP}</span>
+                </p>
               </div>
-            )}
 
-            {/* Total */}
-            <div className="mt-4 p-4 border border-gray-300 rounded-lg bg-white">
-              <div className="flex justify-between items-center">
-                <span className="font-semibold text-gray-900">Total Amount</span>
-                <span className="text-lg font-bold text-gray-900">
-                  Rs. {(getTotalPrice() + 200).toLocaleString()}
-                </span>
+              {/* Actions */}
+              <div className="flex gap-3 mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowPaymentDialog(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handlePaymentConfirm}
+                  className="flex-1 bg-(--color-logo) hover:bg-(--color-logo)/90"
+                >
+                  I Have Paid
+                </Button>
               </div>
-            </div>
-
-            {/* WhatsApp Confirmation Message */}
-            <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-              <p className="text-sm text-gray-700 leading-relaxed">
-                <span className="font-medium">Important:</span> We will confirm your order after you send the receipt of payment to our WhatsApp number which is <span className="font-semibold">{process.env.NEXT_PUBLIC_WHATSAPP}</span>
-              </p>
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-3 mt-6">
-              <Button
-                variant="outline"
-                onClick={() => setShowPaymentDialog(false)}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handlePaymentConfirm}
-                className="flex-1 bg-(--color-logo) hover:bg-(--color-logo)/90"
-              >
-                I Have Paid
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
         </ScrollArea>
-
       </div>
     </div>
   );
