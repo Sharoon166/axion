@@ -60,7 +60,7 @@ export default function BlogPostClient({ slug }: BlogPostClientProps) {
           <span> By {post.author || 'Admin'}</span>
           <span>|</span>
           <span>
-            Pulished on{' '}
+            Published on{' '}
             {post.date
               ? new Date(post.date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
               : new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}

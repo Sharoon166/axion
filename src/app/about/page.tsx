@@ -32,6 +32,7 @@ export default function AboutPage() {
       <PageHeader
         title="About"
         titleHighlight="Axion"
+        subtitle="Learn more about Axion Lighting"
       />
       <div className="max-w-[85rem] mx-auto px-8 sm:px-6">
         <section className="py-12 sm:py-20">

@@ -12,7 +12,7 @@ interface ProductCardProps {
   id: string;
   name: string;
   price: number;
-  img: string[]; // Array for hover image effect
+  img: string[] | string; // Array for hover image effect
   href: string;
   discount?: number;
   saleEndsAt?: string;
@@ -35,6 +35,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const [loading, setLoading] = useState(false);
   const { addToCart } = useCart();
   const { user } = useAuth();
+  
+  // Normalize images to always be an array
+  const images = Array.isArray(img) ? img : [img];
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -48,10 +51,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
     setLoading(true);
     try {
       await addToCart({
-        _id:id,
+        _id: id,
         name,
         price: discount ? calculateSalePrice(price, discount) : price,
-        image: img[0],
+        image: images[0],
         quantity: 1,
         slug: href,
         color: '',
@@ -91,17 +94,18 @@ const ProductCard: React.FC<ProductCardProps> = ({
   }, [saleEndsAt]);
 
   return (
-    <Link href={href} className="bg-white rounded-xl shadow-sm group border border-gray-200 overflow-hidden flex flex-col sm:w-[320px] w-[370px] transition-shadow">
+    <Link href={href} className="bg-white rounded-xl shadow-sm group border border-gray-200 overflow-hidden flex flex-col  transition-shadow">
       <div
         className="relative overflow-hidden w-full h-76 cursor-pointer"
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
+        onMouseEnter={() => images.length > 1 && setHovered(true)}
+        onMouseLeave={() => images.length > 1 && setHovered(false)}
       >
         <Image
-          src={getImageUrl(hovered && img[1] ? img[1] : img[0])}
+          src={getImageUrl(images.length > 1 && hovered ? images[1] : images[0])}
           alt={name}
           fill
           className="object-cover transition-all duration-300 ease-in-out group-hover:scale-105"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
       </div>
 
@@ -109,7 +113,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
       <div className="px-4 py-2  flex flex-col flex-1">
         <h3 className="text-base font-medium text-black leading-snug mb-1 line-clamp-2">{name}</h3>
 
-        <div className="flex items-center">
+        <div className="flex items-center gap-2 ">
           {isOnSale(discount) ? (
             <>
               <p className="text-black font-semibold text-md">
@@ -121,7 +125,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
               </span>
             </>
           ) : (
-            <p className="text-black font-bold text-lg">
+            <p className="text-black font-bold text-sm">
               Rs. {price.toLocaleString()}
             </p>
           )}
@@ -132,7 +136,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         )}
 
         {/* Rating Display */}
-        <div className="flex items-center justify-between mt-1 mb-2">
+        <div className="flex items-center justify-between mt-1">
           <div className="flex items-center gap-1">
             <div className="flex">
               {[1, 2, 3, 4, 5].map((star) => (

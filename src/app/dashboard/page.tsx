@@ -271,7 +271,7 @@ function DashboardContent() {
               </Link>
 
               <Link
-                href="/profile"
+                href="/profile/edit"
                 className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               >
                 <User className="w-4 h-4" />

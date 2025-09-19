@@ -7,15 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { FileText, Search, Edit, Trash2, Filter } from 'lucide-react';
-import { api } from '@/lib/api';
+import { FileText, Search, Edit, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getImageUrl } from '@/lib/utils';
 import Loading from '@/loading';
@@ -40,8 +32,6 @@ export default function BlogsManagement() {
   const [blogs, setBlogs] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // Fetch blogs from API
   useEffect(() => {
@@ -83,18 +73,14 @@ export default function BlogsManagement() {
     fetchBlogs();
   }, []);
 
-  // Filter blogs based on search and status
+  // Filter blogs based on search
   const filteredBlogs = blogs.filter((blog) => {
-    const matchesSearch =
+    return (
       blog.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       blog.author?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (blog.tags &&
-        blog.tags.some((tag) => tag?.toLowerCase().includes(searchQuery.toLowerCase())));
-    const matchesStatus =
-      statusFilter === 'all' ||
-      (statusFilter === 'published' && blog.published) ||
-      (statusFilter === 'draft' && !blog.published);
-    return matchesSearch && matchesStatus;
+        blog.tags.some((tag) => tag?.toLowerCase().includes(searchQuery.toLowerCase())))
+    );
   });
 
   // Handle delete
@@ -113,25 +99,7 @@ export default function BlogsManagement() {
     }
   };
 
-  // Handle status change
-  const handleStatusChange = async (blogSlug: string, newStatus: boolean) => {
-    try {
-      const formData = new FormData();
-      formData.append('published', newStatus.toString());
-
-      await api.blogs.update(blogSlug, formData);
-
-      setBlogs(
-        blogs.map((b) =>
-          b.slug === blogSlug
-            ? { ...b, published: newStatus, updatedAt: new Date().toISOString() }
-            : b,
-        ),
-      );
-    } catch (error) {
-      console.error('Error updating blog status:', error);
-    }
-  };
+ 
 
   const getStatusColor = (published: boolean) => {
     return published ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
@@ -159,17 +127,6 @@ export default function BlogsManagement() {
         </div>
       </div>
 
-      {/* Mobile Filter Toggle */}
-      <div className="lg:hidden">
-        <Button
-          variant="outline"
-          onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
-          className="w-full flex items-center justify-center gap-2"
-        >
-          <Filter className="w-4 h-4" />
-          {mobileFiltersOpen ? 'Hide Filters' : 'Show Filters'}
-        </Button>
-      </div>
 
       {/* Blogs Table */}
       <Card className="bg-white border border-gray-200">
@@ -177,28 +134,14 @@ export default function BlogsManagement() {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
             <h3 className="text-lg font-semibold text-gray-900">Blog Posts</h3>
 
-            <div
-              className={`${mobileFiltersOpen ? 'flex' : 'hidden'} lg:flex flex-col lg:flex-row gap-4`}
-            >
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  placeholder="Search posts..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full lg:w-40">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="published">Published</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="relative w-full max-w-sm">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder="Search posts..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
             </div>
           </div>
 
@@ -358,14 +301,7 @@ export default function BlogsManagement() {
                               Edit
                             </Button>
                           </Link>
-                          <Button
-                            variant={blogPost.published ? 'outline' : 'default'}
-                            size="sm"
-                            onClick={() => handleStatusChange(blogPost.slug, !blogPost.published)}
-                            className="flex-1"
-                          >
-                            {blogPost.published ? 'Unpublish' : 'Publish'}
-                          </Button>
+                          
                           <Button
                             variant="destructive"
                             size="sm"

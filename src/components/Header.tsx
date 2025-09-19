@@ -98,7 +98,7 @@ const Header = () => {
                     className={`relative px-1 py-2 block transition-colors ${
                       isTarget
                         ? 'text-[var(--color-logo)] font-semibold'
-                        : link.className || 'text-slate-700 hover:text-[var(--color-logo)]'
+                        : 'text-slate-700 hover:text-[var(--color-logo)]'
                     }`}
                   >
                     {link.name}
@@ -114,7 +114,7 @@ const Header = () => {
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
               <button className="p-2 sm:p-3 rounded-md transition-all duration-300 hover:bg-slate-100">
-                <Menu className="w-4 h-4 sm:w-5 sm:h-5 text-slate-700" />
+                <Menu className="w-6 h-6 sm:w-5 sm:h-5 text-slate-700" />
               </button>
             </SheetTrigger>
             <SheetContent side="left" className="w-72 sm:w-80 overflow-y-auto">
@@ -145,7 +145,7 @@ const Header = () => {
                       {
                         'bg-slate-100 font-semibold': pathname === link.href,
                       },
-                      link.className,
+                      
                     )}
                   >
                     {link.name}

@@ -214,7 +214,7 @@ const ProductsPage: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-gray-700">Price:</span>
                   <Select value={filters.priceBucket} onValueChange={handlePriceBucketChange}>
-                    <SelectTrigger className="w-48">
+                    <SelectTrigger className="w-56 ml-6 sm:ml-0">
                       <SelectValue placeholder="All Prices" />
                     </SelectTrigger>
                     <SelectContent>
@@ -231,7 +231,7 @@ const ProductsPage: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-gray-700">Sort by:</span>
                   <Select value={filters.sortBy} onValueChange={handleSortChange}>
-                    <SelectTrigger className="w-56">
+                    <SelectTrigger className="w-56 ml-2 sm:ml-0">
                       <SelectValue placeholder="Default" />
                     </SelectTrigger>
                     <SelectContent>
@@ -261,9 +261,7 @@ const ProductsPage: React.FC = () => {
                 {/* Products Grid */}
                 {currentProducts.length > 0 ? (
                   <>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Showing {currentProducts.length} of {filteredProducts.length} filtered products
-                    </p>
+                   
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                       {currentProducts.map((product) => (
                         <ProductCard

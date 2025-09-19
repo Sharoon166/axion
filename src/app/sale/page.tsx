@@ -359,7 +359,7 @@ export default function SalePage() {
         ) : products.length === 0 ? (
           <p className="text-gray-500">No products found for the sale</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mt-8 sm:mt-10 max-w-[85rem] mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-8 sm:mt-10 max-w-[85rem] mx-auto">
             {products.map((product) => (
               <div key={product._id} className="relative">
                 <ProductCard
