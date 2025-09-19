@@ -279,7 +279,7 @@ function DashboardContent() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-4 gap-2 bg-white rounded-lg border p-1">
+            <div className="grid grid-cols-5 gap-2 bg-white rounded-lg border p-1">
               {sidebarItems
                 .filter((item) => item.key !== 'logout')
                 .map((item) => (

@@ -60,7 +60,7 @@ const Footer = () => {
                 </li>
                 <li>
                   <Link
-                    href="/category"
+                    href="/products"
                     className="text-sm sm:text-base text-black hover:text-gray-600 transition-colors"
                   >
                     Products

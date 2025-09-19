@@ -1,6 +1,7 @@
 // Type definitions for Axion Lighting Solutions
 
 export interface Product {
+  _id: string;
   id: string;
   name: string;
   description: string;
@@ -8,6 +9,7 @@ export interface Product {
   category: string;
   image: string;
   inStock: boolean;
+  images: string[];
   slug: string;
   discount?: number; 
 }

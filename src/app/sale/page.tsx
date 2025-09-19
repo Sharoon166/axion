@@ -420,7 +420,7 @@ export default function SalePage() {
 
       <div className="mt-8">
         <Link
-          href="/category"
+          href="/products"
           className="inline-flex items-center px-5 py-2.5 rounded-lg bg-[var(--color-logo)] text-white"
         >
           Browse All Products

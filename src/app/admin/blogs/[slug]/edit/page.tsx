@@ -88,22 +88,63 @@ export default function EditBlogPage() {
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    try {
+      const file = e.target.files?.[0];
+      if (!file) return;
 
-    // Create preview URL
-    const previewUrl = URL.createObjectURL(file);
-    setImage(previewUrl);
-    setNewImageFile(file);
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        console.error('Invalid file type. Please select an image file.');
+        return;
+      }
+
+      // Validate file size (5MB max)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        console.error('Image size should be less than 5MB');
+        return;
+      }
+
+      // Revoke previous object URL if exists
+      if (image && image.startsWith('blob:')) {
+        URL.revokeObjectURL(image);
+      }
+
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setImage(previewUrl);
+      setNewImageFile(file);
+      
+      // Reset input to allow selecting the same file again
+      e.target.value = '';
+    } catch (error) {
+      console.error('Error handling image upload:', error);
+    }
   };
 
   const removeImage = () => {
-    if (image && image.startsWith('blob:')) {
-      URL.revokeObjectURL(image);
+    try {
+      // Revoke object URL to prevent memory leaks
+      if (image) {
+        if (image.startsWith('blob:')) {
+          URL.revokeObjectURL(image);
+        }
+        setImage('');
+      }
+      setNewImageFile(null);
+    } catch (error) {
+      console.error('Error removing image:', error);
     }
-    setImage('');
-    setNewImageFile(null);
   };
+
+  // Clean up object URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      if (image && image.startsWith('blob:')) {
+        URL.revokeObjectURL(image);
+      }
+    };
+  }, [image]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,8 @@ import { useAuth } from '@/contexts/AuthContext';
 export default function NewBlogPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+
+  const [isAuthorized, setIsAuthorized] = useState(false);
   const [loadingState, setLoadingState] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -58,31 +60,39 @@ export default function NewBlogPage() {
     message: '',
   });
 
-  // Check admin access
-  if (!loading && user?.role !== 'admin') {
-    if (typeof window !== 'undefined') {
+  // 1) Auth check — keep above any early returns
+  useEffect(() => {
+    if (loading) return;
+    if (user?.role === 'admin') {
+      setIsAuthorized(true);
+    } else {
+      setIsAuthorized(false);
       router.replace('/');
     }
-    return <div className="p-8 text-center text-red-500">Not authorized</div>;
-  }
+  }, [loading, user, router]);
+
+  // 2) Clean up object URLs — also above any early returns
+  useEffect(() => {
+    const currentCoverImage = coverImage;
+    return () => {
+      if (currentCoverImage && currentCoverImage.startsWith('blob:')) {
+        URL.revokeObjectURL(currentCoverImage);
+      }
+    };
+  }, [coverImage]);
 
   const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-
-    // Auto-generate slug from title
-    if (field === 'title' && typeof value === 'string') {
-      const slug = value
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
-      setFormData((prev) => ({
-        ...prev,
-        slug,
-      }));
-    }
+    setFormData((prev) => {
+      const next = { ...prev, [field]: value };
+      // Auto-generate slug from title
+      if (field === 'title' && typeof value === 'string') {
+        next.slug = value
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '');
+      }
+      return next;
+    });
   };
 
   const showDialog = (
@@ -105,34 +115,51 @@ export default function NewBlogPage() {
   };
 
   const handleCoverImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    try {
+      const file = e.target.files?.[0];
+      if (!file) return;
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      showDialog('error', 'Upload Error', 'Image size should be less than 5MB');
-      return;
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        showDialog('error', 'Invalid File', 'Please select a valid image file (JPEG, PNG, WebP, etc.)');
+        return;
+      }
+
+      // Validate file size (5MB max)
+      const maxSize = 5 * 1024 * 1024;
+      if (file.size > maxSize) {
+        showDialog('error', 'File Too Large', 'Image size should be less than 5MB');
+        return;
+      }
+
+      // Revoke previous object URL if exists
+      if (coverImage && coverImage.startsWith('blob:')) {
+        URL.revokeObjectURL(coverImage);
+      }
+
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setCoverImage(previewUrl);
+      setCoverImageFile(file);
+
+      showDialog('success', 'Upload Successful', 'Cover image uploaded successfully!');
+      e.target.value = '';
+    } catch (error) {
+      console.error('Error handling cover image upload:', error);
+      showDialog('error', 'Upload Error', 'An error occurred while processing the image');
     }
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      showDialog('error', 'Invalid File', 'Please select a valid image file');
-      return;
-    }
-
-    // Create preview URL
-    const previewUrl = URL.createObjectURL(file);
-    setCoverImage(previewUrl);
-    setCoverImageFile(file);
-    showDialog('success', 'Upload Successful', 'Cover image uploaded successfully!');
   };
 
   const removeCoverImage = () => {
-    if (coverImage && coverImage.startsWith('blob:')) {
-      URL.revokeObjectURL(coverImage);
+    try {
+      if (coverImage && coverImage.startsWith('blob:')) {
+        URL.revokeObjectURL(coverImage);
+      }
+      setCoverImage('');
+      setCoverImageFile(null);
+    } catch (error) {
+      console.error('Error removing cover image:', error);
     }
-    setCoverImage('');
-    setCoverImageFile(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -145,7 +172,6 @@ export default function NewBlogPage() {
       // Add form fields
       Object.entries(formData).forEach(([key, value]) => {
         if (key === 'tags') {
-          // Split tags by comma and add each one
           const tags = String(value)
             .split(',')
             .map((tag) => tag.trim())
@@ -156,7 +182,6 @@ export default function NewBlogPage() {
         }
       });
 
-      // Add markdown content if available
       if (markdownContent) {
         formDataToSend.append('markdown', markdownContent);
       }
@@ -169,7 +194,7 @@ export default function NewBlogPage() {
           try {
             const userData = JSON.parse(userDataRaw);
             authorName = userData?.name || '';
-          } catch {}
+          } catch { }
         }
       }
       formDataToSend.append('author', authorName);
@@ -178,11 +203,7 @@ export default function NewBlogPage() {
       if (coverImageFile) {
         const uploadFormData = new FormData();
         uploadFormData.append('file', coverImageFile);
-
-        const uploadResponse = await fetch('/api/upload', {
-          method: 'POST',
-          body: uploadFormData,
-        });
+        const uploadResponse = await fetch('/api/upload', { method: 'POST', body: uploadFormData });
 
         if (uploadResponse.ok) {
           const uploadResult = await uploadResponse.json();
@@ -203,7 +224,6 @@ export default function NewBlogPage() {
       const result = await api.blogs.create(formDataToSend);
 
       if (result.success) {
-        // Cleanup object URLs
         if (coverImage && coverImage.startsWith('blob:')) {
           URL.revokeObjectURL(coverImage);
         }
@@ -227,6 +247,11 @@ export default function NewBlogPage() {
     }
   };
 
+  // Early return comes AFTER all hooks
+  if (loading || !isAuthorized) {
+    return <div className="p-8 text-center">Loading...</div>;
+  }
+
   return (
     <div className="min-h-screen bg-white p-8">
       <div className="max-w-6xl mx-auto">
@@ -241,7 +266,7 @@ export default function NewBlogPage() {
           <div className="space-y-6">
             <h2 className="text-xl font-semibold text-gray-900">Blog Information</h2>
 
-            <div className="grid grid-cols-1 md:grid-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="title" className="text-sm font-medium text-gray-700">
                   Blog Title
@@ -371,7 +396,7 @@ export default function NewBlogPage() {
                 ) : (
                   <label className="cursor-pointer block">
                     <CloudUpload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600 mb-2">Drag or drop a coverage</p>
+                    <p className="text-gray-600 mb-2">Drag or drop a cover image</p>
                     <p className="text-gray-500 text-sm mb-4">or click to upload</p>
                     <input
                       type="file"
@@ -438,9 +463,7 @@ export default function NewBlogPage() {
                     dialogState.onConfirm?.();
                     closeDialog();
                   }}
-                  className={
-                    dialogState.type === 'success' ? 'bg-green-600 hover:bg-green-700' : ''
-                  }
+                  className={dialogState.type === 'success' ? 'bg-green-600 hover:bg-green-700' : ''}
                 >
                   Continue
                 </Button>

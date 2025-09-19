@@ -478,10 +478,10 @@ const ProductPage = () => {
           Please check the URL or browse our categories for more products.
         </p>
         <Link
-          href="/category"
+          href="/products"
           className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-full shadow transition-all"
         >
-          Browse Categories
+          Browse Products
         </Link>
       </div>
     );
@@ -1109,7 +1109,7 @@ const ProductPage = () => {
                           />
                         ))}
                     </div>
-                    <div className="text-gray-800 leading-relaxed break-words">
+                    <div className="text-gray-800 leading-relaxed overflow-wrap-anywhere max-w-full overflow-hidden break-all">
                       {linkifyText(selectedReview.comment)}
                     </div>
                   </div>
@@ -1140,7 +1140,7 @@ const ProductPage = () => {
             <div className="mt-6 text-center">
               <Link
                 href={`/category/${fetchedproduct[0]?.category || ''}`}
-                className="inline-block px-5 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                className="inline-block px-5 py-2 rounded-md bg-(--color-logo) hover:bg-(--color-logo-hover)/90 text-white"
               >
                 View more in this category
               </Link>

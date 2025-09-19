@@ -28,6 +28,7 @@ interface Category {
 export default function NewProjectPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
@@ -74,49 +75,112 @@ export default function NewProjectPage() {
     fetchCategories();
   }, []);
 
-  // Redirect non-admins
-  if (!loading && user?.role !== 'admin') {
-    if (typeof window !== 'undefined') {
+  // Check admin access after initial render
+  useEffect(() => {
+    if (!loading && user?.role !== 'admin') {
       router.replace('/');
+      setIsAuthorized(false);
+    } else {
+      setIsAuthorized(true);
     }
-    return <div className="p-8 text-center text-red-500">Not authorized</div>;
-  }
+  }, [loading, user, router]);
 
   const handleMultipleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
+    try {
+      if (!e.target.files || e.target.files.length === 0) return;
 
-    // Create preview URLs for all selected files
-    const newPreviewUrls = files.map((file) => URL.createObjectURL(file));
+      const files = Array.from(e.target.files);
+      const validFiles: File[] = [];
+      const newPreviewUrls: string[] = [];
+      const maxSize = 5 * 1024 * 1024; // 5MB
 
-    // Add to existing files and previews
-    setSelectedFiles((prev) => [...prev, ...files]);
-    setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
+      files.forEach((file) => {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          console.error(`Skipped ${file.name}: Not an image file`);
+          return;
+        }
+
+        // Validate file size
+        if (file.size > maxSize) {
+          console.error(`Skipped ${file.name}: File is too large (max 5MB)`);
+          return;
+        }
+
+        validFiles.push(file);
+        newPreviewUrls.push(URL.createObjectURL(file));
+      });
+
+      if (validFiles.length > 0) {
+        setSelectedFiles((prev) => [...prev, ...validFiles]);
+        setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
+      }
+
+      // Reset input to allow selecting the same file again
+      e.target.value = '';
+    } catch (error) {
+      console.error('Error handling image upload:', error);
+      toast.error('An error occurred while processing the images');
+    }
   };
 
   const removeImage = (index: number) => {
-    // Revoke object URL to prevent memory leaks
-    if (previewUrls[index]) {
-      URL.revokeObjectURL(previewUrls[index]);
-    }
+    try {
+      // Revoke object URL to prevent memory leaks
+      if (previewUrls[index]) {
+        URL.revokeObjectURL(previewUrls[index]);
+      }
 
-    // Remove from both arrays
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
-    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+      // Create new arrays without the removed item
+      const newFiles = [...selectedFiles];
+      const newPreviews = [...previewUrls];
+      newFiles.splice(index, 1);
+      newPreviews.splice(index, 1);
+
+      // Update state
+      setSelectedFiles(newFiles);
+      setPreviewUrls(newPreviews);
+    } catch (error) {
+      console.error('Error removing image:', error);
+      toast.error('Failed to remove image');
+    }
   };
 
   const clearAllImages = () => {
-    // Revoke all object URLs to prevent memory leaks
-    previewUrls.forEach((url) => URL.revokeObjectURL(url));
-    setSelectedFiles([]);
-    setPreviewUrls([]);
+    try {
+      // Revoke all object URLs to prevent memory leaks
+      previewUrls.forEach((url) => {
+        if (url) {
+          URL.revokeObjectURL(url);
+        }
+      });
+      setSelectedFiles([]);
+      setPreviewUrls([]);
+    } catch (error) {
+      console.error('Error clearing images:', error);
+      toast.error('Failed to clear images');
+    }
   };
+
+  // Clean up object URLs when component unmounts or previewUrls changes
+  useEffect(() => {
+    const currentPreviewUrls = [...previewUrls];
+    return () => {
+      currentPreviewUrls.forEach((url) => {
+        if (url && url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      });
+    };
+  }, [previewUrls]);
 
   const uploadImages = async (files: File[]): Promise<string[]> => {
     const uploadedUrls: string[] = [];
 
     for (const file of files) {
-      if (file) {
+      try {
+        if (!file) continue;
+
         const formData = new FormData();
         formData.append('file', file);
 
@@ -126,12 +190,25 @@ export default function NewProjectPage() {
         });
 
         if (!response.ok) {
-          const error = await response.text();
-          throw new Error(error || 'Failed to upload image');
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            errorData.message ||
+            errorData.error ||
+            `Failed to upload ${file.name}: ${response.statusText}`
+          );
         }
 
         const data = await response.json();
+        if (!data.url) {
+          throw new Error(`No URL returned for ${file.name}`);
+        }
+
         uploadedUrls.push(data.url);
+      } catch (error) {
+        console.error(`Error uploading ${file?.name || 'file'}:`, error);
+        throw new Error(
+          `Failed to upload ${file?.name || 'file'}: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
     }
 
@@ -196,6 +273,10 @@ export default function NewProjectPage() {
       [e.target.name]: e.target.value,
     }));
   };
+
+  if (loading || !isAuthorized) {
+    return <div className="p-8 text-center">Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">

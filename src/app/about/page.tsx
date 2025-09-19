@@ -38,7 +38,7 @@ export default function AboutPage() {
           <div className=" grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             {/* Story & Text */}
             <div>
-              <h2 className="text-xl sm:text-3xl font-bold text-[black]">Our Story</h2>
+              <h2 className="text-xl sm:text-3xl font-bold mb-4 text-[black]">Our Story</h2>
               <div className="space-y-5 text-black/80 sm:text-lg leading-relaxed mb-8">
                 <p>
                   Axion Lighting was founded to bring modern, world‑class lighting to Pakistan.
@@ -191,16 +191,16 @@ export default function AboutPage() {
           </div>
           {/* Content Overlay */}
           <div className="relative z-10 max-w-[85rem] mx-auto px-4 sm:px-6 flex flex-col items-center justify-center text-center">
-            <h2 className="text-3xl md:text-3xl font-bold text-white uppercase mb-6">
+            <h2 className="text-xl text-pretty sm:text-3xl font-bold text-white uppercase mb-6">
               Ready to Brighten Your Space?
             </h2>
-            <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl text-pretty text-white/90 mb-8 max-w-2xl mx-auto">
               Discover how Axion can transform your environment with innovative lighting solutions
               tailored to your needs.
             </p>
             <Link
               href="/contact"
-              className="bg-[var(--color-logo)] text-white px-8 py-4 rounded-lg font-semibold text-lg shadow-lg hover:bg-[var(--color-logo)]/90 transition"
+              className="bg-[var(--color-logo)] text-white px-8 py-3 rounded-lg font-semibold text-md sm:text-lg text-pretty shadow-lg hover:bg-[var(--color-logo)]/90 transition"
             >
               Start Your Project
             </Link>

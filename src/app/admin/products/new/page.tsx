@@ -121,7 +121,6 @@ export default function NewProductPage() {
       }));
     }
 
-    // When category changes, update available subcategories and reset selection
     if (field === 'category' && typeof value === 'string') {
       const found = categories.find((c) => c.name === value || c.slug === value);
       // Normalize key
@@ -143,15 +142,39 @@ export default function NewProductPage() {
   };
 
   const handleMultipleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
+    if (!e.target.files || e.target.files.length === 0) {
+      return;
+    }
 
-    // Create preview URLs for all selected files
-    const newPreviewUrls = files.map((file) => URL.createObjectURL(file));
+    const files = Array.from(e.target.files);
+    const validFiles: File[] = [];
+    const newPreviewUrls: string[] = [];
 
-    // Add to existing files and previews
-    setSelectedFiles((prev) => [...prev, ...files]);
-    setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
+    files.forEach((file) => {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error(`Skipped ${file.name}: Not an image file`);
+        return;
+      }
+
+      // Validate file size (5MB max)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        toast.error(`Skipped ${file.name}: File is too large (max 5MB)`);
+        return;
+      }
+
+      validFiles.push(file);
+      newPreviewUrls.push(URL.createObjectURL(file));
+    });
+
+    if (validFiles.length > 0) {
+      setSelectedFiles((prev) => [...prev, ...validFiles]);
+      setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
+    }
+
+    // Reset the input to allow selecting the same file again
+    e.target.value = '';
   };
 
   const removeImage = (index: number) => {
@@ -160,17 +183,38 @@ export default function NewProductPage() {
       URL.revokeObjectURL(previewUrls[index]);
     }
 
-    // Remove from both arrays
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
-    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+    // Create new arrays without the removed item
+    const newFiles = [...selectedFiles];
+    const newPreviews = [...previewUrls];
+    newFiles.splice(index, 1);
+    newPreviews.splice(index, 1);
+
+    // Update state
+    setSelectedFiles(newFiles);
+    setPreviewUrls(newPreviews);
   };
 
   const clearAllImages = () => {
     // Revoke all object URLs to prevent memory leaks
-    previewUrls.forEach((url) => URL.revokeObjectURL(url));
+    previewUrls.forEach((url) => {
+      if (url) {
+        URL.revokeObjectURL(url);
+      }
+    });
     setSelectedFiles([]);
     setPreviewUrls([]);
   };
+
+  // Clean up object URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      previewUrls.forEach((url) => {
+        if (url) {
+          URL.revokeObjectURL(url);
+        }
+      });
+    };
+  }, [previewUrls]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

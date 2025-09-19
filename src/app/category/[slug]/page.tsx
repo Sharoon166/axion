@@ -66,7 +66,7 @@ const CategoryPage: React.FC = () => {
 
   // State
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [saleMap, setSaleMap] = useState<Record<string, { percent: number; endsAt: string }>>({});
@@ -80,27 +80,6 @@ const CategoryPage: React.FC = () => {
 
   const itemsPerPage = 12;
 
-  // Countdown Timer for Sale
-  const [timeLeft, setTimeLeft] = useState('22:13:49');
-  useEffect(() => {
-    if (slug === 'sale') {
-      const targetTime = new Date().getTime() + 22 * 60 * 60 * 1000 + 13 * 60 * 1000 + 49 * 1000;
-      const timer = setInterval(() => {
-        const now = new Date().getTime();
-        const distance = targetTime - now;
-        if (distance <= 0) {
-          clearInterval(timer);
-          setTimeLeft('00:00:00');
-          return;
-        }
-        const hours = String(Math.floor((distance / (1000 * 60 * 60)) % 24)).padStart(2, '0');
-        const minutes = String(Math.floor((distance / (1000 * 60)) % 60)).padStart(2, '0');
-        const seconds = String(Math.floor((distance / 1000) % 60)).padStart(2, '0');
-        setTimeLeft(`${hours}:${minutes}:${seconds}`);
-      }, 1000);
-      return () => clearInterval(timer);
-    }
-  }, [slug]);
 
   // Fetch categories
   useEffect(() => {
@@ -268,14 +247,6 @@ const CategoryPage: React.FC = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentItems = filteredAndSortedProducts.slice(startIndex, startIndex + itemsPerPage);
 
-  // Filter handlers
-  const handleCategoryChange = (categorySlug: string): void => {
-    setFilters((prev) => ({
-      ...prev,
-      selectedCategory: categorySlug,
-    }));
-    setCurrentPage(1);
-  };
 
   const handlePriceRangeChange = (priceRange: string): void => {
     const [min, max] = priceRange.split('-').map(Number);
@@ -315,14 +286,6 @@ const CategoryPage: React.FC = () => {
         subtitle="Illuminate every corner with elegance."
       />
 
-      {/* Countdown Timer for Sale */}
-      {slug === 'sale' && (
-        <div className="mt-3 text-red-600 font-semibold flex items-center justify-center gap-2 mb-6">
-          <span>⏰ Sale Ends in</span>
-          <span className="text-red-700 font-bold">{timeLeft}</span>
-        </div>
-      )}
-
       <div className="max-w-[85rem] mx-auto px-8 sm:px-6 py-6 lg:py-10">
         {/* Filter and Sort Controls */}
         <div className="bg-gray-50 p-4 rounded-xl shadow-sm mb-6">
@@ -335,26 +298,6 @@ const CategoryPage: React.FC = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
-              {/* Category Filter */}
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
-                  Category:
-                </label>
-                <Select value={filters.selectedCategory} onValueChange={handleCategoryChange}>
-                  <SelectTrigger className="w-full sm:w-[200px]">
-                    <SelectValue placeholder="All Categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cat">All Categories</SelectItem>
-                    {categories.map((category) => (
-                      <SelectItem key={category._id} value={category.slug}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
               {/* Price Range Filter */}
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <label className="text-sm font-medium text-gray-700 whitespace-nowrap">

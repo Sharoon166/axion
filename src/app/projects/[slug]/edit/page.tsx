@@ -168,44 +168,103 @@ export default function EditProjectPage() {
   }, [slug, router]);
 
   const handleMultipleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
+    try {
+      if (!e.target.files || e.target.files.length === 0) return;
 
-    // Create preview URLs for all selected files
-    const newPreviewUrls = files.map((file) => URL.createObjectURL(file));
+      const files = Array.from(e.target.files);
+      const validFiles: File[] = [];
+      const newPreviewUrls: string[] = [];
+      const maxSize = 5 * 1024 * 1024; // 5MB
 
-    // Add to existing files and previews
-    setSelectedFiles((prev) => [...prev, ...files]);
-    setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
+      files.forEach((file) => {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          console.error(`Skipped ${file.name}: Not an image file`);
+          toast.error(`Skipped ${file.name}: Not an image file`);
+          return;
+        }
+
+        // Validate file size
+        if (file.size > maxSize) {
+          console.error(`Skipped ${file.name}: File is too large (max 5MB)`);
+          toast.error(`Skipped ${file.name}: File is too large (max 5MB)`);
+          return;
+        }
+
+        validFiles.push(file);
+        newPreviewUrls.push(URL.createObjectURL(file));
+      });
+
+      if (validFiles.length > 0) {
+        setSelectedFiles((prev) => [...prev, ...validFiles]);
+        setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
+      }
+
+      // Reset input to allow selecting the same file again
+      e.target.value = '';
+    } catch (error) {
+      console.error('Error handling image upload:', error);
+      toast.error('An error occurred while processing the images');
+    }
   };
 
   const removeImage = (index: number) => {
-    // Revoke object URL to prevent memory leaks (only for new uploads)
-    if (previewUrls[index] && previewUrls[index].startsWith('blob:')) {
-      URL.revokeObjectURL(previewUrls[index]);
-    }
+    try {
+      // Revoke object URL to prevent memory leaks (only for new uploads)
+      if (previewUrls[index] && previewUrls[index].startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrls[index]);
+      }
 
-    // Remove from both arrays
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
-    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+      // Create new arrays without the removed item
+      const newFiles = [...selectedFiles];
+      const newPreviews = [...previewUrls];
+      newFiles.splice(index, 1);
+      newPreviews.splice(index, 1);
+
+      // Update state
+      setSelectedFiles(newFiles);
+      setPreviewUrls(newPreviews);
+    } catch (error) {
+      console.error('Error removing image:', error);
+      toast.error('Failed to remove image');
+    }
   };
 
   const clearAllImages = () => {
-    // Revoke all object URLs to prevent memory leaks (only for new uploads)
-    previewUrls.forEach((url) => {
-      if (url.startsWith('blob:')) {
-        URL.revokeObjectURL(url);
-      }
-    });
-    setSelectedFiles([]);
-    setPreviewUrls([]);
+    try {
+      // Revoke all object URLs to prevent memory leaks (only for new uploads)
+      previewUrls.forEach((url) => {
+        if (url && url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      });
+      setSelectedFiles([]);
+      // Only clear preview URLs that are from new uploads (blob: URLs)
+      setPreviewUrls(prev => prev.filter(url => !url.startsWith('blob:')));
+    } catch (error) {
+      console.error('Error clearing images:', error);
+      toast.error('Failed to clear images');
+    }
   };
+
+  // Clean up object URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      previewUrls.forEach((url) => {
+        if (url && url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      });
+    };
+  }, [previewUrls]);
 
   const uploadImages = async (files: File[]): Promise<string[]> => {
     const uploadedUrls: string[] = [];
 
     for (const file of files) {
-      if (file) {
+      try {
+        if (!file) continue;
+
         const formData = new FormData();
         formData.append('file', file);
 
@@ -215,12 +274,25 @@ export default function EditProjectPage() {
         });
 
         if (!response.ok) {
-          const error = await response.text();
-          throw new Error(error || 'Failed to upload image');
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            errorData.message ||
+              errorData.error ||
+              `Failed to upload ${file.name}: ${response.statusText}`
+          );
         }
 
         const data = await response.json();
+        if (!data.url) {
+          throw new Error(`No URL returned for ${file.name}`);
+        }
+
         uploadedUrls.push(data.url);
+      } catch (error) {
+        console.error(`Error uploading ${file?.name || 'file'}:`, error);
+        throw new Error(
+          `Failed to upload ${file?.name || 'file'}: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
     }
 

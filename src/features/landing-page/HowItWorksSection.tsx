@@ -79,7 +79,7 @@ const HowItWorksSection = () => {
         <div className="flex items-center justify-center p-3 md:p-6">
           {/* Call to Action */}
           <Link
-            href="/category"
+            href="/products"
             className="inline-flex items-center bg-[var(--color-logo)] text-white px-4 py-2 md:px-6 md:py-3 rounded-lg font-medium shadow-md transition-colors group text-sm md:text-base"
           >
            Shop Now

@@ -31,7 +31,7 @@ const HeroSection = () => {
           </p>
           <div>
             <Link
-              href="/category"
+              href="/products"
               className="inline-flex items-center bg-white text-slate-900 hover:bg-slate-100 px-6 py-3 md:px-8 md:py-4 rounded-lg font-medium shadow-md transition-colors group text-sm sm:text-md"
             >
               Discover Now

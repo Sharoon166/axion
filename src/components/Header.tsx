@@ -15,7 +15,7 @@ import {
   Edit,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { getImageUrl } from '@/lib/utils';
@@ -48,37 +48,16 @@ const Header = () => {
   const router = useRouter();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [hasSaleItems, setHasSaleItems] = useState(false);
-
-  // Check for active sale items on component mount
-  useEffect(() => {
-    const checkSaleItems = async () => {
-      try {
-        const res = await fetch('/api/sale');
-        const data = await res.json();
-        if (data?.success && data.data) {
-          const hasProducts = data.data.productIds?.length > 0;
-          const hasCategories = Array.isArray(data.data.categorySlugs) && data.data.categorySlugs.length > 0;
-          setHasSaleItems(hasProducts || hasCategories);
-        }
-      } catch (error) {
-        console.error('Error checking sale items:', error);
-        setHasSaleItems(false);
-      }
-    };
-
-    checkSaleItems();
-  }, []);
 
   const navLinks = [
     { name: 'Home', href: '/' },
-    { name: 'Products', href: '/category' },
+    { name: 'Products', href: '/products' },
     { name: 'Projects', href: '/projects' },
     { name: 'About', href: '/about' },
     { name: 'Blog', href: '/blog' },
     { name: 'Contact', href: '/contact' },
-    ...(hasSaleItems ? [{ name: 'Sale', href: '/sale', className: 'text-red-600 font-semibold' }] : []),
-  ].filter(Boolean);
+    { name: 'Sale', href: '/sale', className: 'text-[var(--color-logo)] font-semibold' },
+  ];
 
   const adminLinks = [{ name: 'Dashboard', href: '/dashboard' }, ...navLinks];
 
@@ -128,9 +107,11 @@ const Header = () => {
                 >
                   <Link
                     href={link.href}
-                    className={`relative px-1 py-2 block transition-colors ${isTarget ? 'text-[var(--color-logo)] font-semibold' : 'text-slate-700 hover:text-[var(--color-logo)]'}`}
+                    className={`relative px-1 py-2 block transition-colors ${isTarget ? 'text-[var(--color-logo)] font-semibold' :
+                        link.className || 'text-slate-700 hover:text-[var(--color-logo)]'
+                      }`}
                   >
-                    {link.name} 
+                    {link.name}
                   </Link>
                 </li>
               );
@@ -174,6 +155,7 @@ const Header = () => {
                       {
                         'bg-slate-100 font-semibold': pathname === link.href,
                       },
+                      link.className
                     )}
                   >
                     {link.name}
@@ -354,7 +336,7 @@ const Header = () => {
         </nav>
 
         {/* Icons */}
-        <div className="hidden md:flex items-center space-x-1">
+        <div className="hidden md:flex items-center gap-2">
           {/* Search Dialog */}
           <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
             <DialogTrigger asChild>
@@ -616,7 +598,7 @@ const ProfileDropdown = ({ userData }: { userData: HeaderUser | null }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="group relative p-2 rounded-full overflow-hidden transition-all duration-300 hover:bg-slate-100">
+        <button className="group relative p-2 m-2 rounded-full overflow-hidden transition-all duration-300 hover:bg-slate-100">
           <div
             className=" overflow-hidden rounded-full size-2 "
           >
