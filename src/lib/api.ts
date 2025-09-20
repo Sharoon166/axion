@@ -284,6 +284,32 @@ class ApiClient {
 
       return promise;
     },
+
+    cancel: async (id: string, cancellationReason?: string) => {
+      const promise = fetch(`/api/orders/${id}/cancel`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cancellationReason: cancellationReason || '' }),
+      }).then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || 'Cancellation failed');
+        return data;
+      });
+
+      toast.promise(promise, {
+        loading: 'Cancelling order and restoring stock...',
+        success: (data) => {
+          const stockInfo = data.stockRestoration;
+          if (stockInfo && stockInfo.failed > 0) {
+            return `Order cancelled! Stock restored for ${stockInfo.successful}/${stockInfo.attempted} products.`;
+          }
+          return 'Order cancelled successfully and stock restored!';
+        },
+        error: (err) => err.message || 'Failed to cancel order',
+      });
+
+      return promise;
+    },
   };
 }
 

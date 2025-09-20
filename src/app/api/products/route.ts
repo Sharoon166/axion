@@ -5,7 +5,21 @@ import Category from '@/models/Category';
 
 export async function GET(request: NextRequest) {
   try {
-    await dbConnect();
+    // Enhanced connection with retry mechanism
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        await Promise.race([
+          dbConnect(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('DB timeout')), 8000)),
+        ]);
+        break;
+      } catch (error) {
+        retries--;
+        if (retries === 0) throw error;
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
 
     const { searchParams } = new URL(request.url);
     const featured = searchParams.get('featured');
@@ -21,16 +35,33 @@ export async function GET(request: NextRequest) {
       if (rawIds.length === 0) {
         return NextResponse.json({ success: true, data: [] });
       }
-      const products = await Product.find({ _id: { $in: rawIds } })
-        .populate('category', 'name slug')
-        .lean();
-      // Preserve input order
-      const orderMap = new Map(rawIds.map((id, idx) => [id, idx]));
-      const sorted = products
-        .map((p) => ({ p, idx: orderMap.get(String(p._id)) ?? 0 }))
-        .sort((a, b) => a.idx - b.idx)
-        .map(({ p }) => p);
-      return NextResponse.json({ success: true, data: sorted });
+      
+      try {
+        const products = await Product.find({ _id: { $in: rawIds } })
+          .populate({
+            path: 'category',
+            select: 'name slug',
+            options: { strictPopulate: false }
+          })
+          .lean();
+        
+        // Preserve input order
+        const orderMap = new Map(rawIds.map((id, idx) => [id, idx]));
+        const sorted = products
+          .map((p) => ({ p, idx: orderMap.get(String(p._id)) ?? 0 }))
+          .sort((a, b) => a.idx - b.idx)
+          .map(({ p }) => p);
+        return NextResponse.json({ success: true, data: sorted });
+      } catch (idsError) {
+        console.error('Error fetching products by IDs:', idsError);
+        // Fallback: try without population
+        const products = await Product.find({ _id: { $in: rawIds } }).lean();
+        return NextResponse.json({ 
+          success: true, 
+          data: products,
+          warning: 'Fetched without category population'
+        });
+      }
     }
 
     // Filter by featured status if specified
@@ -40,39 +71,79 @@ export async function GET(request: NextRequest) {
 
     // Filter by category if specified
     if (category) {
-      // Find category by slug
-      const categoryDoc = await Category.findOne({ slug: category });
-      if (categoryDoc) {
-        query.category = categoryDoc._id;
-      } else {
-        // Return empty array if category not found
+      try {
+        // Find category by slug
+        const categoryDoc = await Category.findOne({ slug: category });
+        if (categoryDoc) {
+          query.category = categoryDoc._id;
+        } else {
+          // Return empty array if category not found
+          return NextResponse.json({
+            success: true,
+            data: [],
+            message: 'Category not found'
+          });
+        }
+      } catch (categoryError) {
+        console.error('Error finding category:', categoryError);
         return NextResponse.json({
           success: true,
           data: [],
-          message: 'Category not found'
+          message: 'Error finding category'
         });
       }
     }
 
-    let productsQuery = Product.find(query)
-      .populate('category', 'name slug')
-      .sort({ createdAt: -1 });
+    try {
+      let productsQuery = Product.find(query)
+        .populate({
+          path: 'category',
+          select: 'name slug',
+          options: { strictPopulate: false }
+        })
+        .sort({ createdAt: -1 });
 
-    // Apply limit if specified
-    if (limit) {
-      productsQuery = productsQuery.limit(Number(limit));
+      // Apply limit if specified
+      if (limit) {
+        productsQuery = productsQuery.limit(Number(limit));
+      }
+
+      const products = await productsQuery;
+
+      return NextResponse.json({
+        success: true,
+        data: products.map((product) => product.toObject()),
+      });
+    } catch (queryError) {
+      console.warn('Query with population failed, trying without:', queryError);
+      
+      // Fallback: try without population
+      let productsQuery = Product.find(query).sort({ createdAt: -1 });
+      
+      if (limit) {
+        productsQuery = productsQuery.limit(Number(limit));
+      }
+
+      const products = await productsQuery;
+
+      return NextResponse.json({
+        success: true,
+        data: products.map((product) => product.toObject()),
+        warning: 'Fetched without category population due to error'
+      });
     }
-
-    const products = await productsQuery;
-
-    return NextResponse.json({
-      success: true,
-      data: products.map((product) => product.toObject()),
-    });
   } catch (error) {
     console.error('Error fetching products:', error);
+    
+    if (error instanceof Error && error.message === 'DB timeout') {
+      return NextResponse.json(
+        { success: false, error: 'Database connection timeout. Please try again.' },
+        { status: 504 },
+      );
+    }
+
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch products' },
+      { success: false, error: 'Failed to fetch products. Please check your connection and try again.' },
       { status: 500 },
     );
   }

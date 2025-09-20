@@ -7,26 +7,82 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    await dbConnect();
-    const { slug } = await params;
-    const product = await Product.findOne({ slug })
-      .populate('category', 'name slug');
+    // Enhanced connection with retry
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        await Promise.race([
+          dbConnect(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('DB timeout')), 8000)),
+        ]);
+        break;
+      } catch (error) {
+        retries--;
+        if (retries === 0) throw error;
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
 
-    if (!product) {
+    const { slug } = await params;
+    
+    if (!slug || slug === 'undefined' || slug === 'null') {
       return NextResponse.json(
-        { success: false, error: 'Product not found' },
-        { status: 404 }
+        { success: false, error: 'Valid product slug is required' },
+        { status: 400 }
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      data: product.toObject(),
-    });
+    try {
+      // Try with population first
+      const product = await Product.findOne({ slug })
+        .populate({
+          path: 'category',
+          select: 'name slug',
+          options: { strictPopulate: false }
+        });
+
+      if (!product) {
+        return NextResponse.json(
+          { success: false, error: 'Product not found' },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        data: product.toObject(),
+      });
+    } catch (populationError) {
+      console.warn('Population failed, trying without:', populationError);
+      
+      // Fallback: try without population
+      const product = await Product.findOne({ slug });
+
+      if (!product) {
+        return NextResponse.json(
+          { success: false, error: 'Product not found' },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        data: product.toObject(),
+        warning: 'Fetched without category population due to error'
+      });
+    }
   } catch (error) {
     console.error('Error fetching product:', error);
+    
+    if (error instanceof Error && error.message === 'DB timeout') {
+      return NextResponse.json(
+        { success: false, error: 'Database connection timeout. Please try again.' },
+        { status: 504 },
+      );
+    }
+
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch product' },
+      { success: false, error: 'Failed to fetch product. Please check your connection and try again.' },
       { status: 500 },
     );
   }

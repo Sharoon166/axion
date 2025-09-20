@@ -14,9 +14,13 @@ const Layout = ({ children }: LayoutProps) => {
   const pathname = usePathname();
 
   // Hide header on dashboard routes
-  const hideHeader = pathname?.startsWith('/dashboard')
+  const hideHeader = pathname?.startsWith('/dashboard');
+
+  // Hide padding on home page
+  const hidePadding = pathname === '/';
+
   return (
-    <div className="relative min-h-screen">
+    <div className={`relative min-h-screen ${hidePadding ? '' : 'lg:px-12'}`}>
       {/* Conditionally render Header */}
       {!hideHeader && <Header />}
 

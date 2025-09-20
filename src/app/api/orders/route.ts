@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Order from '@/models/Order';
-import Product from '@/models/Products';
 import { Types } from 'mongoose';
 import { OrderItem } from '@/types';
+import { reduceStockForOrder } from '@/lib/stockManager';
 
 interface OrderQuery {
   user?: string | Types.ObjectId;
@@ -40,11 +40,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Process order items to ensure sale information is included
+    // Process order items to ensure sale information and variants are included
     const processedOrderItems = body.orderItems.map((item: OrderItem) => ({
       ...item,
       saleName: item.saleName || null,
       salePercent: item.salePercent || null,
+      // Ensure variants are properly mapped
+      variants: item.variants ? item.variants.map(variant => ({
+        variantName: variant.variantName,
+        optionValue: variant.optionValue,
+        optionLabel: variant.optionValue // Use optionValue as optionLabel for compatibility
+      })) : []
     }));
 
     // Create new order
@@ -65,92 +71,25 @@ export async function POST(request: NextRequest) {
 
     const createdOrder = await order.save();
 
-    // Update product stock for each item in the order
-    for (const item of body.orderItems) {
-      try {
-        const product = await Product.findById(item.product);
-        if (!product) {
-          console.warn(`Product not found: ${item.product}`);
-          continue;
-        }
+    // Debug: Log the created order items to see if variants are stored
+    console.log('Created order with items:', JSON.stringify(createdOrder.orderItems, null, 2));
 
-        // For non-variant products, just update the main stock
-        await Product.updateOne(
-          { _id: item.product },
-          { $inc: { stock: -item.quantity } }
-        );
-
-        // If the product has variants but no variant info is provided in the order,
-        // we'll just log a warning and continue
-        if (product.variants && product.variants.length > 0 && (!item.variants || item.variants.length === 0)) {
-          console.warn(`Product has variants but order item doesn't specify any: ${item.product}`);
-          // We still update the main stock as a fallback (already done above)
-          continue;
-        }
-
-        // Handle variant products if variant info is provided
-        if (item.variants && item.variants.length > 0) {
-          const variantName = item.variants[0].variantName;
-          const optionValue = item.variants[0].optionValue;
-
-          // Find the variant in the database
-          const variant = product.variants.find((v: { name: string }) => v.name === variantName);
-          if (!variant) {
-            console.warn(`Variant not found: ${variantName} in product ${item.product}`);
-            continue;
-          }
-
-          // Find the option in the variant
-          const optionIndex = variant.options.findIndex(
-            (opt: { label: string; value: string }) => 
-              opt.label === optionValue || opt.value === optionValue
-          );
-
-          if (optionIndex === -1) {
-            console.warn(`Option not found: ${optionValue} in variant ${variantName}`);
-            continue;
-          }
-
-          // Build the update query
-          interface UpdateQuery {
-            $inc: { [key: string]: number };
-            $set?: { [key: string]: unknown };
-            [key: string]: unknown;
-          }
-          
-          const updateQuery: UpdateQuery = {
-            $inc: {}
-          };
-          
-          // Update the specific variant option's stockModifier
-          updateQuery.$inc[`variants.$[v].options.${optionIndex}.stockModifier`] = -item.quantity;
-          
-          // Also update the main stock (already done above, but we can do it here as well for consistency)
-          updateQuery.$inc.stock = -item.quantity;
-
-          // Execute the update
-          await Product.updateOne(
-            { _id: item.product },
-            updateQuery,
-            {
-              arrayFilters: [
-                { 'v._id': variant._id }
-              ]
-            }
-          );
-        }
-      } catch (error) {
-        console.error(`Error updating stock for product ${item.product}:`, error);
-        // Even if there's an error, we still want to update the main stock as a fallback
-        try {
-          await Product.updateOne(
-            { _id: item.product },
-            { $inc: { stock: -item.quantity } }
-          );
-        } catch (fallbackError) {
-          console.error(`Fallback stock update failed for product ${item.product}:`, fallbackError);
-        }
+    // Update product stock for each item in the order using the stock manager
+    try {
+      console.log(`Reducing stock for new order ${createdOrder._id}`);
+      const stockResults = await reduceStockForOrder(createdOrder.orderItems);
+      
+      const failedReductions = stockResults.filter(result => !result.success);
+      if (failedReductions.length > 0) {
+        console.warn(`Some stock reductions failed for order ${createdOrder._id}:`, failedReductions);
       }
+      
+      const successfulReductions = stockResults.filter(result => result.success);
+      console.log(`Successfully reduced stock for ${successfulReductions.length} products in order ${createdOrder._id}`);
+    } catch (error) {
+      console.error(`Error reducing stock for order ${createdOrder._id}:`, error);
+      // Don't fail the order creation if stock reduction fails
+      // The order is still created, but stock might not be updated
     }
 
     return NextResponse.json({ success: true, data: createdOrder }, { status: 201 });
@@ -162,11 +101,21 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    // Connection with timeout
-    await Promise.race([
-      dbConnect(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('DB timeout')), 10000)),
-    ]);
+    // Enhanced connection with retry mechanism
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        await Promise.race([
+          dbConnect(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('DB timeout')), 8000)),
+        ]);
+        break;
+      } catch (error) {
+        retries--;
+        if (retries === 0) throw error;
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
+      }
+    }
 
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
@@ -176,8 +125,14 @@ export async function GET(request: NextRequest) {
 
     const query: OrderQuery = {};
 
-    if (userId) {
-      query.user = userId;
+    // Enhanced user filtering with proper ObjectId handling
+    if (userId && userId !== 'undefined' && userId !== 'null') {
+      try {
+        query.user = new Types.ObjectId(userId);
+      } catch {
+        // If userId is not a valid ObjectId, try string match
+        query.user = userId;
+      }
     }
 
     if (status) {
@@ -194,14 +149,23 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const limitNum = Math.min(Number(limit) || 50, 100); // Cap at 100
+    const limitNum = Math.min(Number(limit) || 50, 100);
     const skip = (page - 1) * limitNum;
 
     try {
+      // Try with full population first
       const [orders, total] = await Promise.all([
         Order.find(query)
-          .populate('user', 'name email')
-          .populate('orderItems.product', 'name slug')
+          .populate({
+            path: 'user',
+            select: 'name email',
+            options: { strictPopulate: false }
+          })
+          .populate({
+            path: 'orderItems.product',
+            select: 'name slug',
+            options: { strictPopulate: false }
+          })
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(limitNum)
@@ -210,29 +174,39 @@ export async function GET(request: NextRequest) {
         Order.countDocuments(query),
       ]);
 
-      return NextResponse.json({
-        success: true,
-        data: orders,
-        pagination: {
-          page,
-          limit: limitNum,
-          total,
-          pages: Math.ceil(total / limitNum),
-        },
-      });
-    } catch {
-      // Fallback: try without population
-      const orders = await Order.find(query)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limitNum)
-        .lean();
+      // Filter out orders with null users if userId was specified
+      const filteredOrders = userId ? orders.filter(order => order.user) : orders;
 
       return NextResponse.json({
         success: true,
-        data: orders,
-        warning: 'Fetched without population due to error',
+        data: filteredOrders,
+        pagination: {
+          page,
+          limit: limitNum,
+          total: userId ? filteredOrders.length : total,
+          pages: Math.ceil((userId ? filteredOrders.length : total) / limitNum),
+        },
       });
+    } catch (populationError) {
+      console.warn('Population failed, trying without:', populationError);
+      
+      // Fallback: try without population
+      try {
+        const orders = await Order.find(query)
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limitNum)
+          .lean();
+
+        return NextResponse.json({
+          success: true,
+          data: orders,
+          warning: 'Fetched without population due to error',
+        });
+      } catch (fallbackError) {
+        console.error('Fallback query also failed:', fallbackError);
+        throw fallbackError;
+      }
     }
   } catch (error) {
     console.error('Error fetching orders:', error);
@@ -240,12 +214,15 @@ export async function GET(request: NextRequest) {
     if (error instanceof Error) {
       if (error.message === 'DB timeout') {
         return NextResponse.json(
-          { success: false, error: 'Database connection timeout' },
+          { success: false, error: 'Database connection timeout. Please try again.' },
           { status: 504 },
         );
       }
     }
 
-    return NextResponse.json({ success: false, error: 'Failed to fetch orders' }, { status: 500 });
+    return NextResponse.json({ 
+      success: false, 
+      error: 'Failed to fetch orders. Please check your connection and try again.' 
+    }, { status: 500 });
   }
 }

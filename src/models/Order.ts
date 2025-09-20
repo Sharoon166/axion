@@ -20,6 +20,12 @@ const orderSchema = new mongoose.Schema(
           type: String,
           required: true,
         },
+        // Variant information for stock restoration
+        variants: [{
+          variantName: { type: String, required: true }, // e.g., "Color", "Size"
+          optionValue: { type: String, required: true }, // e.g., "Red", "Large"
+          optionLabel: { type: String, required: false }, // e.g., "Red", "Large"
+        }],
       },
     ],
     shippingAddress: {

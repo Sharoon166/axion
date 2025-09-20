@@ -1,4 +1,5 @@
 import PageHeader from '@/components/PageHeader';
+import Link from 'next/link';
 
 export default function TermsConditionsPage() {
   return (
@@ -45,7 +46,7 @@ export default function TermsConditionsPage() {
                 Users might be asked to provide additional information along with the basic information required at the time of the order. This is to assure the security of the order and to prevent fraudulent activities.
               </p>
               <p className="text-gray-600 leading-relaxed">
-                Pricing is subject to change. We reserve the right to modify, increase, or decrease any price at any hour of the day without prior notice. For details about returns, please see our <a href="/shipping-policy" className="text-blue-600 underline">Shipping & Return Policy</a> page.
+                Pricing is subject to change. We reserve the right to modify, increase, or decrease any price at any hour of the day without prior notice. For details about returns, please see our <Link href="/shipping-policy" className="text-blue-600 underline">Shipping & Return Policy</Link> page.
               </p>
             </section>
 

@@ -52,29 +52,51 @@ export async function GET(
       );
     }
 
-    // Fetch order with error handling for population
-    const order = await Order.findById(id)
-      .populate({
-        path: 'user',
-        select: 'name email',
-      })
-      .populate({
-        path: 'orderItems.product',
-        select: 'name slug images',
-      })
-      .lean(); // Use lean() instead of toObject() for better performance
+    try {
+      // Try to fetch order with full population
+      const order = await Order.findById(id)
+        .populate({
+          path: 'user',
+          select: 'name email',
+          options: { strictPopulate: false }
+        })
+        .populate({
+          path: 'orderItems.product',
+          select: 'name slug images',
+          options: { strictPopulate: false }
+        })
+        .lean();
 
-    if (!order) {
-      return NextResponse.json(
-        { success: false, error: 'Order not found' },
-        { status: 404 }
-      );
+      if (!order) {
+        return NextResponse.json(
+          { success: false, error: 'Order not found' },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        data: order,
+      });
+    } catch (populationError) {
+      console.warn('Population failed, trying without:', populationError);
+      
+      // Fallback: fetch without population
+      const order = await Order.findById(id).lean();
+
+      if (!order) {
+        return NextResponse.json(
+          { success: false, error: 'Order not found' },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        data: order,
+        warning: 'Fetched without population due to error'
+      });
     }
-
-    return NextResponse.json({
-      success: true,
-      data: order,
-    });
   } catch (error) {
     console.error('Error fetching order:', error);
     return NextResponse.json(

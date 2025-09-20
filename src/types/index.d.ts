@@ -99,6 +99,11 @@ export interface OrderItem {
   color: string;
   shippingPrice: number;
   size: string;
+  variants?: Array<{
+    variantName: string;
+    optionValue: string;
+    optionLabel?: string;
+  }>;
 }
 
 interface ShippingAddress {

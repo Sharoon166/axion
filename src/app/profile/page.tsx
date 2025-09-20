@@ -173,89 +173,109 @@ export default function ProfilePage() {
 
             {/* Right column */}
             <div className="space-y-8">
-              {/* Order History */}
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Order History</h3>
-                  <Link
-                    href="/profile/orders"
-                    className="text-sm text-[var(--color-logo)] hover:underline"
-                  >
-                    View All
-                  </Link>
-                </div>
-                <div className="space-y-4">
-                  {loadingOrders ? (
-                    <Loading />
-                  ) : orderHistory.length > 0 ? (
-                    orderHistory.slice(0, 3).map((o) => (
-                      <Link href={`/order/${o.id}`} key={o.id}>
-                        <div className="flex items-center mb-2 justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-100">
-                              <Image
-                                src={o.image}
-                                alt={o.name}
-                                width={48}
-                                height={48}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                            <div>
-                              <div className="font-semibold text-gray-900 text-sm">
-                                Order #{o.id}
+              {/* Order History - Hidden for admin users */}
+              {!userData?.isAdmin && (
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Order History</h3>
+                    <Link
+                      href="/profile/orders"
+                      className="text-sm text-[var(--color-logo)] hover:underline"
+                    >
+                      View All
+                    </Link>
+                  </div>
+                  <div className="space-y-4">
+                    {loadingOrders ? (
+                      <Loading />
+                    ) : orderHistory.length > 0 ? (
+                      orderHistory.slice(0, 3).map((o) => (
+                        <Link href={`/order/${o.id}`} key={o.id}>
+                          <div className="flex items-center mb-2 justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-100">
+                                <Image
+                                  src={o.image}
+                                  alt={o.name}
+                                  width={48}
+                                  height={48}
+                                  className="w-full h-full object-cover"
+                                />
                               </div>
-                              <div className="text-xs text-gray-600">{o.name}</div>
+                              <div>
+                                <div className="font-semibold text-gray-900 text-sm">
+                                  Order #{o.id}
+                                </div>
+                                <div className="text-xs text-gray-600">{o.name}</div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div
+                                className={`text-xs font-medium ${o.status === 'Delivered' ? 'text-green-600' : o.status === 'Processing' ? 'text-amber-600' : 'text-blue-600'}`}
+                              >
+                                {o.status}
+                              </div>
+                              <div className="text-[11px] text-gray-500">{o.date}</div>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <div
-                              className={`text-xs font-medium ${o.status === 'Delivered' ? 'text-green-600' : o.status === 'Processing' ? 'text-amber-600' : 'text-blue-600'}`}
-                            >
-                              {o.status}
-                            </div>
-                            <div className="text-[11px] text-gray-500">{o.date}</div>
+                        </Link>
+                      ))
+                    ) : (
+                      <div className="text-sm text-gray-500">No orders yet.</div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Wishlist - Hidden for admin users */}
+              {!userData?.isAdmin && (
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Wishlist</h3>
+                    <Link
+                      href="/profile/wishlist"
+                      className="text-sm text-[var(--color-logo)] hover:underline"
+                    >
+                      View All
+                    </Link>
+                  </div>
+                  {wishlistItems.length > 0 ? (
+                    <div className="flex items-center gap-3 overflow-x-auto">
+                      {wishlistItems.slice(0, 8).map((item) => (
+                        <Link href={`/product/${item.slug}`} key={item._id}>
+                          <div className="w-20 h-20 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
+                            <Image
+                              src={item.images[0] || '/prodcut-1.jpg'}
+                              alt={item.name}
+                              width={80}
+                              height={80}
+                              className="w-full h-full object-cover"
+                            />
                           </div>
-                        </div>
-                      </Link>
-                    ))
+                        </Link>
+                      ))}
+                    </div>
                   ) : (
-                    <div className="text-sm text-gray-500">No orders yet.</div>
+                    <div className="text-sm text-gray-500">Your wishlist is empty.</div>
                   )}
                 </div>
-              </div>
+              )}
 
-              {/* Wishlist */}
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Wishlist</h3>
-                  <Link
-                    href="/profile/wishlist"
-                    className="text-sm text-[var(--color-logo)] hover:underline"
-                  >
-                    View All
-                  </Link>
-                </div>
-                {wishlistItems.length > 0 ? (
-                  <div className="flex items-center gap-3 overflow-x-auto">
-                    {wishlistItems.slice(0, 8).map((item) => (
-                      <Link href={`/product/${item.slug}`} key={item._id}>
-                        <div className="w-20 h-20 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
-                          <Image
-                            src={item.images[0] || '/prodcut-1.jpg'}
-                            alt={item.name}
-                            width={80}
-                            height={80}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      </Link>
-                    ))}
+              {/* Admin-specific content */}
+              {userData?.isAdmin && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Admin Dashboard</h3>
+                  <div className="space-y-3">
+                    <Link
+                      href="/dashboard"
+                      className="block p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors"
+                    >
+                      <div className="font-medium text-blue-900">Go to Dashboard</div>
+                      <div className="text-sm text-blue-700">Manage orders, products, and more</div>
+                    </Link>
                   </div>
-                ) : (
-                  <div className="text-sm text-gray-500">Your wishlist is empty.</div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

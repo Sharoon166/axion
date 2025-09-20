@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,15 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-import {
-  Package,
-  Truck,
-  CheckCircle,
-  XCircle,
-  Search,
-  Filter,
-  MoreHorizontal
-} from 'lucide-react';
+import { Package, Truck, CheckCircle, XCircle, Search, Filter, MoreHorizontal } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,7 +32,6 @@ interface Order {
     name: string;
     email: string;
     matchesStatus: boolean | undefined;
-
   };
   orderItems: Array<{
     name: string;
@@ -101,24 +92,50 @@ export default function OrdersManagement() {
     confirmed: 0,
     shipped: 0,
     delivered: 0,
-    cancelled: 0
+    cancelled: 0,
   });
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async (retryCount = 0) => {
     try {
-      const response = await fetch('/api/orders');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      const response = await fetch('/api/orders', {
+        signal: controller.signal,
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
+
+      clearTimeout(timeoutId);
+
       if (response.ok) {
         const result = await response.json();
         const orders = result.success ? result.data : [];
-        setOrders(orders);
+
+        // Filter out orders with missing user data if needed
+        const validOrders = orders.filter((order: Order) => {
+          if (!order.user && order.user !== null) {
+            console.warn('Order found with invalid user reference:', order._id);
+            return false;
+          }
+          return true;
+        });
+
+        setOrders(validOrders);
 
         // Calculate stats
-        const stats = orders.reduce(
-          (acc: { ordered: number; confirmed: number; shipped: number; delivered: number; cancelled: number }, order: Order) => {
+        const stats = validOrders.reduce(
+          (
+            acc: {
+              ordered: number;
+              confirmed: number;
+              shipped: number;
+              delivered: number;
+              cancelled: number;
+            },
+            order: Order,
+          ) => {
             if (order.isCancelled) acc.cancelled++;
             else if (order.isDelivered) acc.delivered++;
             else if (order.isShipped) acc.shipped++;
@@ -126,30 +143,55 @@ export default function OrdersManagement() {
             else acc.ordered++;
             return acc;
           },
-          { ordered: 0, confirmed: 0, shipped: 0, delivered: 0, cancelled: 0 }
+          { ordered: 0, confirmed: 0, shipped: 0, delivered: 0, cancelled: 0 },
         );
 
         setOrderStats(stats);
+      } else {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
-      setOrders([]); // Set empty array on error
+
+      // Retry logic for network errors
+      if (
+        retryCount < 2 &&
+        (error instanceof TypeError || // Network error
+          (error instanceof Error && error.name === 'AbortError') || // Timeout
+          (error instanceof Error && error.message.includes('504'))) // Gateway timeout
+      ) {
+        console.log(`Retrying orders fetch (attempt ${retryCount + 1}/3)...`);
+        setTimeout(() => fetchOrders(retryCount + 1), 1000 * (retryCount + 1)); // Exponential backoff
+        return;
+      }
+
+      setOrders([]); // Set empty array on final error
     } finally {
       setLoading(false);
     }
-  };
+  }, []); // Empty dependency array since fetchOrders doesn't depend on any props or state
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   const filteredOrders = orders.filter((order: Order) => {
-    const matchesSearch = order._id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch =
+      order._id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (order.user?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
       (order.user?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
 
     let matchesStatus = true;
     if (statusFilter !== 'all') {
-      if (statusFilter === 'ordered') matchesStatus = !order.isConfirmed && !order.isShipped && !order.isDelivered && !order.isCancelled;
-      else if (statusFilter === 'confirmed') matchesStatus = !!order.isConfirmed && !order.isShipped && !order.isDelivered && !order.isCancelled;
-      else if (statusFilter === 'shipped') matchesStatus = !!order.isShipped && !order.isDelivered && !order.isCancelled;
-      else if (statusFilter === 'delivered') matchesStatus = order.isDelivered && !order.isCancelled;
+      if (statusFilter === 'ordered')
+        matchesStatus =
+          !order.isConfirmed && !order.isShipped && !order.isDelivered && !order.isCancelled;
+      else if (statusFilter === 'confirmed')
+        matchesStatus =
+          !!order.isConfirmed && !order.isShipped && !order.isDelivered && !order.isCancelled;
+      else if (statusFilter === 'shipped')
+        matchesStatus = !!order.isShipped && !order.isDelivered && !order.isCancelled;
+      else if (statusFilter === 'delivered')
+        matchesStatus = order.isDelivered && !order.isCancelled;
       else if (statusFilter === 'cancelled') matchesStatus = order.isCancelled;
     }
 
@@ -220,13 +262,17 @@ export default function OrdersManagement() {
     newStatus: 'ordered' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled',
   ) => {
     try {
-      await api.orders.updateStatus(orderId, newStatus);
+      if (newStatus === 'cancelled') {
+        // Use the dedicated cancel endpoint for better stock restoration
+        await api.orders.cancel(orderId, 'Cancelled by admin');
+      } else {
+        await api.orders.updateStatus(orderId, newStatus);
+      }
       await fetchOrders(); // Refresh orders list
     } catch (error) {
       console.error('Error updating order status:', error);
     }
   };
-  
 
   return (
     <div className="space-y-6 p-4 md:p-6">
@@ -240,61 +286,63 @@ export default function OrdersManagement() {
 
       {/* Order Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-  {[
-    {
-      label: "Ordered",
-      value: orderStats.ordered,
-      color: "text-yellow-600",
-      bg: "bg-yellow-100",
-      icon: <Package className="w-5 h-5 text-yellow-600" />,
-    },
-    {
-      label: "Confirmed",
-      value: orderStats.confirmed,
-      color: "text-purple-600",
-      bg: "bg-purple-100",
-      icon: <CheckCircle className="w-5 h-5 text-purple-600" />,
-    },
-    {
-      label: "Shipped",
-      value: orderStats.shipped,
-      color: "text-blue-600",
-      bg: "bg-blue-100",
-      icon: <Truck className="w-5 h-5 text-blue-600" />,
-    },
-    {
-      label: "Delivered",
-      value: orderStats.delivered,
-      color: "text-green-600",
-      bg: "bg-green-100",
-      icon: <CheckCircle className="w-5 h-5 text-green-600" />,
-    },
-    {
-      label: "Cancelled",
-      value: orderStats.cancelled,
-      color: "text-red-600",
-      bg: "bg-red-100",
-      icon: <XCircle className="w-5 h-5 text-red-600" />,
-    },
-  ].map((item, i) => (
-    <Card key={i} className="bg-white border border-gray-200 rounded-xl shadow-sm">
-      <CardContent className="p-3 sm:p-4">
-        <div className="flex flex-col items-center text-center sm:flex-row sm:items-center sm:text-left sm:gap-3">
-          <div className={`w-10 h-10 ${item.bg} rounded-lg flex items-center justify-center mb-2 sm:mb-0`}>
-            {item.icon}
-          </div>
-          <div>
-            <p className="text-xs sm:text-sm text-gray-600">{item.label}</p>
-            <p className={`text-lg sm:text-xl md:text-2xl font-bold ${item.color}`}>
-              {item.value}
-            </p>
-            <p className="text-[10px] sm:text-xs text-gray-500">Orders</p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  ))}
-</div>
+        {[
+          {
+            label: 'Ordered',
+            value: orderStats.ordered,
+            color: 'text-yellow-600',
+            bg: 'bg-yellow-100',
+            icon: <Package className="w-5 h-5 text-yellow-600" />,
+          },
+          {
+            label: 'Confirmed',
+            value: orderStats.confirmed,
+            color: 'text-purple-600',
+            bg: 'bg-purple-100',
+            icon: <CheckCircle className="w-5 h-5 text-purple-600" />,
+          },
+          {
+            label: 'Shipped',
+            value: orderStats.shipped,
+            color: 'text-blue-600',
+            bg: 'bg-blue-100',
+            icon: <Truck className="w-5 h-5 text-blue-600" />,
+          },
+          {
+            label: 'Delivered',
+            value: orderStats.delivered,
+            color: 'text-green-600',
+            bg: 'bg-green-100',
+            icon: <CheckCircle className="w-5 h-5 text-green-600" />,
+          },
+          {
+            label: 'Cancelled',
+            value: orderStats.cancelled,
+            color: 'text-red-600',
+            bg: 'bg-red-100',
+            icon: <XCircle className="w-5 h-5 text-red-600" />,
+          },
+        ].map((item, i) => (
+          <Card key={i} className="bg-white border border-gray-200 rounded-xl shadow-sm">
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex flex-col items-center text-center sm:flex-row sm:items-center sm:text-left sm:gap-3">
+                <div
+                  className={`w-10 h-10 ${item.bg} rounded-lg flex items-center justify-center mb-2 sm:mb-0`}
+                >
+                  {item.icon}
+                </div>
+                <div>
+                  <p className="text-xs sm:text-sm text-gray-600">{item.label}</p>
+                  <p className={`text-lg sm:text-xl md:text-2xl font-bold ${item.color}`}>
+                    {item.value}
+                  </p>
+                  <p className="text-[10px] sm:text-xs text-gray-500">Orders</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
       {/* Mobile Filter Toggle */}
       <div className="lg:hidden">
@@ -314,7 +362,9 @@ export default function OrdersManagement() {
           {/* Filters */}
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
             <h3 className="text-lg font-semibold text-gray-900">Orders</h3>
-            <div className={`${mobileFiltersOpen ? 'flex' : 'hidden'} lg:flex flex-col lg:flex-row gap-4 w-full lg:w-auto`}>
+            <div
+              className={`${mobileFiltersOpen ? 'flex' : 'hidden'} lg:flex flex-col lg:flex-row gap-4 w-full lg:w-auto`}
+            >
               <div className="relative flex-1 lg:flex-none lg:w-80">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
@@ -341,7 +391,7 @@ export default function OrdersManagement() {
           </div>
 
           {loading ? (
-           <Loading/>
+            <Loading />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full hidden md:table">
@@ -371,21 +421,33 @@ export default function OrdersManagement() {
                         className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
                         onClick={() => handleOrderClick(order)}
                       >
-                        <td className="py-4 px-4 font-medium text-gray-900">#{order._id.slice(-8)}</td>
+                        <td className="py-4 px-4 font-medium text-gray-900">
+                          #{order._id.slice(-8)}
+                        </td>
                         <td className="py-4 px-4">
                           <div>
-                            <p className="font-medium text-gray-900">{order.user?.name || 'Unknown User'}</p>
-                            <p className="text-sm text-gray-500">{order.user?.email || 'No email'}</p>
+                            <p className="font-medium text-gray-900">
+                              {order.user?.name || 'Unknown User'}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {order.user?.email || 'No email'}
+                            </p>
                           </div>
                         </td>
                         <td className="py-4 px-4">
-                          <Badge className={`${getStatusColor(order)} flex items-center gap-1 w-fit`}>
+                          <Badge
+                            className={`${getStatusColor(order)} flex items-center gap-1 w-fit`}
+                          >
                             {getStatusIcon(order)}
                             {getOrderStatus(order)}
                           </Badge>
                         </td>
-                        <td className="py-4 px-4 font-semibold text-gray-900">Rs.{order.totalPrice.toLocaleString()}</td>
-                        <td className="py-4 px-4 text-gray-600">{new Date(order.createdAt).toLocaleDateString()}</td>
+                        <td className="py-4 px-4 font-semibold text-gray-900">
+                          Rs.{order.totalPrice.toLocaleString()}
+                        </td>
+                        <td className="py-4 px-4 text-gray-600">
+                          {new Date(order.createdAt).toLocaleDateString()}
+                        </td>
                         <td className="py-4 px-4">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -397,20 +459,28 @@ export default function OrdersManagement() {
                                 aria-label="Change order status"
                                 title="Change order status"
                               >
-                                <MoreHorizontal/>
+                                <MoreHorizontal />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                              <DropdownMenuItem onClick={() => updateOrderStatus(order._id, 'ordered')}>
+                              <DropdownMenuItem
+                                onClick={() => updateOrderStatus(order._id, 'ordered')}
+                              >
                                 Ordered
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => updateOrderStatus(order._id, 'confirmed')}>
+                              <DropdownMenuItem
+                                onClick={() => updateOrderStatus(order._id, 'confirmed')}
+                              >
                                 Confirmed
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => updateOrderStatus(order._id, 'shipped')}>
+                              <DropdownMenuItem
+                                onClick={() => updateOrderStatus(order._id, 'shipped')}
+                              >
                                 Shipped
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => updateOrderStatus(order._id, 'delivered')}>
+                              <DropdownMenuItem
+                                onClick={() => updateOrderStatus(order._id, 'delivered')}
+                              >
                                 Delivered
                               </DropdownMenuItem>
                               <DropdownMenuItem
@@ -421,7 +491,6 @@ export default function OrdersManagement() {
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
-
                         </td>
                       </tr>
                     ))
@@ -439,11 +508,13 @@ export default function OrdersManagement() {
                 ) : (
                   paginatedOrders.map((order) => (
                     <Card key={order._id} className="overflow-hidden">
-                      <CardContent >
+                      <CardContent>
                         <div className="flex items-start justify-between mb-2">
                           <div>
                             <p className="font-semibold text-gray-900">#{order._id.slice(-8)}</p>
-                            <p className="text-sm text-gray-600">{order.user?.name || 'Unknown User'}</p>
+                            <p className="text-sm text-gray-600">
+                              {order.user?.name || 'Unknown User'}
+                            </p>
                           </div>
                           <Badge className={`${getStatusColor(order)} flex items-center gap-1`}>
                             {getStatusIcon(order)}
@@ -455,7 +526,12 @@ export default function OrdersManagement() {
                           <span>{new Date(order.createdAt).toLocaleDateString()}</span>
                         </div>
                         <div className="flex gap-2">
-                          <Button variant="outline" size="sm" className="flex-1" onClick={() => handleOrderClick(order)}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => handleOrderClick(order)}
+                          >
                             View
                           </Button>
                           <DropdownMenu>
@@ -465,19 +541,30 @@ export default function OrdersManagement() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => updateOrderStatus(order._id, 'ordered')}>
+                              <DropdownMenuItem
+                                onClick={() => updateOrderStatus(order._id, 'ordered')}
+                              >
                                 Ordered
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => updateOrderStatus(order._id, 'confirmed')}>
+                              <DropdownMenuItem
+                                onClick={() => updateOrderStatus(order._id, 'confirmed')}
+                              >
                                 Confirmed
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => updateOrderStatus(order._id, 'shipped')}>
+                              <DropdownMenuItem
+                                onClick={() => updateOrderStatus(order._id, 'shipped')}
+                              >
                                 Shipped
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => updateOrderStatus(order._id, 'delivered')}>
+                              <DropdownMenuItem
+                                onClick={() => updateOrderStatus(order._id, 'delivered')}
+                              >
                                 Delivered
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => updateOrderStatus(order._id, 'cancelled')} className="text-red-600">
+                              <DropdownMenuItem
+                                onClick={() => updateOrderStatus(order._id, 'cancelled')}
+                                className="text-red-600"
+                              >
                                 Cancelled
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -490,12 +577,10 @@ export default function OrdersManagement() {
               </div>
             </div>
           )}
-          
+
           {/* Pagination Controls */}
           {filteredOrders.length > 0 && (
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-end gap-4 border-t border-gray-200 pt-4">
-              
-              
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}

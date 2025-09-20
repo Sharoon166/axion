@@ -44,12 +44,10 @@ const SaleSection = () => {
 
   const fetchSaleProducts = async () => {
     try {
-      setLoading(true);
-      
       const saleRes = await fetch('/api/sale?mode=all');
       const saleJson = await saleRes.json();
       if (!saleJson.success) throw new Error('Failed to fetch sale config');
-      
+
       const activeSales: SaleConfig[] = Array.isArray(saleJson.data) ? saleJson.data : [];
       if (!activeSales.length) {
         setProducts([]);
@@ -59,7 +57,11 @@ const SaleSection = () => {
 
       // Collect explicit product IDs
       const explicitIds = Array.from(
-        new Set(activeSales.flatMap((s) => (Array.isArray(s.productIds) ? s.productIds.filter(Boolean) : [])))
+        new Set(
+          activeSales.flatMap((s) =>
+            Array.isArray(s.productIds) ? s.productIds.filter(Boolean) : [],
+          ),
+        ),
       );
 
       // Load explicit products
@@ -76,8 +78,10 @@ const SaleSection = () => {
       if (categorySlugs.length) {
         const results = await Promise.all(
           categorySlugs.map((slug) =>
-            fetch(`/api/products?category=${encodeURIComponent(slug)}&limit=12`).then((r) => r.json())
-          )
+            fetch(`/api/products?category=${encodeURIComponent(slug)}&limit=12`).then((r) =>
+              r.json(),
+            ),
+          ),
         );
         categoryProducts = results.filter((r) => r?.success).flatMap((r) => r.data ?? []);
       }
@@ -93,7 +97,7 @@ const SaleSection = () => {
       for (const s of activeSales) {
         const ids = new Set<string>();
         (s.productIds || []).forEach((id) => ids.add(id));
-        
+
         if (s.categorySlugs?.length) {
           for (const p of categoryProducts) {
             const catSlug = p?.category?.slug;
@@ -106,8 +110,12 @@ const SaleSection = () => {
         ids.forEach((pid) => {
           const existing = tmpSaleMap[pid];
           const next = { percent: s.discountPercent || 0, endsAt: s.endsAt, saleId: s._id };
-          if (!existing || next.percent > existing.percent || 
-              (next.percent === existing.percent && new Date(next.endsAt).getTime() < new Date(existing.endsAt).getTime())) {
+          if (
+            !existing ||
+            next.percent > existing.percent ||
+            (next.percent === existing.percent &&
+              new Date(next.endsAt).getTime() < new Date(existing.endsAt).getTime())
+          ) {
             tmpSaleMap[pid] = next;
           }
         });
@@ -135,7 +143,9 @@ const SaleSection = () => {
       <div className="px-4 sm:px-5 py-6 sm:py-8">
         <div className="max-w-[85rem] mx-auto px-4">
           <div className="text-center mb-8">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-3">On Sale <span>Now</span></h2>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-3">
+              On Sale <span>Now</span>
+            </h2>
             <p className="text-sm sm:text-base text-gray-600">Loading sale items...</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
@@ -159,7 +169,9 @@ const SaleSection = () => {
     <div className="px-4 sm:px-5 py-6 sm:py-8 bg-gray-50">
       <div className="max-w-[85rem] mx-auto px-4">
         <div className="text-center mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-3">On Sale <span>Now</span></h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-3">
+            On Sale <span>Now</span>
+          </h2>
           <p className="text-sm sm:text-base text-gray-600">
             Limited-time deals on our best lights, don&apos;t miss out
           </p>
@@ -171,7 +183,7 @@ const SaleSection = () => {
               <h3 className="text-xl font-semibold mb-4">No Active Sales</h3>
               <p className="text-gray-600 mb-6">Check back later for amazing deals</p>
               {user?.isAdmin && (
-                <Button 
+                <Button
                   className="bg-[var(--color-logo)] hover:bg-[var(--color-logo)]/90"
                   onClick={() => router.push('/sale')}
                 >
@@ -186,7 +198,7 @@ const SaleSection = () => {
               {products.map((product) => {
                 const mapping = saleMap[product._id];
                 const discount = mapping?.percent || 0;
-                
+
                 return (
                   <ProductCard
                     key={product._id}
@@ -202,7 +214,7 @@ const SaleSection = () => {
                 );
               })}
             </div>
-            
+
             <div className="flex justify-center">
               <Link
                 href="/sale"

@@ -56,7 +56,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${poppins.variable} lg:px-12 font-poppins`}>
+      <body className={`${poppins.variable} font-poppins`}>
         <Providers>
           <Layout>{children}</Layout>
 

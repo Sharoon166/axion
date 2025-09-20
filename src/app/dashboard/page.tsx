@@ -110,17 +110,50 @@ function DashboardContent() {
 
       setLoadingData(true);
       try {
-        const ordersResponse = await fetch('/api/orders');
-        const ordersResult = ordersResponse.ok
-          ? await ordersResponse.json()
-          : { success: false, data: [] };
-        const orders: ApiOrder[] = ordersResult.success ? ordersResult.data : [];
+        // Fetch orders with timeout and retry
+        const fetchWithRetry = async (url: string, retries = 2) => {
+          for (let i = 0; i <= retries; i++) {
+            try {
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 8000);
+              
+              const response = await fetch(url, {
+                signal: controller.signal,
+                headers: { 'Cache-Control': 'no-cache' },
+              });
+              
+              clearTimeout(timeoutId);
+              return response;
+            } catch (error) {
+              if (i === retries) throw error;
+              await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+            }
+          }
+          throw new Error('Max retries exceeded');
+        };
 
-        const productsResponse = await fetch('/api/products');
-        const productsResult = productsResponse.ok
-          ? await productsResponse.json()
-          : { success: false, data: [] };
-        const products: ApiProduct[] = productsResult.success ? productsResult.data : [];
+        const [ordersResponse, productsResponse] = await Promise.allSettled([
+          fetchWithRetry('/api/orders'),
+          fetchWithRetry('/api/products')
+        ]);
+
+        // Handle orders response
+        let orders: ApiOrder[] = [];
+        if (ordersResponse.status === 'fulfilled' && ordersResponse.value.ok) {
+          const ordersResult = await ordersResponse.value.json();
+          orders = ordersResult.success ? ordersResult.data : [];
+        } else {
+          console.warn('Failed to fetch orders:', ordersResponse.status === 'rejected' ? ordersResponse.reason : 'Response not ok');
+        }
+
+        // Handle products response
+        let products: ApiProduct[] = [];
+        if (productsResponse.status === 'fulfilled' && productsResponse.value.ok) {
+          const productsResult = await productsResponse.value.json();
+          products = productsResult.success ? productsResult.data : [];
+        } else {
+          console.warn('Failed to fetch products:', productsResponse.status === 'rejected' ? productsResponse.reason : 'Response not ok');
+        }
 
         const totalOrders = orders.length;
         const pendingOrders = orders.filter(
