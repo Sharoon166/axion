@@ -29,6 +29,28 @@ interface Filters {
   sortBy: string;
 }
 
+interface Sale {
+  _id: string;
+  name: string;
+  productIds: string[];
+  endsAt: string;
+  discountPercent: number;
+  active: boolean;
+}
+
+interface SaleData {
+  _id: string;
+  name: string;
+  categorySlugs: string[];
+  productIds: string[];
+  endsAt: string;
+  discountPercent: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
+
 interface Product {
   _id: string;
   id: string;
@@ -41,7 +63,11 @@ interface Product {
   inStock: boolean;
   images: string[];
   slug: string;
-  discount?: number;
+  saleInfo?: {
+    discountPercent: number;
+    endsAt: string;
+    saleName: string;
+  };
 }
 
 const ProductsPage: React.FC = () => {
@@ -52,6 +78,7 @@ const ProductsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [sale, setSale] = useState<Sale | null>(null);
 
   // Filter state
   const [filters, setFilters] = useState<Filters>({
@@ -90,44 +117,86 @@ const ProductsPage: React.FC = () => {
     fetchCategories();
   }, []);
 
-  // Fetch products
+  // Fetch sale data
+  const fetchSale = async (): Promise<SaleData | null> => {
+    try {
+      const response = await fetch('/api/sale');
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data && result.data.active) {
+          return result.data;
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching sale:', error);
+      return null;
+    }
+  };
+
+
+  // Fetch products and apply sale data
   useEffect(() => {
-    const fetchProducts = async (): Promise<void> => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await fetch('/api/products');
-        if (response.ok) {
-          const result = await response.json();
+        // Fetch products and sale data in parallel
+        const [productsResponse, saleData] = await Promise.all([
+          fetch('/api/products'),
+          fetchSale()
+        ]);
+
+        if (productsResponse.ok) {
+          const result = await productsResponse.json();
           if (result.success && Array.isArray(result.data)) {
-            setProducts(result.data);
+            // Apply sale data to products if there's an active sale
+            if (saleData && saleData.active) {
+              const productsWithSale = result.data.map((product: any) => {
+                if (saleData.productIds.includes(product._id)) {
+                  return {
+                    ...product,
+                    saleInfo: {
+                      discountPercent: saleData.discountPercent,
+                      endsAt: saleData.endsAt,
+                      saleName: saleData.name
+                    }
+                  };
+                }
+                return product;
+              });
+              setProducts(productsWithSale);
+            } else {
+              setProducts(result.data);
+            }
           }
         }
       } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProducts();
+    fetchData();
   }, []);
 
   // Filter and sort products when filters or products change
   useEffect(() => {
-    let out = [...products];
+    let filtered = [...products];
 
-    // Filter by category
+    // Apply category filter
     if (filters.selectedCategory !== 'all') {
-      out = out.filter((p) => {
-        const slug = p.category.name || '';
-        return slug === filters.selectedCategory;
-      });
+      filtered = filtered.filter(
+        (product) =>
+          product.category &&
+          product.category.slug === filters.selectedCategory
+      );
     }
 
     // Filter by price bucket
     const bucket = priceOptions.find((o) => o.value === filters.priceBucket);
     if (bucket && bucket.value !== 'all') {
-      out = out.filter((p) => {
+      filtered = filtered.filter((p) => {
         const price = Number(p.price) || 0;
         return price >= bucket.min && price < bucket.max;
       });
@@ -136,24 +205,24 @@ const ProductsPage: React.FC = () => {
     // Sort products
     switch (filters.sortBy) {
       case 'price-asc':
-        out.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
+        filtered.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
         break;
       case 'price-desc':
-        out.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
+        filtered.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
         break;
       case 'name-asc':
-        out.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
         break;
       case 'name-desc':
-        out.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+        filtered.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
         break;
       default:
         break;
     }
 
-    setFilteredProducts(out);
+    setFilteredProducts(filtered);
     setCurrentPage(1); // Reset to first page when filters change
-  }, [products, filters, priceOptions]);
+  }, [products, filters, priceOptions, sale]);
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
@@ -178,7 +247,7 @@ const ProductsPage: React.FC = () => {
 
   return (
     <div>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen">
         <PageHeader title="All " titleHighlight="Products" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -262,17 +331,18 @@ const ProductsPage: React.FC = () => {
                 {currentProducts.length > 0 ? (
                   <>
                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-6">
                       {currentProducts.map((product) => (
                         <ProductCard
                           key={product._id}
                           id={product._id}
                           name={product.name}
-                          price={product.price || 0}
-                          rating={product.rating}
-                          img={product.images || []}
+                          price={product.price}
+                          img={product.images?.[0] || '/placeholder-product.jpg'}
                           href={`/product/${product.slug}`}
-                          discount={product.discount}
+                          rating={product.rating}
+                          discount={product.saleInfo?.discountPercent}
+                          saleEndsAt={product.saleInfo?.endsAt}
                         />
                       ))}
                     </div>

@@ -203,7 +203,7 @@ export default function SalePage() {
                   {/* Show results only if searching */}
                   {query.trim() && (
                     <ScrollArea className="h-[350px] w-full rounded-md border p-3">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                         {filteredProducts.length > 0 ? (
                           filteredProducts.slice(0, 20).map((p) => {
                             const checked = selectedProductIds.includes(p._id);

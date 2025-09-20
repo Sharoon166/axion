@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       } catch (error) {
         retries--;
         if (retries === 0) throw error;
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }
 
@@ -31,20 +31,23 @@ export async function GET(request: NextRequest) {
 
     // If explicit IDs are provided, fetch those products and return early
     if (idsParam) {
-      const rawIds = idsParam.split(',').map((s) => s.trim()).filter(Boolean);
+      const rawIds = idsParam
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
       if (rawIds.length === 0) {
         return NextResponse.json({ success: true, data: [] });
       }
-      
+
       try {
         const products = await Product.find({ _id: { $in: rawIds } })
           .populate({
             path: 'category',
             select: 'name slug',
-            options: { strictPopulate: false }
+            options: { strictPopulate: false },
           })
           .lean();
-        
+
         // Preserve input order
         const orderMap = new Map(rawIds.map((id, idx) => [id, idx]));
         const sorted = products
@@ -56,10 +59,10 @@ export async function GET(request: NextRequest) {
         console.error('Error fetching products by IDs:', idsError);
         // Fallback: try without population
         const products = await Product.find({ _id: { $in: rawIds } }).lean();
-        return NextResponse.json({ 
-          success: true, 
+        return NextResponse.json({
+          success: true,
           data: products,
-          warning: 'Fetched without category population'
+          warning: 'Fetched without category population',
         });
       }
     }
@@ -81,7 +84,7 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({
             success: true,
             data: [],
-            message: 'Category not found'
+            message: 'Category not found',
           });
         }
       } catch (categoryError) {
@@ -89,7 +92,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({
           success: true,
           data: [],
-          message: 'Error finding category'
+          message: 'Error finding category',
         });
       }
     }
@@ -99,7 +102,7 @@ export async function GET(request: NextRequest) {
         .populate({
           path: 'category',
           select: 'name slug',
-          options: { strictPopulate: false }
+          options: { strictPopulate: false },
         })
         .sort({ createdAt: -1 });
 
@@ -116,10 +119,10 @@ export async function GET(request: NextRequest) {
       });
     } catch (queryError) {
       console.warn('Query with population failed, trying without:', queryError);
-      
+
       // Fallback: try without population
       let productsQuery = Product.find(query).sort({ createdAt: -1 });
-      
+
       if (limit) {
         productsQuery = productsQuery.limit(Number(limit));
       }
@@ -129,12 +132,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         success: true,
         data: products.map((product) => product.toObject()),
-        warning: 'Fetched without category population due to error'
+        warning: 'Fetched without category population due to error',
       });
     }
   } catch (error) {
     console.error('Error fetching products:', error);
-    
+
     if (error instanceof Error && error.message === 'DB timeout') {
       return NextResponse.json(
         { success: false, error: 'Database connection timeout. Please try again.' },
@@ -143,7 +146,10 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch products. Please check your connection and try again.' },
+      {
+        success: false,
+        error: 'Failed to fetch products. Please check your connection and try again.',
+      },
       { status: 500 },
     );
   }

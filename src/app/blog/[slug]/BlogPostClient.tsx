@@ -7,6 +7,7 @@ import { ArrowRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { BlogPost } from '@/types';
 import Loading from '@/loading';
+import { useRouter } from 'next/navigation';
 
 interface BlogPostClientProps {
   slug: string;
@@ -15,6 +16,7 @@ interface BlogPostClientProps {
 export default function BlogPostClient({ slug }: BlogPostClientProps) {
   const [post, setPost] = useState<BlogPost | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -97,7 +99,7 @@ export default function BlogPostClient({ slug }: BlogPostClientProps) {
           <p className="text-gray-600 mb-6">
             Contact us today to start your journey toward a smarter, brighter home.
           </p>
-          <Button className="bg-(--color-logo) hover:bg-(--color-logo)/80 rounded-xl group">
+          <Button className="bg-(--color-logo) hover:bg-(--color-logo)/80 rounded-xl group" onClick={() => router.push('/contact')}>
             Start Your Project{' '}
             <ArrowRight className="group-hover:translate-x-0.5 transition-transform" />
           </Button>

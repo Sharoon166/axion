@@ -121,9 +121,9 @@ export interface SalesData {
 }
 
 interface OrderData {
-
   id: string;
   _id: string;
+  orderId: string;
   images: string[];
   slug: string;
   name: string;
@@ -132,7 +132,14 @@ interface OrderData {
   rating: number;
   image: string;
   price: number;
-  user: User | null;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    isAdmin: boolean;
+    image: string;
+  } | null;
   orderItems: OrderItem[];
   shippingAddress: ShippingAddress;
   paymentMethod: string;
@@ -145,22 +152,11 @@ interface OrderData {
   paidAt: Date | null;
   isDelivered: boolean;
   deliveredAt: Date | null;
-  // New lifecycle fields
   isConfirmed?: boolean;
   confirmedAt?: Date | null;
   isShipped?: boolean;
   shippedAt?: Date | null;
   createdAt: Date;
-  images?: string[];
   isCancelled: boolean;
   cancelledAt: Date | null;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    role: string;
-    isAdmin: boolean;
-    image: string;
-  }
-
 }

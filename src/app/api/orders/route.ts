@@ -2,8 +2,27 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Order from '@/models/Order';
 import { Types } from 'mongoose';
-import { OrderItem } from '@/types';
+import { OrderData, OrderItem, Product } from '@/types';
 import { reduceStockForOrder } from '@/lib/stockManager';
+
+// Extend the Order document with additional properties
+type PopulatedOrder = Omit<OrderData, 'user' | 'orderItems'> & {
+  _id: Types.ObjectId;
+  user: {
+    _id: Types.ObjectId;
+    name?: string;
+    email?: string;
+  } | Types.ObjectId | null;
+  orderItems: Array<{
+    _id: Types.ObjectId;
+    product: Types.ObjectId | { _id: Types.ObjectId; name?: string; slug?: string; images?: string[] };
+    quantity: number;
+    price: number;
+  }>;
+  orderId: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 interface OrderQuery {
   user?: string | Types.ObjectId;
@@ -70,29 +89,68 @@ export async function POST(request: NextRequest) {
     });
 
     const createdOrder = await order.save();
+    
+    // Ensure orderId is included in the response
+    const orderResponse = createdOrder.toObject();
+    orderResponse.orderId = createdOrder.orderId;
 
-    // Debug: Log the created order items to see if variants are stored
-    console.log('Created order with items:', JSON.stringify(createdOrder.orderItems, null, 2));
+    // Debug: Log the created order with orderId
+    console.log('Created order with ID:', createdOrder.orderId);
 
-    // Update product stock for each item in the order using the stock manager
+    // Reduce stock for each item in the order
     try {
-      console.log(`Reducing stock for new order ${createdOrder._id}`);
       const stockResults = await reduceStockForOrder(createdOrder.orderItems);
-      
-      const failedReductions = stockResults.filter(result => !result.success);
-      if (failedReductions.length > 0) {
-        console.warn(`Some stock reductions failed for order ${createdOrder._id}:`, failedReductions);
-      }
-      
       const successfulReductions = stockResults.filter(result => result.success);
-      console.log(`Successfully reduced stock for ${successfulReductions.length} products in order ${createdOrder._id}`);
+      console.log(`Successfully reduced stock for ${successfulReductions.length} products in order ${createdOrder.orderId}`);
+      
+      if (successfulReductions.length < stockResults.length) {
+        console.warn(`Some products' stock could not be updated for order ${createdOrder.orderId}`);
+      }
     } catch (error) {
-      console.error(`Error reducing stock for order ${createdOrder._id}:`, error);
+      console.error(`Error reducing stock for order ${createdOrder.orderId}:`, error);
       // Don't fail the order creation if stock reduction fails
       // The order is still created, but stock might not be updated
     }
 
-    return NextResponse.json({ success: true, data: createdOrder }, { status: 201 });
+    // Prepare the response with proper type safety
+    const responseData = {
+      ...orderResponse,
+      _id: orderResponse._id.toString(),
+      orderId: orderResponse.orderId,
+      user: orderResponse.user ? {
+        _id: orderResponse.user._id?.toString(),
+        name: orderResponse.user.name || 'Guest User',
+        email: orderResponse.user.email || 'guest@example.com'
+      } : null,
+      orderItems: orderResponse.orderItems.map((item: { _id: Types.ObjectId; product: any; name: string; qty: number; quantity: number; image: string; price: number; color: string; size?: string; }) => {
+        // Handle the product field based on its type
+        let productData: any = null;
+        const product = item.product;
+        
+        if (product) {
+          if (product instanceof Types.ObjectId) {
+            productData = product.toString();
+          } else if (typeof product === 'object' && product !== null) {
+            // It's a Product object
+            productData = {
+              _id: product._id ? String(product._id) : '',
+              name: product.name ? String(product.name) : '',
+              slug: product.slug ? String(product.slug) : ''
+            };
+          } else if (typeof product === 'string') {
+            productData = product;
+          }
+        }
+        
+        return {
+          ...item,
+          _id: item._id.toString(),
+          product: productData
+        };
+      })
+    };
+
+    return NextResponse.json({ success: true, data: responseData }, { status: 201 });
   } catch (error) {
     console.error('Error creating order:', error);
     return NextResponse.json({ success: false, error: 'Failed to create order' }, { status: 500 });
@@ -153,13 +211,15 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limitNum;
 
     try {
-      // Try with full population first
+      // Get orders with user population
       const [orders, total] = await Promise.all([
         Order.find(query)
           .populate({
             path: 'user',
             select: 'name email',
-            options: { strictPopulate: false }
+            options: { 
+              strictPopulate: false,
+            }
           })
           .populate({
             path: 'orderItems.product',
@@ -170,7 +230,45 @@ export async function GET(request: NextRequest) {
           .skip(skip)
           .limit(limitNum)
           .lean()
-          .exec(),
+          .then(orders => {
+            // Type assertion to handle the populated order
+            const populatedOrders = orders as unknown as PopulatedOrder[];
+            return populatedOrders.map(order => {
+              // Ensure orderId is included
+              const orderId = order.orderId || `ORD_${order._id.toString().slice(-8).toUpperCase()}`;
+              
+              // Handle user population
+              let userInfo: { name: string; email: string };
+              if (order.user && typeof order.user === 'object' && !(order.user instanceof Types.ObjectId)) {
+                // User is populated
+                userInfo = { 
+                  name: order.user.name || 'Guest User',
+                  email: order.user.email || 'guest@example.com'
+                };
+              } else {
+                // User is not populated or is an ObjectId
+                userInfo = { name: 'Guest User', email: 'guest@example.com' };
+              }
+              
+              return {
+                ...order,
+                _id: order._id.toString(),
+                orderId,
+                user: userInfo,
+                // Convert any ObjectId fields to strings
+                orderItems: order.orderItems.map(item => ({
+                  ...item,
+                  _id: item._id.toString(),
+                  product: typeof item.product === 'object' && item.product !== null && !(item.product instanceof Types.ObjectId)
+                    ? {
+                        ...item.product,
+                        _id: item.product._id.toString()
+                      }
+                    : item.product?.toString()
+                }))
+              };
+            });
+          }),
         Order.countDocuments(query),
       ]);
 

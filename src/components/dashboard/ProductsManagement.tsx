@@ -222,9 +222,9 @@ export default function ProductsManagement() {
                             />
                           </div>
                         </td>
-                        <td className="py-4 px-4">
+                        <td className="py-4 px-2">
                           <div>
-                            <p className="font-medium text-gray-900">{productItem.name}</p>
+                            <p className="font-medium text-gray-900 line-clamp-1">{productItem.name}</p>
                             <p className="text-sm text-gray-500">{productItem.slug}</p>
                           </div>
                         </td>
@@ -241,7 +241,7 @@ export default function ProductsManagement() {
                                   : 'bg-red-100 text-red-800'
                             }`}
                           >
-                            {productItem.stock} in stock
+                            {productItem.stock}
                           </span>
                         </td>
                         <td className="py-4 px-4 font-semibold text-gray-900">

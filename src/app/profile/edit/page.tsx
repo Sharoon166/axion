@@ -207,7 +207,7 @@ export default function EditProfilePage() {
       loading: 'Updating profile...',
       success: () => {
         setTimeout(() => {
-          router.push('/');
+          router.push('/profile');
         }, 1000);
         return 'Profile updated successfully!';
       },

@@ -210,10 +210,18 @@ function DashboardContent() {
         <Loading />
       </div>
     );
-  if (!userData?.isAdmin) redirect('/');
+  
+  // Redirect if not admin or order admin
+  if (!userData?.isAdmin && userData?.role !== 'orderAdmin') redirect('/');
+  
+  const isOrderAdmin = userData?.role === 'orderAdmin';
 
   const handleLogout = () => {
-    localStorage.removeItem('userData');
+    // Clear all items from localStorage
+    localStorage.clear();
+    // Clear sessionStorage as well for good measure
+    sessionStorage.clear();
+    // Redirect to home page
     window.location.href = '/';
   };
 
@@ -221,7 +229,7 @@ function DashboardContent() {
     router.push(`/dashboard?tab=${tabKey}`);
   };
 
-  const sidebarItems = [
+  const adminSidebarItems = [
     { icon: BarChart3, label: 'Dashboard', key: 'dashboard' },
     { icon: ShoppingCart, label: 'Order', key: 'orders' },
     { icon: Package, label: 'Product', key: 'products' },
@@ -229,6 +237,13 @@ function DashboardContent() {
     { icon: Briefcase, label: 'Projects', key: 'projects' },
     { icon: LogOut, label: 'Logout', key: 'logout' },
   ];
+
+  const orderAdminSidebarItems = [
+    { icon: ShoppingCart, label: 'Order Management', key: 'orders' },
+    { icon: LogOut, label: 'Logout', key: 'logout' },
+  ];
+
+  const sidebarItems = isOrderAdmin ? orderAdminSidebarItems : adminSidebarItems;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -249,10 +264,10 @@ function DashboardContent() {
                 <div className="w-12 h-12 rounded-full overflow-hidden bg-blue-100 flex items-center justify-center">
                   <Image
                     src={userData?.avatar || userData?.image || '/avatar.png'}
-                    width={48}
-                    height={48}
+                    width={100}
+                    height={100}
                     alt="Admin"
-                    className="rounded-full object-cover"
+                    className="size-full object-center object-cover"
                   />
                 </div>
                 <div>
@@ -332,13 +347,13 @@ function DashboardContent() {
             </div>
           </div>
 
-          {activeTab === 'dashboard' && (
+          {activeTab === 'dashboard' && !isOrderAdmin && (
             <DashboardOverview dashboardData={dashboardData} loadingData={loadingData} />
           )}
-          {activeTab === 'orders' && <OrdersManagement />}
-          {activeTab === 'products' && <ProductsManagement />}
-          {activeTab === 'blogs' && <BlogsManagement />}
-          {activeTab === 'projects' && <ProjectManagement />}
+          {activeTab === 'orders' && <OrdersManagement isOrderAdmin={isOrderAdmin} />}
+          {activeTab === 'products' && !isOrderAdmin && <ProductsManagement />}
+          {activeTab === 'blogs' && !isOrderAdmin && <BlogsManagement />}
+          {activeTab === 'projects' && !isOrderAdmin && <ProjectManagement />}
         </div>
       </div>
     </div>

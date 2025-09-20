@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, ChangeEvent } from 'react';
+import { useState, useRef, ChangeEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,8 +12,21 @@ import { UserPlus, Eye, EyeOff, Upload, X } from 'lucide-react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 
+interface UserData {
+  id?: string;
+  name?: string;
+  email?: string;
+  role?: string;
+  isAdmin?: boolean;
+  image?: string;
+  address?: string | null;
+  phone?: string | null;
+}
+
 export default function RegisterPage() {
   const router = useRouter();
+  const [user, setUser] = useState<UserData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -23,7 +36,31 @@ export default function RegisterPage() {
   });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Load user data from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const userData = localStorage.getItem('userData');
+      if (userData) {
+        try {
+          setUser(JSON.parse(userData));
+        } catch (e) {
+          console.error('Failed to parse user data', e);
+        }
+      }
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Redirect if user is not a dev admin
+  useEffect(() => {
+    if (!isLoading) {
+      if (!user || user.role !== 'admin') {
+        router.push('/');
+      }
+    }
+  }, [user, isLoading, router]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -76,10 +113,9 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLoading) return;
+    setIsSubmitting(true);
 
     try {
-      setIsLoading(true);
 
       await toast.promise(
         (async () => {
@@ -133,7 +169,7 @@ export default function RegisterPage() {
           success: () => {
             // Redirect after successful registration
             setTimeout(() => {
-              router.push(formData.isAdmin ? '/admin' : '/profile');
+              router.push(formData.isAdmin ? '/' : '/');
             }, 1000);
             return 'Registration successful! Redirecting...';
           },
@@ -147,10 +183,14 @@ export default function RegisterPage() {
       console.error('Unexpected error:', error);
       toast.error('An unexpected error occurred');
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
+  useEffect(() => {
+    // This check is now handled in the useEffect above
+    
+  }, []);
   return (
     <div className="min-h-screen bg-gray-50">
       <PageHeader
@@ -171,54 +211,7 @@ export default function RegisterPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Profile Picture Upload */}
-              <div className="space-y-2">
-                <Label>Profile Picture</Label>
-                <div className="flex items-center gap-4">
-                  <div className="relative w-20 h-20 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden">
-                    {previewUrl ? (
-                      <>
-                        <Image
-                          src={previewUrl}
-                          alt="Profile preview"
-                          fill
-                          className="object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={removeImage}
-                          className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </>
-                    ) : (
-                      <Upload className="w-6 h-6 text-gray-400" />
-                    )}
-                  </div>
-                  <div>
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleFileChange}
-                      accept="image/*"
-                      className="hidden"
-                      id="avatar-upload"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="flex items-center gap-2"
-                    >
-                      <Upload className="w-4 h-4" />
-                      {formData.avatar ? 'Change' : 'Upload'} Photo
-                    </Button>
-                    <p className="text-xs text-muted-foreground mt-1">JPG, PNG up to 5MB</p>
-                  </div>
-                </div>
-              </div>
+            <form onSubmit={handleSubmit} className="space-y-4">          
 
               <div>
                 <Label htmlFor="name">Full Name</Label>

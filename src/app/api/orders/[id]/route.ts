@@ -1,6 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Order from '@/models/Order';
+import { OrderData } from '@/types';
+import { Types } from 'mongoose';
+
+// Extend the Order document with additional properties
+type PopulatedOrder = Omit<OrderData, 'user' | 'orderItems'> & {
+  user: {
+    _id: Types.ObjectId;
+    name?: string;
+    email?: string;
+  } | Types.ObjectId | null;
+  orderItems: Array<{
+    _id: Types.ObjectId;
+    product: Types.ObjectId | { _id: Types.ObjectId; name?: string; slug?: string; images?: string[] };
+    quantity: number;
+    price: number;
+  }>;
+  orderId?: string;
+};
 
 // Interface for the update data
 interface OrderUpdateData {
@@ -65,7 +83,7 @@ export async function GET(
           select: 'name slug images',
           options: { strictPopulate: false }
         })
-        .lean();
+        .lean() as unknown as PopulatedOrder;
 
       if (!order) {
         return NextResponse.json(
@@ -74,15 +92,41 @@ export async function GET(
         );
       }
 
+      // Ensure orderId is included in the response
+      const orderResponse = {
+        ...order,
+        _id: order._id.toString(),
+        orderId: order.orderId || `ORD_${order._id.toString().slice(-8).toUpperCase()}`,
+        // Convert any ObjectId fields to strings
+        orderItems: order.orderItems.map(item => ({
+          ...item,
+          _id: item._id.toString(),
+          product: typeof item.product === 'object' && item.product !== null && !(item.product instanceof Types.ObjectId)
+            ? {
+                ...item.product,
+                _id: item.product._id.toString()
+              }
+            : item.product?.toString()
+        })),
+        // Handle user population
+        user: order.user && typeof order.user === 'object' && !(order.user instanceof Types.ObjectId)
+          ? {
+              _id: order.user._id.toString(),
+              name: order.user.name || 'Guest User',
+              email: order.user.email || 'guest@example.com'
+            }
+          : { _id: order.user?.toString() || 'guest', name: 'Guest User', email: 'guest@example.com' }
+      };
+
       return NextResponse.json({
         success: true,
-        data: order,
+        data: orderResponse,
       });
     } catch (populationError) {
       console.warn('Population failed, trying without:', populationError);
       
       // Fallback: fetch without population
-      const order = await Order.findById(id).lean();
+      const order = await Order.findById(id).lean() as unknown as PopulatedOrder;
 
       if (!order) {
         return NextResponse.json(
@@ -91,9 +135,35 @@ export async function GET(
         );
       }
 
+      // Ensure orderId is included in the fallback response
+      const orderResponse = {
+        ...order,
+        _id: order._id.toString(),
+        orderId: order.orderId || `ORD_${order._id.toString().slice(-8).toUpperCase()}`,
+        // Convert any ObjectId fields to strings
+        orderItems: order.orderItems.map(item => ({
+          ...item,
+          _id: item._id.toString(),
+          product: typeof item.product === 'object' && item.product !== null && !(item.product instanceof Types.ObjectId)
+            ? {
+                ...item.product,
+                _id: item.product._id.toString()
+              }
+            : item.product?.toString()
+        })),
+        // Handle user population
+        user: order.user && typeof order.user === 'object' && !(order.user instanceof Types.ObjectId)
+          ? {
+              _id: order.user._id.toString(),
+              name: order.user.name || 'Guest User',
+              email: order.user.email || 'guest@example.com'
+            }
+          : { _id: order.user?.toString() || 'guest', name: 'Guest User', email: 'guest@example.com' }
+      };
+
       return NextResponse.json({
         success: true,
-        data: order,
+        data: orderResponse,
         warning: 'Fetched without population due to error'
       });
     }
@@ -201,7 +271,7 @@ export async function PUT(
         path: 'orderItems.product',
         select: 'name slug images'
       })
-      .lean();
+      .lean() as unknown as PopulatedOrder;
 
     if (!order) {
       return NextResponse.json(
@@ -210,9 +280,35 @@ export async function PUT(
       );
     }
 
+    // Ensure orderId is included in the response
+    const orderResponse = {
+      ...order,
+      _id: order._id.toString(),
+      orderId: order.orderId || `ORD_${order._id.toString().slice(-8).toUpperCase()}`,
+      // Convert any ObjectId fields to strings
+      orderItems: order.orderItems.map(item => ({
+        ...item,
+        _id: item._id.toString(),
+        product: typeof item.product === 'object' && item.product !== null && !(item.product instanceof Types.ObjectId)
+          ? {
+              ...item.product,
+              _id: item.product._id.toString()
+            }
+          : item.product?.toString()
+      })),
+      // Handle user population
+      user: order.user && typeof order.user === 'object' && !(order.user instanceof Types.ObjectId)
+        ? {
+            _id: order.user._id.toString(),
+            name: order.user.name || 'Guest User',
+            email: order.user.email || 'guest@example.com'
+          }
+        : { _id: order.user?.toString() || 'guest', name: 'Guest User', email: 'guest@example.com' }
+    };
+
     return NextResponse.json({
       success: true,
-      data: order,
+      data: orderResponse,
     });
   } catch (error) {
     console.error('Error updating order:', error);

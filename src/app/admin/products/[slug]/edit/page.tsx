@@ -257,19 +257,35 @@ export default function EditProductPage() {
 
   const removeImage = (index: number) => {
     // Revoke object URL to prevent memory leaks
-    if (previewUrls[index]) {
+    if (previewUrls[index] && previewUrls[index].startsWith('blob:')) {
       URL.revokeObjectURL(previewUrls[index]);
     }
 
-    // Create new arrays without the removed item
-    const newFiles = [...selectedFiles];
-    const newPreviews = [...previewUrls];
-    newFiles.splice(index, 1);
-    newPreviews.splice(index, 1);
-
-    // Update state
-    setSelectedFiles(newFiles);
-    setPreviewUrls(newPreviews);
+    // Check if we're removing an existing image or a newly added one
+    const isExistingImage = index < previewUrls.length - selectedFiles.length;
+    
+    if (isExistingImage) {
+      // For existing images, just remove from preview (will be removed from DB on submit)
+      const newPreviews = [...previewUrls];
+      newPreviews.splice(index, 1);
+      setPreviewUrls(newPreviews);
+    } else {
+      // For new images, remove from both selectedFiles and previewUrls
+      const newFiles = [...selectedFiles];
+      const newPreviews = [...previewUrls];
+      const fileIndex = index - (previewUrls.length - selectedFiles.length);
+      
+      // Revoke the URL before removing
+      if (previewUrls[index]?.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrls[index]);
+      }
+      
+      newFiles.splice(fileIndex, 1);
+      newPreviews.splice(index, 1);
+      
+      setSelectedFiles(newFiles);
+      setPreviewUrls(newPreviews);
+    }
   };
 
   const clearAllImages = () => {
@@ -311,17 +327,15 @@ export default function EditProductPage() {
         formDataToSend.append(`subcategories[${index}]`, subcat);
       });
 
-      // Keep existing non-blob URLs
-      const uploadedImageUrls = [...previewUrls.filter((url) => !url.startsWith('blob:'))];
-
-      // Upload only new files (File objects) - only those that are actually new
-      const newFiles = selectedFiles.filter(
-        (file, index) =>
-          file instanceof File &&
-          !previewUrls.some((url, i) => i >= index && !url.startsWith('blob:')),
+      // Only keep existing non-blob URLs (already uploaded images)
+      const existingImageUrls = previewUrls.filter(url => 
+        url && !url.startsWith('blob:')
       );
-
-      for (const file of newFiles) {
+      
+      const uploadedImageUrls = [...existingImageUrls];
+      
+      // Upload only the newly selected files
+      for (const file of selectedFiles) {
         try {
           const uploadFormData = new FormData();
           uploadFormData.append('file', file);
@@ -361,12 +375,25 @@ export default function EditProductPage() {
         formDataToSend.append('sizes', size);
       });
 
-      // Add variants/addons
+      // Add variants and addons if they exist
       if (variants && variants.length > 0) {
-        formDataToSend.append('variants', JSON.stringify(variants));
+        // Filter out any empty or invalid variants
+        const validVariants = variants.filter(
+          (v) => v.name && v.options && v.options.length > 0
+        );
+        if (validVariants.length > 0) {
+          formDataToSend.append('variants', JSON.stringify(validVariants));
+        }
       }
+
       if (addons && addons.length > 0) {
-        formDataToSend.append('addons', JSON.stringify(addons));
+        // Filter out any empty or invalid addons
+        const validAddons = addons.filter(
+          (a) => a.name && a.options && a.options.length > 0
+        );
+        if (validAddons.length > 0) {
+          formDataToSend.append('addons', JSON.stringify(validAddons));
+        }
       }
 
       // Add specifications

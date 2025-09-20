@@ -27,6 +27,7 @@ import Pagination from '@/components/Pagination';
 
 interface Order {
   _id: string;
+  orderId: string;
   user: {
     _id: string;
     name: string;
@@ -76,7 +77,11 @@ interface Order {
   updatedAt: string;
 }
 
-export default function OrdersManagement() {
+interface OrdersManagementProps {
+  isOrderAdmin?: boolean;
+}
+
+export default function OrdersManagement({ isOrderAdmin = false }: OrdersManagementProps) {
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -421,8 +426,9 @@ export default function OrdersManagement() {
                         className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
                         onClick={() => handleOrderClick(order)}
                       >
-                        <td className="py-4 px-4 font-medium text-gray-900">
-                          #{order._id.slice(-8)}
+
+                        <td className="py-4 px-4 font-semibold text-sm">
+                          {order.orderId || 'N/A'}
                         </td>
                         <td className="py-4 px-4">
                           <div>
@@ -512,6 +518,7 @@ export default function OrdersManagement() {
                         <div className="flex items-start justify-between mb-2">
                           <div>
                             <p className="font-semibold text-gray-900">#{order._id.slice(-8)}</p>
+                            <p className="text-sm font-mono text-gray-600">{order.orderId || 'N/A'}</p>
                             <p className="text-sm text-gray-600">
                               {order.user?.name || 'Unknown User'}
                             </p>

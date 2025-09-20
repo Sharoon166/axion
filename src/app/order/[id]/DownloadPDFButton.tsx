@@ -54,7 +54,7 @@ export default function DownloadPDFButton({ order, orderId }: DownloadPDFButtonP
       doc.setFontSize(12);
       doc.setTextColor('#000');
 
-      doc.text(`Order ID: #${orderId.slice(-6)}`, 40, 110);
+      doc.text(`Order ID: #${orderId}`, 40, 110);
       doc.text(`Order Date: ${orderDate}`, 40, 130);
       doc.text(`Status: ${getOrderStatus()}`, 40, 150);
       doc.text(`Payment: ${order.paymentMethod || 'N/A'}`, 40, 170);

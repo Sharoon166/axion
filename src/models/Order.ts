@@ -1,7 +1,14 @@
 import mongoose from 'mongoose';
+import { nanoid } from 'nanoid';
 
 const orderSchema = new mongoose.Schema(
   {
+    orderId: { 
+      type: String, 
+      required: true, 
+      unique: true,
+      default: () => `ORD_${nanoid(8).toUpperCase()}`
+    },
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false },
     customerEmail: { type: String, required: false },
     orderItems: [
@@ -21,11 +28,13 @@ const orderSchema = new mongoose.Schema(
           required: true,
         },
         // Variant information for stock restoration
-        variants: [{
-          variantName: { type: String, required: true }, // e.g., "Color", "Size"
-          optionValue: { type: String, required: true }, // e.g., "Red", "Large"
-          optionLabel: { type: String, required: false }, // e.g., "Red", "Large"
-        }],
+        variants: [
+          {
+            variantName: { type: String, required: true }, // e.g., "Color", "Size"
+            optionValue: { type: String, required: true }, // e.g., "Red", "Large"
+            optionLabel: { type: String, required: false }, // e.g., "Red", "Large"
+          },
+        ],
       },
     ],
     shippingAddress: {

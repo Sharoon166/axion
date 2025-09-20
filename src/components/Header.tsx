@@ -545,7 +545,7 @@ const ProfileDropdown = ({ userData }: { userData: HeaderUser | null }) => {
         <button className="group relative p-2 m-2 rounded-full overflow-hidden transition-all duration-300 hover:bg-slate-100">
           <div className=" overflow-hidden rounded-full size-2 ">
             <Image
-              src={userData?.image || '/placeholder.png'}
+              src={userData?.image || '/logo.svg'}
               alt={userData?.name || 'user picture'}
               className="object-cover object-center"
               fill
@@ -578,7 +578,10 @@ const ProfileDropdown = ({ userData }: { userData: HeaderUser | null }) => {
 
         <button
           onClick={() => {
+            // Clear all items from localStorage and sessionStorage
             localStorage.clear();
+            sessionStorage.clear();
+            // Redirect to home page
             window.location.href = '/';
           }}
           className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm hover:bg-gray-100 rounded-md transition-colors"

@@ -36,6 +36,7 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
     );
   }
   const order: OrderData = res.data;
+  const orderId=order.orderId;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
@@ -43,13 +44,18 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Orders Details</h1>
-            <p className="text-sm sm:text-base text-gray-600">
-              Order ID: #{String(id || '').slice(-6)}
-            </p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Order Details</h1>
+            <div className="space-y-1 mt-1">
+              <p className="text-sm sm:text-base text-gray-600">
+                <span className="font-medium">Order ID:</span> {order.orderId || 'N/A'}
+              </p>
+              <p className="text-xs text-gray-500">
+                <span className="font-medium">Reference:</span> #{String(id || '').slice(-8)}
+              </p>
+            </div>
           </div>
           <div className="w-full sm:w-auto">
-            <DownloadPDFButton order={order} orderId={id} />
+            <DownloadPDFButton order={order} orderId={orderId} />
           </div>
         </div>
 
@@ -340,7 +346,7 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
                 </div>
                 <div className="space-y-2">
                   <span className="text-gray-600 font-medium">Shipping Address:</span>
-                  <div className="bg-gray-50 p-3 rounded-lg">
+                  <div className="bg-gray-50  rounded-lg">
                     <p className="font-medium text-gray-900">{order.shippingAddress?.fullName}</p>
                     <p className="text-gray-700">{order.shippingAddress?.address}</p>
                     <p className="text-gray-700">

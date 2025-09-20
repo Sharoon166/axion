@@ -26,7 +26,7 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   // no tabs; single page layout
   const [orderHistory, setOrderHistory] = useState<
-    Array<{ id: string; name: string; status: string; image: string; date: string }>
+    Array<{ id: string; orderId: string; name: string; status: string; image: string; date: string }>
   >([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const { wishlistItems } = useWishlist();
@@ -70,6 +70,7 @@ export default function ProfilePage() {
           const orders = result.success ? result.data : ([] as unknown[]);
           type ApiOrder = {
             _id?: string;
+            orderId?: string;
             orderItems?: Array<{ name?: string; image?: string }>;
             isDelivered?: boolean;
             isCancelled?: boolean;
@@ -79,6 +80,7 @@ export default function ProfilePage() {
           setOrderHistory(
             (orders as ApiOrder[]).map((order, index: number) => ({
               id: order._id || `order-${index}`,
+              orderId: order.orderId || `ORD_${order._id?.slice(-8).toUpperCase() || index}`,
               name: order.orderItems?.[0]?.name || 'Order Items',
               status: order.isDelivered
                 ? 'Delivered'
@@ -122,7 +124,7 @@ export default function ProfilePage() {
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden bg-gray-100">
                 <Image
-                  src={userData?.image || '/about-image.jpg'}
+                  src={userData?.image || '/logo.svg'}
                   alt={userData?.name || 'User'}
                   width={80}
                   height={80}
@@ -204,7 +206,7 @@ export default function ProfilePage() {
                               </div>
                               <div>
                                 <div className="font-semibold text-gray-900 text-sm">
-                                  Order #{o.id}
+                                  Order #{o.orderId}
                                 </div>
                                 <div className="text-xs text-gray-600">{o.name}</div>
                               </div>

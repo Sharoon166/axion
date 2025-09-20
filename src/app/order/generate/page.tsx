@@ -347,7 +347,7 @@ const OrderGeneratePage = () => {
         </div>
 
         {/* Payment Dialog */}
-        <ScrollArea className="h-[70vh]">
+        <ScrollArea className="h-[30vh] z-[100000] relative">
           <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
             <DialogContent className="max-w-md">
               <DialogHeader>

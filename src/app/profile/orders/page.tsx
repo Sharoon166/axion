@@ -19,6 +19,7 @@ import Link from 'next/link';
 
 interface OrderListItem {
   id: string;
+  orderId: string;
   name: string;
   status: string;
   date: string;
@@ -57,6 +58,7 @@ export default function OrderHistoryPage() {
             type ApiOrder = {
               id?: string;
               _id?: string;
+              orderId?: string;
               items?: Array<{ name?: string; image?: string }>;
               status?: string;
               images: string[];
@@ -72,6 +74,7 @@ export default function OrderHistoryPage() {
               orders.map(
                 (order: ApiOrder): OrderListItem => ({
                   id: order._id || '',
+                  orderId: order.orderId || `ORD_${order._id?.slice(-8).toUpperCase() || ''}`,
                   name: order.orderItems?.[0]?.name || 'Order Items',
                   status: order.isCancelled
                     ? 'Cancelled'
@@ -103,7 +106,8 @@ export default function OrderHistoryPage() {
       statusFilter === 'all' || order.status.toLowerCase() === statusFilter.toLowerCase();
     const matchesSearch =
       order.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.id.toLowerCase().includes(searchQuery.toLowerCase());
+      order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.orderId.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
 
@@ -134,7 +138,7 @@ export default function OrderHistoryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <PageHeader
         title="Order"
         titleHighlight="History"
@@ -156,17 +160,7 @@ export default function OrderHistoryPage() {
             </SelectContent>
           </Select>
 
-          <Select value={dateFilter} onValueChange={setDateFilter}>
-            <SelectTrigger className="w-full md:w-48">
-              <SelectValue placeholder="Filter by Date" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Dates</SelectItem>
-              <SelectItem value="2025">2025</SelectItem>
-              <SelectItem value="2024">2024</SelectItem>
-              <SelectItem value="2023">2023</SelectItem>
-            </SelectContent>
-          </Select>
+         
 
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -183,10 +177,10 @@ export default function OrderHistoryPage() {
         {loading ? (
          <Loading/>
         ) : (
-          <div className="space-y-6">
+          <div >
             {paginatedOrders.map((order) => (
               <Link href={`/order/${order.id}`} key={order.id}>
-              <Card key={order.id} className="shadow-sm hover:shadow-md transition-shadow">
+              <Card key={order.id} className="shadow-sm mb-10 hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex flex-col lg:flex-row lg:items-center gap-6">
                     {/* Product Image */}
@@ -203,14 +197,13 @@ export default function OrderHistoryPage() {
                     {/* Order Details */}
                     <div className="flex-1 space-y-2">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                        <h3 className="text-lg font-semibold text-gray-900">Order ID:{order.id}</h3>
-                        <span
-                          className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(order.status)}`}
-                        >
-                          {order.status}
-                        </span>
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">Order #{order.orderId}</h3>
+                          <p className="text-sm text-gray-500">Ref: {order.id}</p>
+                        </div>
+                       
                       </div>
-
+                      
                       <p className="text-gray-600">{order.name}</p>
                       <p className="text-sm text-gray-500">{order.date}</p>
 
@@ -220,6 +213,11 @@ export default function OrderHistoryPage() {
                     {/* Price and Actions */}
                     <div className="flex flex-col items-end gap-3">
                       <span className="text-2xl font-bold text-(--color-logo)">{order.price}</span>
+                      <span
+                          className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(order.status)}`}
+                        >
+                          {order.status}
+                        </span> 
                      
                     </div>
                   </div>

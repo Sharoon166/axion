@@ -131,11 +131,23 @@ export default function DashboardOverview({
       const recentOrders = orders
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 5)
-        .map((order) => ({
-          id: order._id?.slice(-8) || 'N/A',
-          customer: order.user?.name || 'Unknown',
-          total: order.totalPrice || 0,
-        }));
+        .map((order) => {
+          // Safely get user name with better fallback handling
+          let customerName = 'Guest User';
+          if (order.user) {
+            if (typeof order.user === 'object' && order.user !== null) {
+              customerName = order.user.name || 'Guest User';
+            } else if (typeof order.user === 'string') {
+              customerName = 'User ID: ' + order.user;
+            }
+          }
+          
+          return {
+            id: order._id?.slice(-8) || 'N/A',
+            customer: customerName,
+            total: order.totalPrice || 0,
+          };
+        });
 
       // Calculate top products based on order items
       const productSales: { [key: string]: number } = {};

@@ -84,7 +84,39 @@ export async function PUT(
       }
     }
 
-    const updateData = {
+    // Parse subcategories
+    const subcategories = [];
+    // Handle both array-style (subcategories[0], subcategories[1], etc.) and direct subcategories field
+    for (const [key, value] of formData.entries()) {
+      if (key === 'subcategories' || key.startsWith('subcategories[')) {
+        if (typeof value === 'string' && value.trim() !== '') {
+          subcategories.push(value);
+        }
+      }
+    }
+
+    // Parse variants and addons if they exist
+    const variantsData = formData.get('variants');
+    let variants = [];
+    if (variantsData) {
+      try {
+        variants = JSON.parse(variantsData as string);
+      } catch (error) {
+        console.error('Error parsing variants:', error);
+      }
+    }
+
+    const addonsData = formData.get('addons');
+    let addons = [];
+    if (addonsData) {
+      try {
+        addons = JSON.parse(addonsData as string);
+      } catch (error) {
+        console.error('Error parsing addons:', error);
+      }
+    }
+
+    const updateData: any = {
       name: formData.get('name'),
       slug: formData.get('slug'),
       price: Number(formData.get('price')),
@@ -94,10 +126,19 @@ export async function PUT(
       featured: formData.get('featured') === 'true',
       specifications: specifications,
       shipping: shipping,
-      images: formData.getAll('images'),
-      colors: formData.getAll('colors'),
-      sizes: formData.getAll('sizes'),
+      images: formData.getAll('images').filter((img: any) => img && img.trim() !== ''),
+      colors: formData.getAll('colors').filter((c: any) => c && c.trim() !== ''),
+      sizes: formData.getAll('sizes').filter((s: any) => s && s.trim() !== ''),
+      subcategories: subcategories,
     };
+
+    // Only add variants and addons if they exist
+    if (variants && variants.length > 0) {
+      updateData.variants = variants;
+    }
+    if (addons && addons.length > 0) {
+      updateData.addons = addons;
+    }
 
     const product = await Product.findOneAndUpdate(
       { slug },
