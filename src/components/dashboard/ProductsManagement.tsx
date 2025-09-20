@@ -233,13 +233,12 @@ export default function ProductsManagement() {
                         </td>
                         <td className="py-4 px-4">
                           <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              productItem.stock > 10
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${productItem.stock > 10
                                 ? 'bg-green-100 text-green-800'
                                 : productItem.stock > 0
                                   ? 'bg-yellow-100 text-yellow-800'
                                   : 'bg-red-100 text-red-800'
-                            }`}
+                              }`}
                           >
                             {productItem.stock}
                           </span>
@@ -293,9 +292,9 @@ export default function ProductsManagement() {
                           </div>
                         )}
                       </div>
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-semibold text-lg">{productItem.name}</h3>
+                      <CardContent className=" px-2 sm:p-4">
+                        <div className="flex items-start gap-2 sm:items-center flex-col sm:flex-row mb-2">
+                          <h3 className="font-semibold line-clamp-2 sm:line-clamp-none text-md sm:text-lg">{productItem.name}</h3>
                           <span className="font-semibold text-gray-900">
                             Rs.{productItem.price?.toLocaleString()}
                           </span>

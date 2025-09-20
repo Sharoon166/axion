@@ -116,6 +116,16 @@ export default function EditProductPage() {
   const [isStockExceeded, setIsStockExceeded] = useState(false);
   const [addons, setAddons] = useState<Addon[]>([]);
 
+  // Helper function to get the correct file for a preview URL
+  const getFileForPreview = (previewIndex: number) => {
+    const url = previewUrls[previewIndex];
+    if (!url?.startsWith('blob:')) return null;
+
+    // Count how many blob URLs come before this index
+    const blobIndex = previewUrls.slice(0, previewIndex).filter(u => u.startsWith('blob:')).length;
+    return selectedFiles[blobIndex] || null;
+  };
+
   const fetchProduct = useCallback(async () => {
     try {
       setIsPageLoading(true);
@@ -197,13 +207,13 @@ export default function EditProductPage() {
   const validateStock = useCallback((stockValue: string | boolean, variantsList: Variant[]) => {
     const mainStock = Number(stockValue) || 0;
     let totalVariantStock = 0;
-    
+
     variantsList.forEach((variant) => {
       variant.options.forEach((option) => {
         totalVariantStock += Number(option.stockModifier) || 0;
       });
     });
-    
+
     if (totalVariantStock > mainStock) {
       toast.error(`Total variant quantity (${totalVariantStock}) cannot exceed main product stock (${mainStock})`);
       setIsStockExceeded(true);
@@ -217,9 +227,9 @@ export default function EditProductPage() {
       ...formData,
       [field]: value,
     };
-    
+
     setFormData(newFormData);
-    
+
     // If stock is being updated, validate against current variants
     if (field === 'stock' && variants.length > 0) {
       validateStock(value, variants);
@@ -263,50 +273,30 @@ export default function EditProductPage() {
   };
 
   const removeImage = (index: number) => {
-    // Get the URL before we modify the array
     const urlToRemove = previewUrls[index];
-    
+
     // Revoke object URL if it's a blob
     if (urlToRemove?.startsWith('blob:')) {
       URL.revokeObjectURL(urlToRemove);
+
+      // Find the corresponding file in selectedFiles and remove it
+      const blobIndex = previewUrls.slice(0, index).filter(url => url.startsWith('blob:')).length;
+      const newFiles = [...selectedFiles];
+      newFiles.splice(blobIndex, 1);
+      setSelectedFiles(newFiles);
     }
 
-    // Clone arrays to avoid mutating state directly
+    // Remove from preview URLs
     const newPreviews = [...previewUrls];
     newPreviews.splice(index, 1);
-    
-    // Update preview URLs first
     setPreviewUrls(newPreviews);
-
-    // If this was a newly selected file (blob), remove from selectedFiles too
-    if (urlToRemove?.startsWith('blob:')) {
-      // Create a map of blob URLs to their indices in the original previewUrls array
-      const blobUrlToIndex = new Map<string, number>();
-      previewUrls.forEach((url, idx) => {
-        if (url.startsWith('blob:')) {
-          blobUrlToIndex.set(url, idx);
-        }
-      });
-
-      // Find the index of the file to remove in selectedFiles
-      const fileIndex = Array.from(blobUrlToIndex.entries())
-        .findIndex(([url, _]) =>{
-          console.log(url,_, urlToRemove);
-          return url === urlToRemove});
-      
-      if (fileIndex !== -1) {
-        const newFiles = [...selectedFiles];
-        newFiles.splice(fileIndex, 1);
-        setSelectedFiles(newFiles);
-      }
-    }
   };
 
 
   const clearAllImages = () => {
-    // Revoke all object URLs to prevent memory leaks
+    // Revoke only blob URLs to prevent memory leaks
     previewUrls.forEach((url) => {
-      if (url) {
+      if (url?.startsWith('blob:')) {
         URL.revokeObjectURL(url);
       }
     });
@@ -343,12 +333,12 @@ export default function EditProductPage() {
       });
 
       // Only keep existing non-blob URLs (already uploaded images)
-      const existingImageUrls = previewUrls.filter(url => 
+      const existingImageUrls = previewUrls.filter(url =>
         url && !url.startsWith('blob:')
       );
-      
+
       const uploadedImageUrls = [...existingImageUrls];
-      
+
       // Upload only the newly selected files
       for (const file of selectedFiles) {
         try {
@@ -568,11 +558,14 @@ export default function EditProductPage() {
                               <X className="w-4 h-4" />
                             </Button>
                           </div>
-                          {selectedFiles[index] && (
-                            <p className="text-xs text-gray-500 mt-1 truncate">
-                              {selectedFiles[index]?.name}
-                            </p>
-                          )}
+                          {(() => {
+                            const file = getFileForPreview(index);
+                            return file && (
+                              <p className="text-xs text-gray-500 mt-1 truncate">
+                                {file.name}
+                              </p>
+                            );
+                          })()}
                         </div>
                       ))}
                     </div>
@@ -706,8 +699,8 @@ export default function EditProductPage() {
               <CardTitle>Variants & Add-ons</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <VariantManager 
-                variants={variants} 
+              <VariantManager
+                variants={variants}
                 onChange={setVariants}
                 mainStock={Number(formData.stock) || 0}
                 onStockExceeded={setIsStockExceeded}
@@ -721,8 +714,8 @@ export default function EditProductPage() {
             <Button type="button" variant="outline" onClick={() => router.back()}>
               Cancel
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full py-6 text-lg"
               disabled={saving || isStockExceeded}
               title={isStockExceeded ? "Total variant quantity exceeds main product stock" : ""}
