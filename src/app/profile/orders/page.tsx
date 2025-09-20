@@ -31,7 +31,6 @@ interface OrderListItem {
 export default function OrderHistoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState('all');
-  const [dateFilter, setDateFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [orderData, setOrderData] = useState<OrderListItem[]>([]);
   const [loading, setLoading] = useState(true);

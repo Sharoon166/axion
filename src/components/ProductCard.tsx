@@ -2,9 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { ShoppingCart, Loader2, Star } from 'lucide-react';
-import { getImageUrl, calculateSalePrice, isOnSale } from '@/lib/utils';
+import { getImageUrl, calculateSalePrice } from '@/lib/utils';
 import { useCart } from '@/contexts/CartContext';
-import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import Link from 'next/link';
 
@@ -34,8 +33,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const [hovered, setHovered] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isOrderAdmin, setIsOrderAdmin] = useState(false);
   const { addToCart } = useCart();
-  const { user } = useAuth();
 
   // Normalize images to always be an array
   const images = Array.isArray(img) ? img : [img];
@@ -46,6 +45,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
     if (userData) {
       const user = JSON.parse(userData);
       setIsAdmin(user.role === 'admin');
+      setIsOrderAdmin(user.role === 'order admin');
     }
   }, []);
 
@@ -167,7 +167,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           </div>
 
           {/* Add to Cart Button - Hidden for admin */}
-          {!isAdmin && (
+          {!isAdmin || !isOrderAdmin && (
             <div className="flex justify-end">
               <button
                 onClick={handleAddToCart}

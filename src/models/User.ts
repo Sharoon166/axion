@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema(
     avatar: { type: String },
     role: { 
       type: String, 
-      enum: ['user', 'admin'],
+      enum: ['user', 'admin', 'order admin', 'dev admin'],
       default: 'user' 
     },
     address: { type: String }, // Changed from object to string
@@ -43,7 +43,7 @@ export interface IUser extends mongoose.Document {
   isAdmin: boolean;
   avatar?: string;
   phone?: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'admin' | 'order admin' | 'dev admin';
   address?: string; // Changed from object to string
   wishlist: mongoose.Types.ObjectId[];
   createdAt: Date;

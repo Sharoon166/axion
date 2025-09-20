@@ -77,11 +77,13 @@ interface Order {
   updatedAt: string;
 }
 
+
 interface OrdersManagementProps {
-  isOrderAdmin?: boolean;
+  isOrderAdmin: boolean;
 }
 
-export default function OrdersManagement({ isOrderAdmin = false }: OrdersManagementProps) {
+export default function OrdersManagement({ isOrderAdmin }: OrdersManagementProps) {
+  console.log(isOrderAdmin)
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);

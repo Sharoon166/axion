@@ -3,11 +3,77 @@ import dbConnect from '@/lib/db';
 import Product from '@/models/Products';
 import Category from '@/models/Category';
 import { requireAdmin } from '@/lib/adminAuth';
+interface Specification {
+  name: string;
+  value: string;
+}
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+interface ShippingDimensions {
+  length?: number;
+  width?: number;
+  height?: number;
+}
+
+interface ShippingInfo {
+  weight?: number;
+  dimensions?: ShippingDimensions;
+  freeShipping?: boolean;
+  shippingCost?: number;
+  estimatedDelivery?: string;
+  returnPolicy?: string;
+}
+
+interface VariantOption {
+  label: string;
+  value: string;
+  priceModifier?: number;
+  stockModifier?: number;
+  image?: string;
+  specifications?: Specification[];
+}
+
+interface Variant {
+  name: string;
+  type: 'color' | 'size' | 'text' | 'dropdown';
+  required?: boolean;
+  options: VariantOption[];
+}
+
+interface AddonOption {
+  label: string;
+  price: number;
+  description?: string;
+  image?: string;
+}
+
+interface Addon {
+  name: string;
+  description?: string;
+  type: 'checkbox' | 'radio' | 'quantity';
+  required?: boolean;
+  maxQuantity?: number;
+  options: AddonOption[];
+}
+
+interface ProductUpdateData {
+  name: FormDataEntryValue | null;
+  slug: FormDataEntryValue | null;
+  price: number;
+  description: FormDataEntryValue | null;
+  category: string;
+  stock: number;
+  featured: boolean;
+  specifications: Specification[];
+  shipping: ShippingInfo;
+  images: string[];
+  colors: string[];
+  variants?: Variant[];
+  addons?: Addon[];
+  sizes?: string[];
+  subcategories?: string[];
+}
+
+export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   // Check admin authorization
   const authError = await requireAdmin(request);
   if (authError) return authError;
@@ -19,10 +85,7 @@ export async function GET(
     const product = await Product.findOne({ slug }).populate('category', 'name slug');
 
     if (!product) {
-      return NextResponse.json(
-        { success: false, error: 'Product not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: 'Product not found' }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -31,17 +94,11 @@ export async function GET(
     });
   } catch (error) {
     console.error('Error fetching product:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch product' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Failed to fetch product' }, { status: 500 });
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   // Check admin authorization
   const authError = await requireAdmin(request);
   if (authError) return authError;
@@ -116,7 +173,7 @@ export async function PUT(
       }
     }
 
-    const updateData: any = {
+    const updateData: ProductUpdateData = {
       name: formData.get('name'),
       slug: formData.get('slug'),
       price: Number(formData.get('price')),
@@ -126,9 +183,15 @@ export async function PUT(
       featured: formData.get('featured') === 'true',
       specifications: specifications,
       shipping: shipping,
-      images: formData.getAll('images').filter((img: any) => img && img.trim() !== ''),
-      colors: formData.getAll('colors').filter((c: any) => c && c.trim() !== ''),
-      sizes: formData.getAll('sizes').filter((s: any) => s && s.trim() !== ''),
+      images: formData
+        .getAll('images')
+        .filter((img): img is string => typeof img === 'string' && img.trim() !== ''),
+      colors: formData
+        .getAll('colors')
+        .filter((c): c is string => typeof c === 'string' && c.trim() !== ''),
+      sizes: formData
+        .getAll('sizes')
+        .filter((s): s is string => typeof s === 'string' && s.trim() !== ''),
       subcategories: subcategories,
     };
 
@@ -140,17 +203,13 @@ export async function PUT(
       updateData.addons = addons;
     }
 
-    const product = await Product.findOneAndUpdate(
-      { slug },
-      updateData,
-      { new: true }
-    ).populate('category', 'name slug');
+    const product = await Product.findOneAndUpdate({ slug }, updateData, { new: true }).populate(
+      'category',
+      'name slug',
+    );
 
     if (!product) {
-      return NextResponse.json(
-        { success: false, error: 'Product not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: 'Product not found' }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -161,14 +220,14 @@ export async function PUT(
     console.error('Error updating product:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to update product' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
+  { params }: { params: Promise<{ slug: string }> },
 ) {
   // Check admin authorization
   const authError = await requireAdmin(request);
@@ -181,10 +240,7 @@ export async function DELETE(
     const product = await Product.findOneAndDelete({ slug });
 
     if (!product) {
-      return NextResponse.json(
-        { success: false, error: 'Product not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: 'Product not found' }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -195,7 +251,7 @@ export async function DELETE(
     console.error('Error deleting product:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to delete product' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

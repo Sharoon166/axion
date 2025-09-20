@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, ChangeEvent, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,8 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import PageHeader from '@/components/PageHeader';
-import { UserPlus, Eye, EyeOff, Upload, X } from 'lucide-react';
-import Image from 'next/image';
+import { UserPlus, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface UserData {
@@ -18,6 +17,7 @@ interface UserData {
   email?: string;
   role?: string;
   isAdmin?: boolean;
+  isOrderAdmin?: boolean;
   image?: string;
   address?: string | null;
   phone?: string | null;
@@ -34,9 +34,8 @@ export default function RegisterPage() {
     isAdmin: false,
     avatar: null as File | null,
   });
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [, setIsSubmitting] = useState(false);
 
   // Load user data from localStorage
   useEffect(() => {
@@ -61,7 +60,6 @@ export default function RegisterPage() {
       }
     }
   }, [user, isLoading, router]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -71,46 +69,9 @@ export default function RegisterPage() {
     }));
   };
 
-  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+ 
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please upload an image file (JPEG, PNG, etc.)');
-      return;
-    }
-
-    // Check file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('File size should be less than 5MB');
-      return;
-    }
-
-    setFormData((prev) => ({
-      ...prev,
-      avatar: file,
-    }));
-
-    // Create preview URL
-    const reader = new FileReader();
-    reader.onload = () => {
-      setPreviewUrl(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const removeImage = () => {
-    setFormData((prev) => ({
-      ...prev,
-      avatar: null,
-    }));
-    setPreviewUrl(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);

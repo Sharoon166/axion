@@ -86,7 +86,7 @@ const ProductsPage: React.FC = () => {
     priceBucket: 'all',
     sortBy: 'default',
   });
-
+console.log(setSale)
   // Price buckets - memoized to prevent infinite re-renders
   const priceOptions = useMemo(() => [
     { value: 'all', label: 'All Prices', min: 0, max: Infinity },
@@ -151,7 +151,7 @@ const ProductsPage: React.FC = () => {
           if (result.success && Array.isArray(result.data)) {
             // Apply sale data to products if there's an active sale
             if (saleData && saleData.active) {
-              const productsWithSale = result.data.map((product: any) => {
+              const productsWithSale = result.data.map((product: Product) => {
                 if (saleData.productIds.includes(product._id)) {
                   return {
                     ...product,

@@ -14,6 +14,7 @@ interface UserData {
   id?: string;
   name?: string;
   email?: string;
+  isOrderAdmin?: boolean;
   avatar?: string;
   address?: string;
   image?: string;

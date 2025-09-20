@@ -5,9 +5,10 @@ export interface UserData {
   id: string;
   name?: string | null;
   email?: string | null;
-  role: 'user' | 'admin';
+  role: 'user' | 'admin' | 'order admin'| 'dev admin';
   image?: string | null;
   isAdmin?: boolean;
+  isOrderAdmin?: boolean;
   phone?: string | null;
   address?: string | null;
   city?: string | null;

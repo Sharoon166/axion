@@ -3,7 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Search, Handbag, UserRound, Clock, Star, Trash2, Menu, LogOut, Edit } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { getImageUrl } from '@/lib/utils';
@@ -36,6 +36,13 @@ const Header = () => {
   const router = useRouter();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isOrderAdmin, setIsOrderAdmin] = useState(false);
+
+  useEffect(() => {
+    if (user?.role === 'order admin') {
+      setIsOrderAdmin(true);
+    }
+  }, [user]);
 
   const navLinks = [
     { name: 'Home', href: '/' },
@@ -83,7 +90,7 @@ const Header = () => {
         {/* Desktop Navigation */}
         <nav className="hidden md:block">
           <ul className="flex items-center gap-6">
-            {(user?.isAdmin ? adminLinks : navLinks).map((link) => {
+            {(user?.isAdmin || isOrderAdmin ? adminLinks : navLinks).map((link) => {
               const isTarget = pillTarget === link.href;
 
               return (
@@ -145,7 +152,6 @@ const Header = () => {
                       {
                         'bg-slate-100 font-semibold': pathname === link.href,
                       },
-                      
                     )}
                   >
                     {link.name}
@@ -495,6 +501,7 @@ interface HeaderUser {
   name?: string | null;
   email?: string | null;
   isAdmin?: boolean;
+  isOrderAdmin?: boolean;
   image?: string | null;
 }
 
@@ -523,7 +530,7 @@ const ProfileDropdown = ({ userData }: { userData: HeaderUser | null }) => {
       href: '/profile/edit',
       icon: <Edit size={16} />,
     },
-    ...(userData.isAdmin
+    ...(userData.isAdmin || userData.isOrderAdmin
       ? []
       : [
           {

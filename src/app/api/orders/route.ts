@@ -122,9 +122,9 @@ export async function POST(request: NextRequest) {
         name: orderResponse.user.name || 'Guest User',
         email: orderResponse.user.email || 'guest@example.com'
       } : null,
-      orderItems: orderResponse.orderItems.map((item: { _id: Types.ObjectId; product: any; name: string; qty: number; quantity: number; image: string; price: number; color: string; size?: string; }) => {
+      orderItems: orderResponse.orderItems.map((item: { _id: Types.ObjectId; product: Product; name: string; qty: number; quantity: number; image: string; price: number; color: string; size?: string; }) => {
         // Handle the product field based on its type
-        let productData: any = null;
+        let productData= null;
         const product = item.product;
         
         if (product) {

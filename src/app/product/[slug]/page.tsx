@@ -808,7 +808,7 @@ const ProductPage = () => {
                 <div className="flex gap-4 mt-8">
                   <Button
                     className="flex-1 bg-blue-900 text-white hover:bg-blue-800"
-                    disabled={Boolean(user?.isAdmin || user?.role === 'admin')}
+                    disabled={Boolean(user?.isAdmin || user?.role === 'admin' || user?.role === 'order admin')}
                     onClick={() => {
                       const config = createProductConfiguration(product);
                       const availableStock = calculateAvailableStock(config);
@@ -893,7 +893,9 @@ const ProductPage = () => {
                   </Button>
                   <Button
                     variant="outline"
-                    disabled={Boolean(user?.isAdmin || user?.role === 'admin')}
+                    disabled={Boolean(
+                      user?.isAdmin || user?.role==='order admin' || user?.role==='admin',
+                    )}
                     onClick={async () => {
                       const wishlistItem = {
                         _id: product._id.toString(),

@@ -212,9 +212,9 @@ function DashboardContent() {
     );
   
   // Redirect if not admin or order admin
-  if (!userData?.isAdmin && userData?.role !== 'orderAdmin') redirect('/');
+  if (!userData?.isAdmin && userData?.role !== 'order admin') redirect('/');
   
-  const isOrderAdmin = userData?.role === 'orderAdmin';
+  const isOrderAdmin = userData?.role === 'order admin';
 
   const handleLogout = () => {
     // Clear all items from localStorage
@@ -239,7 +239,7 @@ function DashboardContent() {
   ];
 
   const orderAdminSidebarItems = [
-    { icon: ShoppingCart, label: 'Order Management', key: 'orders' },
+    { icon: ShoppingCart, label: 'Order', key: 'orders' },
     { icon: LogOut, label: 'Logout', key: 'logout' },
   ];
 

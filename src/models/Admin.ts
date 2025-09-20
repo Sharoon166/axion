@@ -6,6 +6,11 @@ const adminSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true, select: false },
     avatar: { type: String },
+    role: { 
+      type: String, 
+      enum: ['admin', 'order admin', 'dev admin'],
+      default: 'admin' 
+    },
     permissions: [String],
     lastActive: { type: Date, default: Date.now },
   },
