@@ -160,7 +160,7 @@ function SearchComponent(): ReactElement {
           ) : filteredProducts.length === 0 ? (
             <p className="text-gray-500">No products found. {searchQuery && `for "${searchQuery}"`}</p>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
               {filteredProducts.map((product) => (
                 <ProductCard
                   key={product._id}

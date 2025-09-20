@@ -4,7 +4,22 @@ import React, { useState, useEffect, useCallback, JSX } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Star, Plus, Minus, ShoppingCart, Heart } from 'lucide-react';
+import { Star, Heart, Minus, Plus, ShoppingCart } from 'lucide-react';
+import { ReviewImageUpload } from '@/components/ReviewImageUpload';
+
+interface ReviewType {
+  _id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  productId: string;
+  productSlug: string;
+  rating: number;
+  comment: string;
+  images?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
 import { getImageUrl, calculateSalePrice, isOnSale } from '@/lib/utils';
 import { useCart } from '@/contexts/CartContext';
 import useWishlist from '@/contexts/WishlistContext';
@@ -88,6 +103,16 @@ const ProductPage = () => {
   const { slug } = useParams();
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+
+  // Type for wishlist item
+  interface WishlistItemType {
+    _id: string;
+    name: string;
+    price: number;
+    image: string; // Single image for the wishlist item
+    images: string[]; // All images for the product
+    slug: string;
+  }
   const { user } = useAuth();
 
   const [selectedImage, setSelectedImage] = useState('');
@@ -101,9 +126,14 @@ const ProductPage = () => {
   const [selectedVariants, setSelectedVariants] = useState<SelectedVariant[]>([]);
   const [selectedAddons, setSelectedAddons] = useState<SelectedAddon[]>([]);
   const [showReviewModal, setShowReviewModal] = useState(false);
-  const [reviewData, setReviewData] = useState({
+  const [reviewData, setReviewData] = useState<{
+    rating: number;
+    comment: string;
+    images: string[];
+  }>({
     rating: 5,
     comment: '',
+    images: [],
   });
   const [sortBy, setSortBy] = useState<'recent' | 'highest' | 'lowest'>('recent');
   const [userData, setUserData] = useState<{ id: string; name: string; email: string } | null>(
@@ -114,14 +144,7 @@ const ProductPage = () => {
   const [saleName, setSaleName] = useState<string | null>(null);
   const [saleEndsAt, setSaleEndsAt] = useState<string | null>(null);
   const [saleTimeLeft, setSaleTimeLeft] = useState<string | null>(null);
-  const [selectedReview, setSelectedReview] = useState<{
-    userId: string;
-    userName: string;
-    userEmail: string;
-    rating: number;
-    comment: string;
-    createdAt: string;
-  } | null>(null);
+  const [selectedReview, setSelectedReview] = useState<ReviewType | null>(null);
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
 
   // Convert URLs inside plain text into clickable links
@@ -464,6 +487,11 @@ const ProductPage = () => {
     }
 
     try {
+      // Ensure images is an array and filter out any invalid entries
+      const images = Array.isArray(reviewData.images) 
+        ? reviewData.images.filter((img: string) => typeof img === 'string' && img.trim() !== '')
+        : [];
+
       const response = await fetch(`/api/products/${slug}/reviews`, {
         method: 'POST',
         headers: {
@@ -475,6 +503,7 @@ const ProductPage = () => {
           userEmail: userData.email,
           rating: reviewData.rating,
           comment: reviewData.comment,
+          images: images,
         }),
       });
 
@@ -483,9 +512,11 @@ const ProductPage = () => {
       if (result.success) {
         toast.success('Review submitted successfully!');
         setShowReviewModal(false);
-        setReviewData({ rating: 5, comment: '' });
+        setReviewData({ rating: 5, comment: '', images: [] });
         // Refresh reviews to show new review
-        fetchProductReviews(fetchedproduct[0].slug);
+        if (fetchedproduct.length > 0) {
+          await fetchProductReviews(fetchedproduct[0].slug);
+        }
       } else {
         toast.error(result.error || 'Failed to submit review');
       }
@@ -598,8 +629,8 @@ const ProductPage = () => {
 
               {/* Right - Info */}
               <div>
-                <h1 className="text-3xl md:text-4xl text-black font-semibold">{product?.name}</h1>
-                <p className="text-muted-foreground mt-2">{product?.description}</p>
+                <h1 className="text-2xl md:text-4xl text-black font-semibold">{product?.name}</h1>
+                <p className="text-muted-foreground mt-2 line-clamp-4">{product?.description}</p>
 
                 {/* Rating */}
                 <div className="flex items-center mt-3 gap-2">
@@ -808,7 +839,9 @@ const ProductPage = () => {
                 <div className="flex gap-4 mt-8">
                   <Button
                     className="flex-1 bg-blue-900 text-white hover:bg-blue-800"
-                    disabled={Boolean(user?.isAdmin || user?.role === 'admin' || user?.role === 'order admin')}
+                    disabled={Boolean(
+                      user?.isAdmin || user?.role === 'admin' || user?.role === 'order admin',
+                    )}
                     onClick={() => {
                       const config = createProductConfiguration(product);
                       const availableStock = calculateAvailableStock(config);
@@ -894,20 +927,16 @@ const ProductPage = () => {
                   <Button
                     variant="outline"
                     disabled={Boolean(
-                      user?.isAdmin || user?.role==='order admin' || user?.role==='admin',
+                      user?.isAdmin || user?.role === 'order admin' || user?.role === 'admin',
                     )}
-                    onClick={async () => {
-                      const wishlistItem = {
+                    onClick={async (e: React.MouseEvent) => {
+                      e.preventDefault();
+                      const wishlistItem: WishlistItemType = {
                         _id: product._id.toString(),
                         name: product.name,
-                        price: isOnSale(Math.max(product.discount || 0, salePercent || 0))
-                          ? calculateSalePrice(
-                              product.price,
-                              Math.max(product.discount || 0, salePercent || 0),
-                            )
-                          : product.price,
-                        image: product.images[0],
-                        images: product.images,
+                        price: product.price,
+                        image: product.images[0], // Use first image as the main image
+                        images: product.images, // Keep all images
                         slug: product.slug,
                       };
 
@@ -919,9 +948,9 @@ const ProductPage = () => {
                           await addToWishlist(wishlistItem);
                           toast.success('Added to wishlist');
                         }
-                      } catch (error) {
-                        console.error('Wishlist operation failed:', error);
-                        // Error handling is done in the context
+                      } catch (err) {
+                        console.error('Wishlist operation failed:', err);
+                        toast.error('Failed to update wishlist');
                       }
                     }}
                     className={
@@ -1010,7 +1039,7 @@ const ProductPage = () => {
                 {/* Reviews Grid */}
                 {fetchedproduct[0]?.reviews && fetchedproduct[0].reviews.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {[...fetchedproduct[0].reviews]
+                    {[...(fetchedproduct[0].reviews as ReviewType[])]
                       .sort((a, b) => {
                         if (sortBy === 'recent')
                           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -1026,7 +1055,7 @@ const ProductPage = () => {
                             setSelectedReview(review);
                             setIsReviewDialogOpen(true);
                           }}
-                          onKeyDown={(e) => {
+                          onKeyDown={(e: React.KeyboardEvent) => {
                             if (e.key === 'Enter' || e.key === ' ') {
                               e.preventDefault();
                               setSelectedReview(review);
@@ -1068,6 +1097,34 @@ const ProductPage = () => {
                           >
                             {linkifyText(review.comment)}
                           </p>
+
+                          {/* Review Images */}
+                          {review.images && review.images.length > 0 && (
+                            <div className="mt-3">
+                              <div className="flex flex-wrap gap-2">
+                                {review.images.map((img: string, imgIndex: number) => (
+                                  <div
+                                    key={`review-${index}-img-${imgIndex}`}
+                                    className="w-20 h-20 rounded-md overflow-hidden border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      // Open image in lightbox or new tab
+                                      window.open(img, '_blank');
+                                    }}
+                                  >
+                                    <Image
+                                      src={img}
+                                      alt={`Review image ${imgIndex + 1}`}
+                                      width={80}
+                                      height={80}
+                                      className="w-full h-full object-cover"
+                                      unoptimized
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
 
                           <div className="flex items-center justify-between mt-5">
                             <div className="flex text-yellow-500">
@@ -1203,7 +1260,7 @@ const ProductPage = () => {
         {relatedProducts.length > 0 && (
           <>
             <h2 className="text-2xl font-bold mt-12 mb-6">You may also like</h2>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {relatedProducts.map((p) => (
                 <ProductCard
                   key={`related-${p._id}-${p.slug}`}
@@ -1258,35 +1315,55 @@ const ProductPage = () => {
 
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Rating</label>
-                  <div className="flex space-x-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Your Rating
+                  </label>
+                  <div className="flex items-center">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
                         key={star}
-                        onClick={() => setReviewData((prev) => ({ ...prev, rating: star }))}
-                        className={`text-3xl transition-all duration-200 transform hover:scale-110 ${
-                          star <= reviewData.rating ? 'text-yellow-400' : 'text-gray-300'
-                        } hover:text-yellow-400`}
+                        type="button"
+                        onClick={() => setReviewData({ ...reviewData, rating: star })}
+                        className="focus:outline-none"
                       >
-                        ★
+                        <Star
+                          className={`w-8 h-8 ${
+                            star <= reviewData.rating
+                              ? 'text-yellow-400 fill-current'
+                              : 'text-gray-300'
+                          }`}
+                        />
                       </button>
                     ))}
+                    <span className="ml-2 text-sm text-gray-500">{reviewData.rating} out of 5</span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">{reviewData.rating} out of 5 stars</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label
+                    htmlFor="review-comment"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Your Review
                   </label>
                   <textarea
-                    value={reviewData.comment}
-                    onChange={(e) =>
-                      setReviewData((prev) => ({ ...prev, comment: e.target.value }))
-                    }
-                    placeholder="Share your thoughts about this product..."
-                    className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+                    id="review-comment"
                     rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Share your experience with this product..."
+                    value={reviewData.comment}
+                    onChange={(e) => setReviewData({ ...reviewData, comment: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Add Photos (Optional)
+                  </label>
+                  <ReviewImageUpload
+                    onImagesChange={(images: string[]) => setReviewData({ ...reviewData, images })}
+                    maxImages={5}
+                    initialImages={reviewData.images}
                   />
                 </div>
 

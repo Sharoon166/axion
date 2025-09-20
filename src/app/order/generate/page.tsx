@@ -263,7 +263,7 @@ const OrderGeneratePage = () => {
               {cartItems.map((item, index) => (
                 <div
                   key={`${item._id}-${item.color}-${item.size}-${index}`}
-                  className="flex items-center space-x-4 p-3 border rounded-lg"
+                  className="flex items-start sm:flex-row flex-col sm:items-center space-x-4 gap-2 p-3 border rounded-lg"
                 >
                   <Image
                     src={getImageUrl(item.image)}
@@ -273,7 +273,7 @@ const OrderGeneratePage = () => {
                     className="rounded-lg object-cover"
                   />
                   <div className="flex-1">
-                    <h3 className="font-medium">{item.name}</h3>
+                    <h3 className="font-medium text-sm line-clamp-2">{item.name}</h3>
                     <div className="text-sm text-gray-600 space-y-1">
                       {/* Show sale info (if applied) */}
                       {typeof item.salePercent === 'number' && item.salePercent > 0 && (

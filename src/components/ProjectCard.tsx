@@ -10,6 +10,7 @@ export interface ProjectCardProps {
   category?: string; // e.g., Residential
   style?: string; // e.g., Modern
   location?: string; // e.g., Islamabad, Pakistan
+  type?: string; // e.g., Modern
   date?: string; // e.g., July 2025
   className?: string;
 }
@@ -20,6 +21,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   title,
   style,
   location,
+  type,
   date,
   className,
 }) => {
@@ -42,11 +44,10 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
       </div>
 
       <div className="p-2 md:p-4">
-        {(style) && (
           <p className="text-slate-600 capitalize text-sm mb-2">
-            {style.split(',').join(' - ') || ''}
+            {`${type} - ${style?.split(',').join(' - ') || ''}`}
           </p>
-        )}
+        
         <h3 className="text-lg md:text-xl font-semibold text-slate-900 mb-3 leading-snug">
           {title}
         </h3>

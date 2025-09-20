@@ -9,7 +9,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { ArrowLeft, Upload, X, Package, Save } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -44,7 +50,6 @@ export default function NewProductPage() {
 
   // Predefined subcategories map for known categories
   const PREDEFINED_SUBCATEGORIES: Record<string, string[]> = {
-
     'indoor lighting': [
       'Ceiling Lights',
       'Wall Lights',
@@ -73,11 +78,11 @@ export default function NewProductPage() {
     ],
   };
 
-
   // Shipping & Return policy is now static, so we no longer capture per-product shipping fields
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [variants, setVariants] = useState<Variant[]>([]);
+  const [isStockExceeded, setIsStockExceeded] = useState(false);
   const [addons, setAddons] = useState<Addon[]>([]);
 
   useEffect(() => {
@@ -104,10 +109,30 @@ export default function NewProductPage() {
   };
 
   const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData((prev) => ({
-      ...prev,
+    const newFormData = {
+      ...formData,
       [field]: value,
-    }));
+    };
+
+    setFormData(newFormData);
+
+    // If stock is being updated, validate against current variants
+    if (field === 'stock' && variants.length > 0) {
+      const mainStock = Number(value) || 0;
+      let totalVariantStock = 0;
+
+      variants.forEach((variant) => {
+        variant.options.forEach((option) => {
+          totalVariantStock += Number(option.stockModifier) || 0;
+        });
+      });
+
+      if (totalVariantStock > mainStock) {
+        toast.error(
+          `Total variant quantity (${totalVariantStock}) cannot exceed main product stock (${mainStock})`,
+        );
+      }
+    }
 
     // Auto-generate slug from name
     if (field === 'name' && typeof value === 'string') {
@@ -129,13 +154,19 @@ export default function NewProductPage() {
       let mapped = PREDEFINED_SUBCATEGORIES[key];
       // Fallback: include-based heuristics
       if (!mapped) {
-        if (key.includes('indoor')) mapped = PREDEFINED_SUBCATEGORIES['indoor'] || PREDEFINED_SUBCATEGORIES['indoor lighting'];
-        else if (key.includes('outdoor')) mapped = PREDEFINED_SUBCATEGORIES['outdoor'] || PREDEFINED_SUBCATEGORIES['outdoor lighting'];
-        else if (key.includes('solar')) mapped = PREDEFINED_SUBCATEGORIES['solar'] || PREDEFINED_SUBCATEGORIES['solar lighting'];
+        if (key.includes('indoor'))
+          mapped =
+            PREDEFINED_SUBCATEGORIES['indoor'] || PREDEFINED_SUBCATEGORIES['indoor lighting'];
+        else if (key.includes('outdoor'))
+          mapped =
+            PREDEFINED_SUBCATEGORIES['outdoor'] || PREDEFINED_SUBCATEGORIES['outdoor lighting'];
+        else if (key.includes('solar'))
+          mapped = PREDEFINED_SUBCATEGORIES['solar'] || PREDEFINED_SUBCATEGORIES['solar lighting'];
         else if (key.includes('light')) mapped = PREDEFINED_SUBCATEGORIES['lighting'];
       }
-      const subcats = (mapped && Array.isArray(mapped) ? mapped : found?.subcategories || [])
-        .filter(Boolean);
+      const subcats = (
+        mapped && Array.isArray(mapped) ? mapped : found?.subcategories || []
+      ).filter(Boolean);
       setAvailableSubcats(subcats);
       setSelectedSubcats([]);
     }
@@ -178,22 +209,32 @@ export default function NewProductPage() {
   };
 
   const removeImage = (index: number) => {
-    // Revoke object URL to prevent memory leaks
-    if (previewUrls[index]) {
+    // Revoke object URL if it's a blob
+    if (previewUrls[index]?.startsWith('blob:')) {
       URL.revokeObjectURL(previewUrls[index]);
     }
-
-    // Create new arrays without the removed item
-    const newFiles = [...selectedFiles];
+  
+    // Clone arrays to avoid mutating state directly
     const newPreviews = [...previewUrls];
-    newFiles.splice(index, 1);
     newPreviews.splice(index, 1);
-
-    // Update state
-    setSelectedFiles(newFiles);
     setPreviewUrls(newPreviews);
+  
+    // If this was a newly selected file, remove from selectedFiles too
+    if (previewUrls[index]?.startsWith('blob:')) {
+      const newFiles = [...selectedFiles];
+      // Find corresponding file by index of blob
+      const blobIndexes = previewUrls
+        .map((url, i) => (url.startsWith('blob:') ? i : -1))
+        .filter((i) => i !== -1);
+  
+      const fileIndex = blobIndexes.indexOf(index);
+      if (fileIndex !== -1) {
+        newFiles.splice(fileIndex, 1);
+        setSelectedFiles(newFiles);
+      }
+    }
   };
-
+  
   const clearAllImages = () => {
     // Revoke all object URLs to prevent memory leaks
     previewUrls.forEach((url) => {
@@ -216,8 +257,37 @@ export default function NewProductPage() {
     };
   }, [previewUrls]);
 
+  const validateVariantQuantities = (): boolean => {
+    if (variants.length === 0) return true;
+
+    const mainStock = Number(formData.stock) || 0;
+    let totalVariantStock = 0;
+
+    // Calculate total stock from all variants
+    variants.forEach((variant) => {
+      variant.options.forEach((option) => {
+        totalVariantStock += Number(option.stockModifier) || 0;
+      });
+    });
+
+    if (totalVariantStock > mainStock) {
+      toast.error(
+        `Total variant quantity (${totalVariantStock}) cannot exceed main product stock (${mainStock})`,
+      );
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate variant quantities before submission
+    if (!validateVariantQuantities()) {
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -264,7 +334,7 @@ export default function NewProductPage() {
 
       // Add addons data (force type to 'checkbox')
       if (addons.length > 0) {
-        const coercedAddons = addons.map(a => ({
+        const coercedAddons = addons.map((a) => ({
           ...a,
           type: 'checkbox' as const,
         }));
@@ -433,9 +503,10 @@ export default function NewProductPage() {
                     <Input
                       id="price"
                       type="number"
-                      step="0.01"
+                      step="1"
+                      min="0"
                       required
-                      placeholder="0.00"
+                      placeholder="0"
                       value={formData.price}
                       onChange={(e) => handleInputChange('price', e.target.value)}
                     />
@@ -446,6 +517,8 @@ export default function NewProductPage() {
                     <Input
                       id="stock"
                       type="number"
+                      step="1"
+                      min="0"
                       placeholder="0"
                       value={formData.stock}
                       onChange={(e) => handleInputChange('stock', e.target.value)}
@@ -479,7 +552,10 @@ export default function NewProductPage() {
                       {availableSubcats.map((sc) => {
                         const checked = selectedSubcats.includes(sc);
                         return (
-                          <label key={sc} className="flex items-center gap-2 border rounded-md p-2 cursor-pointer">
+                          <label
+                            key={sc}
+                            className="flex items-center gap-2 border rounded-md p-2 cursor-pointer"
+                          >
                             <input
                               type="checkbox"
                               checked={checked}
@@ -494,10 +570,11 @@ export default function NewProductPage() {
                         );
                       })}
                     </div>
-                    <p className="text-xs text-gray-500">These are dependent on the category you selected.</p>
+                    <p className="text-xs text-gray-500">
+                      These are dependent on the category you selected.
+                    </p>
                   </div>
                 )}
-
 
                 <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
@@ -529,7 +606,12 @@ export default function NewProductPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Variants Manager */}
-              <VariantManager variants={variants} onChange={setVariants} />
+              <VariantManager
+                variants={variants}
+                onChange={setVariants}
+                mainStock={Number(formData.stock) || 0}
+                onStockExceeded={setIsStockExceeded}
+              />
 
               {/* Addons Manager */}
               <AddonManager addons={addons} onChange={setAddons} />
@@ -543,11 +625,12 @@ export default function NewProductPage() {
             </Button>
             <Button
               type="submit"
-              disabled={loading || !formData.name || !formData.price}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="w-fit text-sm bg-(--color-logo) hover:bg-(--color-logo)/90"
+              disabled={loading || isStockExceeded}
+              title={isStockExceeded ? 'Total variant quantity exceeds main product stock' : ''}
             >
               {loading ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 max-w-fit border-white mr-2"></div>
               ) : (
                 <Save className="w-4 h-4 mr-2" />
               )}

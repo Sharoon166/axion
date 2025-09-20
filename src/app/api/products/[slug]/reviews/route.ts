@@ -2,7 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Product from '@/models/Products';
 import Review from '@/models/Review';
-
+interface ReviewType {
+  userId: string;
+  userName: string;
+  userEmail: string;
+  productId: string;
+  productSlug: string;
+  rating: number;
+  comment: string;
+  images?: string[];
+}
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -10,11 +19,19 @@ export async function POST(
   try {
     await dbConnect();
     
-    const { userId, userName, userEmail, rating, comment } = await request.json();
+    const { userId, userName, userEmail, rating, comment, images } = await request.json();
     
     if (!userId || !userName || !userEmail || !rating || !comment) {
       return NextResponse.json(
-        { success: false, error: 'All fields are required' },
+        { success: false, error: 'All required fields must be provided' },
+        { status: 400 }
+      );
+    }
+    
+    // Validate images array if provided
+    if (images && !Array.isArray(images)) {
+      return NextResponse.json(
+        { success: false, error: 'Images must be an array' },
         { status: 400 }
       );
     }
@@ -50,15 +67,24 @@ export async function POST(
     }
 
     // Create new review in Review collection
-    const newReview = await Review.create({
+    const reviewData: ReviewType = {
       userId,
       userName,
       userEmail,
       productId: product._id,
       productSlug: slug,
       rating: Number(rating),
-      comment
-    });
+      comment,
+    };
+
+    // Only add images if they exist and are valid
+    if (Array.isArray(images) && images.length > 0) {
+      reviewData.images = images.filter(img => typeof img === 'string' && img.trim() !== '');
+    } else {
+      reviewData.images = [];
+    }
+
+    const newReview = await Review.create(reviewData);
 
     // Update product rating and review count
     const reviews = await Review.find({ productId: product._id });
@@ -92,8 +118,9 @@ export async function GET(
     await dbConnect();
     
     const { slug } = await params;
+
+    // Find the product by slug
     const product = await Product.findOne({ slug });
-    
     if (!product) {
       return NextResponse.json(
         { success: false, error: 'Product not found' },
@@ -101,18 +128,28 @@ export async function GET(
       );
     }
 
-    // Fetch reviews from Review collection
+    // Get all reviews for this product, sorted by newest first
     const reviews = await Review.find({ productId: product._id })
       .sort({ createdAt: -1 })
       .lean();
 
+    // Ensure each review has an images array, even if empty
+    const reviewsWithImages = reviews.map(review => ({
+      ...review,
+      images: Array.isArray(review.images) ? review.images : []
+    }));
+
+    // Calculate average rating
+    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+    const averageRating = reviews.length > 0 ? totalRating / reviews.length : 0;
+
     return NextResponse.json({
       success: true,
       data: {
-        reviews: reviews,
-        rating: product.rating || 0,
-        numReviews: product.numReviews || 0
-      }
+        reviews: reviewsWithImages,
+        rating: averageRating,
+        numReviews: reviews.length,
+      },
     });
 
   } catch (error) {

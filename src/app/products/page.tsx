@@ -338,7 +338,7 @@ console.log(setSale)
                           id={product._id}
                           name={product.name}
                           price={product.price}
-                          img={product.images?.[0] || '/placeholder-product.jpg'}
+                          img={product.images || '/placeholder-product.jpg'}
                           href={`/product/${product.slug}`}
                           rating={product.rating}
                           discount={product.saleInfo?.discountPercent}

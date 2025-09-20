@@ -37,6 +37,7 @@ const Header = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isOrderAdmin, setIsOrderAdmin] = useState(false);
+  
 
   useEffect(() => {
     if (user?.role === 'order admin') {
@@ -142,7 +143,7 @@ const Header = () => {
 
               {/* Mobile Navigation Links */}
               <div className="space-y-3 px-2">
-                {(user?.isAdmin ? adminLinks : navLinks).map((link) => (
+                {((user?.isAdmin || isOrderAdmin) ? adminLinks : navLinks).map((link) => (
                   <Link
                     key={link.name}
                     href={link.href}
@@ -174,95 +175,99 @@ const Header = () => {
                   Search Products
                 </button>
 
-                <button
-                  onClick={() => setMobileCartOpen(!mobileCartOpen)}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-800 hover:bg-slate-100 transition-all duration-200 hover:translate-x-1"
-                >
-                  <div className="p-1 bg-[var(--color-logo)]/10 rounded-lg relative">
-                    <Handbag size={18} />
-                    {getTotalItems() > 0 && (
-                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                        {getTotalItems()}
-                      </span>
-                    )}
-                  </div>
-                  Shopping Cart
-                </button>
+                {!(user?.isAdmin || isOrderAdmin) && (
+                  <>
+                    <button
+                      onClick={() => setMobileCartOpen(!mobileCartOpen)}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-800 hover:bg-slate-100 transition-all duration-200 hover:translate-x-1"
+                    >
+                      <div className="p-1 bg-[var(--color-logo)]/10 rounded-lg relative">
+                        <Handbag size={18} />
+                        {getTotalItems() > 0 && (
+                          <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                            {getTotalItems()}
+                          </span>
+                        )}
+                      </div>
+                      Shopping Cart
+                    </button>
 
-                {/* Mobile Cart Dropdown */}
-                {mobileCartOpen && (
-                  <div className="mt-2 p-3  rounded-lg border w-full max-w-full overflow-hidden">
-                    <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
-                      {cartItems.length === 0 ? (
-                        <p className="text-center py-4 text-gray-500">Your cart is empty</p>
-                      ) : (
-                        cartItems.map((item, index) => (
-                          <div
-                            key={`${item._id}-${item.color}-${item.size}-${index}`}
-                            className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#2CA6A4]/10 w-full overflow-hidden"
-                          >
-                            <Image
-                              src={getImageUrl(item.image)}
-                              alt={item.name}
-                              width={40}
-                              height={40}
-                              className="rounded object-cover"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <h4
-                                className="font-medium text-sm truncate"
-                                style={{ color: '#0C1E33' }}
+                    {/* Mobile Cart Dropdown */}
+                    {mobileCartOpen && (
+                      <div className="mt-2 p-3  rounded-lg border w-full max-w-full overflow-hidden">
+                        <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                          {cartItems.length === 0 ? (
+                            <p className="text-center py-4 text-gray-500">Your cart is empty</p>
+                          ) : (
+                            cartItems.map((item, index) => (
+                              <div
+                                key={`${item._id}-${item.color}-${item.size}-${index}`}
+                                className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#2CA6A4]/10 w-full overflow-hidden"
                               >
-                                {item.name}
-                              </h4>
-                              <p className="text-xs text-[var(--color-logo)]">
-                                Rs. {item.price.toLocaleString()} x {item.quantity}
-                              </p>
-                            </div>
-                            <button
-                              onClick={() => removeFromCart(item._id)}
-                              className="p-1 hover:bg-red-100 rounded"
-                            >
-                              <Trash2 size={14} className="text-red-500" />
-                            </button>
-                          </div>
-                        ))
-                      )}
-                    </div>
-
-                    {cartItems.length > 0 && (
-                      <>
-                        <div className="border-t pt-3 mt-3">
-                          <div className="flex justify-between items-center mb-3">
-                            <span className="font-semibold" style={{ color: '#0C1E33' }}>
-                              Total:
-                            </span>
-                            <span className="font-bold text-lg text-[var(--color-logo)]">
-                              Rs. {getTotalPrice().toLocaleString()}
-                            </span>
-                          </div>
-                          <button
-                            onClick={() => {
-                              if (!user) {
-                                setMobileMenuOpen(false);
-                                router.push('/login');
-                                return;
-                              }
-                              setMobileMenuOpen(false);
-                              router.push('/order/generate');
-                            }}
-                            className="w-full py-2 px-4 rounded-lg text-center transition-colors duration-200"
-                            style={{
-                              backgroundColor: '#0077B6',
-                              color: 'white',
-                            }}
-                          >
-                            Pay Now
-                          </button>
+                                <Image
+                                  src={getImageUrl(item.image)}
+                                  alt={item.name}
+                                  width={40}
+                                  height={40}
+                                  className="rounded object-cover"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <h4
+                                    className="font-medium text-sm truncate"
+                                    style={{ color: '#0C1E33' }}
+                                  >
+                                    {item.name}
+                                  </h4>
+                                  <p className="text-xs text-[var(--color-logo)]">
+                                    Rs. {item.price.toLocaleString()} x {item.quantity}
+                                  </p>
+                                </div>
+                                <button
+                                  onClick={() => removeFromCart(item._id)}
+                                  className="p-1 hover:bg-red-100 rounded"
+                                >
+                                  <Trash2 size={14} className="text-red-500" />
+                                </button>
+                              </div>
+                            ))
+                          )}
                         </div>
-                      </>
+
+                        {cartItems.length > 0 && (
+                          <>
+                            <div className="border-t pt-3 mt-3">
+                              <div className="flex justify-between items-center mb-3">
+                                <span className="font-semibold" style={{ color: '#0C1E33' }}>
+                                  Total:
+                                </span>
+                                <span className="font-bold text-lg text-[var(--color-logo)]">
+                                  Rs. {getTotalPrice().toLocaleString()}
+                                </span>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  if (!user) {
+                                    setMobileMenuOpen(false);
+                                    router.push('/login');
+                                    return;
+                                  }
+                                  setMobileMenuOpen(false);
+                                  router.push('/order/generate');
+                                }}
+                                className="w-full py-2 px-4 rounded-lg text-center transition-colors duration-200"
+                                style={{
+                                  backgroundColor: '#0077B6',
+                                  color: 'white',
+                                }}
+                              >
+                                Pay Now
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
                     )}
-                  </div>
+                  </>
                 )}
 
                 {user ? (
@@ -404,93 +409,95 @@ const Header = () => {
             </DialogContent>
           </Dialog>
 
-          {/* Cart Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="group relative p-2 rounded-md transition-all duration-300 hover:bg-slate-100">
-                <Handbag
-                  size={20}
-                  className="text-slate-700 group-hover:text-[var(--color-logo)] transition-colors duration-300"
-                />
-                {getTotalItems() > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold bg-white text-black">
-                    {getTotalItems()}
-                  </span>
-                )}
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-80 p-4" align="end">
-              <DropdownMenuLabel style={{ color: '#0C1E33' }}>Shopping Cart</DropdownMenuLabel>
-              <DropdownMenuSeparator style={{ backgroundColor: '#a5afc2' }} />
-
-              <div className="space-y-3 max-h-64 overflow-y-auto">
-                {cartItems.length === 0 ? (
-                  <p className="text-center py-4 text-gray-500">Your cart is empty</p>
-                ) : (
-                  cartItems.map((item, index) => (
-                    <div
-                      key={`${item._id}-${item.color}-${item.size}-${index}`}
-                      className="flex items-center space-x-3 p-2 rounded-lg hover:bg-[#2CA6A4]/10"
-                    >
-                      <Image
-                        src={getImageUrl(item.image)}
-                        alt={item.name}
-                        width={40}
-                        height={40}
-                        className="rounded object-cover"
-                      />
-                      <div className="flex-1">
-                        <h4 className="font-medium text-sm" style={{ color: '#0C1E33' }}>
-                          {item.name}
-                        </h4>
-                        <p className="text-xs text-[var(--color-logo)]">
-                          Rs. {item.price.toLocaleString()} x {item.quantity}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => removeFromCart(item._id)}
-                        className="p-1 hover:bg-red-100 rounded"
-                      >
-                        <Trash2 size={14} className="text-red-500" />
-                      </button>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              <DropdownMenuSeparator style={{ backgroundColor: '#a5afc2' }} />
-              <div className="space-y-3 pt-2">
-                <div className="flex justify-between items-center">
-                  <span className="font-semibold" style={{ color: '#0C1E33' }}>
-                    Total:
-                  </span>
-                  <span className="font-bold text-lg text-[var(--color-logo)]">
-                    Rs. {getTotalPrice().toLocaleString()}
-                  </span>
-                </div>
-                <button
-                  onClick={() => {
-                    if (!user) {
-                      router.push('/login');
-                      return;
-                    }
-                    router.push('/order/generate');
-                  }}
-                  disabled={cartItems.length === 0}
-                  className="w-full py-2 px-4 rounded-lg text-center transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{
-                    backgroundColor: cartItems.length > 0 ? '#0077B6' : '#ccc',
-                    color: 'white',
-                  }}
-                >
-                  Pay Now
+          {/* Cart Dropdown - Hidden for admin and order admin */}
+          {!(user?.isAdmin || isOrderAdmin) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="group relative p-2 rounded-md transition-all duration-300 hover:bg-slate-100">
+                  <Handbag
+                    size={20}
+                    className="text-slate-700 group-hover:text-[var(--color-logo)] transition-colors duration-300"
+                  />
+                  {getTotalItems() > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold bg-white text-black">
+                      {getTotalItems()}
+                    </span>
+                  )}
                 </button>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-80 p-4" align="end">
+                <DropdownMenuLabel style={{ color: '#0C1E33' }}>Shopping Cart</DropdownMenuLabel>
+                <DropdownMenuSeparator style={{ backgroundColor: '#a5afc2' }} />
+
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {cartItems.length === 0 ? (
+                    <p className="text-center py-4 text-gray-500">Your cart is empty</p>
+                  ) : (
+                    cartItems.map((item, index) => (
+                      <div
+                        key={`${item._id}-${item.color}-${item.size}-${index}`}
+                        className="flex items-center space-x-3 p-2 rounded-lg hover:bg-[#2CA6A4]/10"
+                      >
+                        <Image
+                          src={getImageUrl(item.image)}
+                          alt={item.name}
+                          width={40}
+                          height={40}
+                          className="rounded object-cover"
+                        />
+                        <div className="flex-1">
+                          <h4 className="font-medium text-sm" style={{ color: '#0C1E33' }}>
+                            {item.name}
+                          </h4>
+                          <p className="text-xs text-[var(--color-logo)]">
+                            Rs. {item.price.toLocaleString()} x {item.quantity}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => removeFromCart(item._id)}
+                          className="p-1 hover:bg-red-100 rounded"
+                        >
+                          <Trash2 size={14} className="text-red-500" />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <DropdownMenuSeparator style={{ backgroundColor: '#a5afc2' }} />
+                <div className="space-y-3 pt-2">
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold" style={{ color: '#0C1E33' }}>
+                      Total:
+                    </span>
+                    <span className="font-bold text-lg text-[var(--color-logo)]">
+                      Rs. {getTotalPrice().toLocaleString()}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (!user) {
+                        router.push('/login');
+                        return;
+                      }
+                      router.push('/order/generate');
+                    }}
+                    disabled={cartItems.length === 0}
+                    className="w-full py-2 px-4 rounded-lg text-center transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{
+                      backgroundColor: cartItems.length > 0 ? '#0077B6' : '#ccc',
+                      color: 'white',
+                    }}
+                  >
+                    Pay Now
+                  </button>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
 
           {/* Profile Icon */}
-          <ProfileDropdown userData={user} />
+          <ProfileDropdown userData={user} isOrderAdmin={isOrderAdmin} />
         </div>
       </div>
     </header>
@@ -505,7 +512,12 @@ interface HeaderUser {
   image?: string | null;
 }
 
-const ProfileDropdown = ({ userData }: { userData: HeaderUser | null }) => {
+interface ProfileDropdownProps {
+  userData: HeaderUser | null;
+  isOrderAdmin: boolean;
+}
+
+const ProfileDropdown = ({ userData, isOrderAdmin }: ProfileDropdownProps) => {
   if (!userData) {
     return (
       <Link href="/login">
@@ -530,7 +542,7 @@ const ProfileDropdown = ({ userData }: { userData: HeaderUser | null }) => {
       href: '/profile/edit',
       icon: <Edit size={16} />,
     },
-    ...(userData.isAdmin || userData.isOrderAdmin
+    ...(userData.isAdmin || isOrderAdmin
       ? []
       : [
           {

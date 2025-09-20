@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import { Trash2, Plus, Edit } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Trash2, Edit } from 'lucide-react';
-import { Variant, VariantOption } from '@/lib/productVariants';
 import { ChromePicker } from 'react-color';
+import type { Variant, VariantOption } from '@/lib/productVariants';
+
+import React, { useState } from 'react';
 
 type RGBColor = {
   r: number;
@@ -35,9 +37,16 @@ declare class EyeDropper {
 interface VariantManagerProps {
   variants: Variant[];
   onChange: (variants: Variant[]) => void;
+  mainStock?: number;
+  onStockExceeded?: (isExceeded: boolean) => void;
 }
 
-const VariantManager: React.FC<VariantManagerProps> = ({ variants, onChange }) => {
+const VariantManager: React.FC<VariantManagerProps> = ({ 
+  variants, 
+  onChange, 
+  mainStock = Infinity,
+  onStockExceeded
+}) => {
   const [editingVariant, setEditingVariant] = useState<number | null>(null);
   const [editingOption, setEditingOption] = useState<{
     variantIndex: number;
@@ -102,7 +111,19 @@ const VariantManager: React.FC<VariantManagerProps> = ({ variants, onChange }) =
       required: false,
       options: [],
     };
-    onChange([...variants, newVariant]);
+    const updatedVariants = [...variants, newVariant];
+    
+    if (typeof mainStock === 'number') {
+      const totalVariantStock = calculateTotalVariantStock(updatedVariants);
+      if (totalVariantStock > mainStock) {
+        toast.error(`Total variant quantity (${totalVariantStock}) cannot exceed main product stock (${mainStock})`);
+        if (onStockExceeded) {
+          onStockExceeded(true);
+        }
+      }
+    }
+    
+    onChange(updatedVariants);
     setEditingVariant(variants.length);
   };
 
@@ -150,6 +171,14 @@ const VariantManager: React.FC<VariantManagerProps> = ({ variants, onChange }) =
     }
   };
 
+  const calculateTotalVariantStock = (variantList: Variant[]): number => {
+    return variantList.reduce((total, variant) => {
+      return total + variant.options.reduce((sum, option) => {
+        return sum + (Number(option.stockModifier) || 0);
+      }, 0);
+    }, 0);
+  };
+
   const updateOption = (
     variantIndex: number,
     optionIndex: number,
@@ -161,15 +190,45 @@ const VariantManager: React.FC<VariantManagerProps> = ({ variants, onChange }) =
       ...updated[variantIndex].options[optionIndex],
       [field]: value,
     };
+    
+    // Check if we're updating stockModifier and validate
+    if (field === 'stockModifier' && typeof mainStock === 'number') {
+      const totalVariantStock = calculateTotalVariantStock(updated);
+      const isExceeded = totalVariantStock > mainStock;
+      
+      if (isExceeded) {
+        toast.error(`Total variant quantity (${totalVariantStock}) cannot exceed main product stock (${mainStock})`);
+      }
+      
+      if (onStockExceeded) {
+        onStockExceeded(isExceeded);
+      }
+    }
+    
     onChange(updated);
   };
 
   const removeOption = (variantIndex: number, optionIndex: number) => {
     const updated = [...variants];
+    
     updated[variantIndex].options = updated[variantIndex].options.filter(
       (_, i) => i !== optionIndex,
     );
+    
+    // If this was the last option, remove the variant
+    if (updated[variantIndex].options.length === 0) {
+      updated.splice(variantIndex, 1);
+    }
+    
+    // Check stock validation after removal
+    if (typeof mainStock === 'number' && onStockExceeded) {
+      const totalVariantStock = calculateTotalVariantStock(updated);
+      onStockExceeded(totalVariantStock > mainStock);
+    }
+    
     onChange(updated);
+    
+    // Reset editing state if needed
     if (
       editingOption?.variantIndex === variantIndex &&
       editingOption?.optionIndex === optionIndex

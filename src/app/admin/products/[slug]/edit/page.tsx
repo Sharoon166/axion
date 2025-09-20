@@ -17,6 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import VariantManager from '@/components/admin/VariantManager';
 import AddonManager from '@/components/admin/AddonManager';
 import { Variant, Addon } from '@/lib/productVariants';
+import { toast } from 'sonner';
 
 interface Category {
   _id: string;
@@ -112,6 +113,7 @@ export default function EditProductPage() {
   const [colors, setColors] = useState<string[]>([]);
   const [sizes, setSizes] = useState<string[]>([]);
   const [variants, setVariants] = useState<Variant[]>([]);
+  const [isStockExceeded, setIsStockExceeded] = useState(false);
   const [addons, setAddons] = useState<Addon[]>([]);
 
   const fetchProduct = useCallback(async () => {
@@ -192,30 +194,35 @@ export default function EditProductPage() {
 
   // (constants moved to module scope)
 
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  const validateStock = useCallback((stockValue: string | boolean, variantsList: Variant[]) => {
+    const mainStock = Number(stockValue) || 0;
+    let totalVariantStock = 0;
+    
+    variantsList.forEach((variant) => {
+      variant.options.forEach((option) => {
+        totalVariantStock += Number(option.stockModifier) || 0;
+      });
+    });
+    
+    if (totalVariantStock > mainStock) {
+      toast.error(`Total variant quantity (${totalVariantStock}) cannot exceed main product stock (${mainStock})`);
+      setIsStockExceeded(true);
+    } else {
+      setIsStockExceeded(false);
+    }
+  }, []);
 
-    // When category changes, update available subcategories and reset selection
-    if (field === 'category' && typeof value === 'string') {
-      const found = categories.find((c) => c.name === value || c.slug === value);
-      // Normalize key
-      const key = (found?.slug || found?.name || value).toString().toLowerCase().trim();
-      // Try direct match
-      let mapped = PREDEFINED_SUBCATEGORIES[key];
-      // Fallback: include-based heuristics
-      if (!mapped) {
-        if (key.includes('indoor')) mapped = PREDEFINED_SUBCATEGORIES['indoor'] || PREDEFINED_SUBCATEGORIES['indoor lighting'];
-        else if (key.includes('outdoor')) mapped = PREDEFINED_SUBCATEGORIES['outdoor'] || PREDEFINED_SUBCATEGORIES['outdoor lighting'];
-        else if (key.includes('solar')) mapped = PREDEFINED_SUBCATEGORIES['solar'] || PREDEFINED_SUBCATEGORIES['solar lighting'];
-        else if (key.includes('light')) mapped = PREDEFINED_SUBCATEGORIES['lighting'];
-      }
-      const subcats = (mapped && Array.isArray(mapped) ? mapped : found?.subcategories || [])
-        .filter(Boolean);
-      setAvailableSubcats(subcats);
-      setSelectedSubcats([]);
+  const handleInputChange = (field: string, value: string | boolean) => {
+    const newFormData = {
+      ...formData,
+      [field]: value,
+    };
+    
+    setFormData(newFormData);
+    
+    // If stock is being updated, validate against current variants
+    if (field === 'stock' && variants.length > 0) {
+      validateStock(value, variants);
     }
   };
 
@@ -256,37 +263,45 @@ export default function EditProductPage() {
   };
 
   const removeImage = (index: number) => {
-    // Revoke object URL to prevent memory leaks
-    if (previewUrls[index] && previewUrls[index].startsWith('blob:')) {
-      URL.revokeObjectURL(previewUrls[index]);
+    // Get the URL before we modify the array
+    const urlToRemove = previewUrls[index];
+    
+    // Revoke object URL if it's a blob
+    if (urlToRemove?.startsWith('blob:')) {
+      URL.revokeObjectURL(urlToRemove);
     }
 
-    // Check if we're removing an existing image or a newly added one
-    const isExistingImage = index < previewUrls.length - selectedFiles.length;
+    // Clone arrays to avoid mutating state directly
+    const newPreviews = [...previewUrls];
+    newPreviews.splice(index, 1);
     
-    if (isExistingImage) {
-      // For existing images, just remove from preview (will be removed from DB on submit)
-      const newPreviews = [...previewUrls];
-      newPreviews.splice(index, 1);
-      setPreviewUrls(newPreviews);
-    } else {
-      // For new images, remove from both selectedFiles and previewUrls
-      const newFiles = [...selectedFiles];
-      const newPreviews = [...previewUrls];
-      const fileIndex = index - (previewUrls.length - selectedFiles.length);
+    // Update preview URLs first
+    setPreviewUrls(newPreviews);
+
+    // If this was a newly selected file (blob), remove from selectedFiles too
+    if (urlToRemove?.startsWith('blob:')) {
+      // Create a map of blob URLs to their indices in the original previewUrls array
+      const blobUrlToIndex = new Map<string, number>();
+      previewUrls.forEach((url, idx) => {
+        if (url.startsWith('blob:')) {
+          blobUrlToIndex.set(url, idx);
+        }
+      });
+
+      // Find the index of the file to remove in selectedFiles
+      const fileIndex = Array.from(blobUrlToIndex.entries())
+        .findIndex(([url, _]) =>{
+          console.log(url,_, urlToRemove);
+          return url === urlToRemove});
       
-      // Revoke the URL before removing
-      if (previewUrls[index]?.startsWith('blob:')) {
-        URL.revokeObjectURL(previewUrls[index]);
+      if (fileIndex !== -1) {
+        const newFiles = [...selectedFiles];
+        newFiles.splice(fileIndex, 1);
+        setSelectedFiles(newFiles);
       }
-      
-      newFiles.splice(fileIndex, 1);
-      newPreviews.splice(index, 1);
-      
-      setSelectedFiles(newFiles);
-      setPreviewUrls(newPreviews);
     }
   };
+
 
   const clearAllImages = () => {
     // Revoke all object URLs to prevent memory leaks
@@ -691,7 +706,12 @@ export default function EditProductPage() {
               <CardTitle>Variants & Add-ons</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <VariantManager variants={variants} onChange={setVariants} />
+              <VariantManager 
+                variants={variants} 
+                onChange={setVariants}
+                mainStock={Number(formData.stock) || 0}
+                onStockExceeded={setIsStockExceeded}
+              />
               <AddonManager addons={addons} onChange={setAddons} />
             </CardContent>
           </Card>
@@ -701,10 +721,11 @@ export default function EditProductPage() {
             <Button type="button" variant="outline" onClick={() => router.back()}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={saving || !formData.name || !formData.price}
-              className="bg-blue-600 hover:bg-blue-700"
+            <Button 
+              type="submit" 
+              className="w-full py-6 text-lg"
+              disabled={saving || isStockExceeded}
+              title={isStockExceeded ? "Total variant quantity exceeds main product stock" : ""}
             >
               {saving ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />

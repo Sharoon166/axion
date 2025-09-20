@@ -9,6 +9,10 @@ const reviewSchema = new mongoose.Schema(
     productSlug: { type: String, required: true },
     rating: { type: Number, required: true, min: 1, max: 5 },
     comment: { type: String, required: true },
+    images: { 
+      type: [String], 
+      default: [] 
+    },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
   },

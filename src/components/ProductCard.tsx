@@ -122,7 +122,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
       {/* Content */}
       <div className="px-4 py-2 flex flex-col flex-1">
-        <h3 className="text-base font-medium text-black leading-snug mb-1 line-clamp-2">{name}</h3>
+        <h3 className="text-base font-medium text-black leading-snug mb-1 h-12 line-clamp-2">{name}</h3>
 
         <div className="flex items-center gap-2">
           {isProductOnSale ? (
@@ -166,22 +166,19 @@ const ProductCard: React.FC<ProductCardProps> = ({
             </span>
           </div>
 
-          {/* Add to Cart Button - Hidden for admin */}
-          {!isAdmin || !isOrderAdmin && (
-            <div className="flex justify-end">
-              <button
-                onClick={handleAddToCart}
-                disabled={loading}
-                className="rounded-full bg-[var(--color-logo)] hover:bg-[var(--color-logo)]/90 p-2 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <Loader2 className="h-5 w-5 text-white animate-spin" />
-                ) : (
-                  <ShoppingCart className="h-5 w-5 text-white" />
-                )}
-              </button>
-            </div>
-          )}
+          <div className="flex justify-end">
+            <button
+              onClick={handleAddToCart}
+              disabled={loading || isAdmin || isOrderAdmin}
+              className="rounded-full bg-[var(--color-logo)] hover:bg-[var(--color-logo)]/90 p-2 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <Loader2 className="h-5 w-5 text-white animate-spin" />
+              ) : (
+                <ShoppingCart className="h-5 w-5 text-white" />
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </Link>
