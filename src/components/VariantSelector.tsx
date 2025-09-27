@@ -1,0 +1,497 @@
+'use client';
+
+import {
+  Variant,
+  VariantOption,
+  SubVariant,
+  SubVariantOption,
+  SubSubVariant,
+  SubSubVariantOption,
+  SelectedVariant,
+} from '@/lib/productVariants';
+
+interface VariantSelectorProps {
+  variants: Variant[];
+  selectedVariants: SelectedVariant[];
+  onVariantChange: (selectedVariants: SelectedVariant[]) => void;
+}
+
+const VariantSelector: React.FC<VariantSelectorProps> = ({
+  variants,
+  selectedVariants,
+  onVariantChange,
+}) => {
+
+  if (!variants || variants.length === 0) return null;
+
+  const handleVariantSelection = (variant: Variant, option: VariantOption) => {
+    const newSelectedVariant: SelectedVariant = {
+      variantName: variant.name,
+      optionValue: option.value,
+    };
+
+    const updatedVariants = [...selectedVariants];
+    const existingIndex = updatedVariants.findIndex((sv) => sv.variantName === variant.name);
+
+    if (existingIndex >= 0) {
+      updatedVariants[existingIndex] = newSelectedVariant;
+    } else {
+      updatedVariants.push(newSelectedVariant);
+    }
+
+    onVariantChange(updatedVariants);
+  };
+
+  const handleSubVariantSelection = (
+    parentVariantName: string,
+    subVariant: SubVariant,
+    subOption: SubVariantOption,
+  ) => {
+    const updatedVariants = [...selectedVariants];
+    const parentIndex = updatedVariants.findIndex((sv) => sv.variantName === parentVariantName);
+
+    if (parentIndex >= 0) {
+      const parent = updatedVariants[parentIndex];
+      const subVariants = parent.subVariants || [];
+      const subIndex = subVariants.findIndex((sv) => sv.subVariantName === subVariant.name);
+
+      const newSubVariant = {
+        subVariantName: subVariant.name,
+        optionValue: subOption.value,
+      };
+
+      if (subIndex >= 0) {
+        subVariants[subIndex] = newSubVariant;
+      } else {
+        subVariants.push(newSubVariant);
+      }
+
+      updatedVariants[parentIndex] = {
+        ...parent,
+        subVariants: subVariants,
+      };
+
+      onVariantChange(updatedVariants);
+    }
+  };
+
+  const handleSubSubVariantSelection = (
+    parentVariantName: string,
+    subVariantName: string,
+    subSubVariant: SubSubVariant,
+    subSubOption: SubSubVariantOption,
+  ) => {
+    const updatedVariants = [...selectedVariants];
+    const parentIndex = updatedVariants.findIndex((sv) => sv.variantName === parentVariantName);
+
+    if (parentIndex >= 0) {
+      const parent = updatedVariants[parentIndex];
+      const subVariants = parent.subVariants || [];
+      const subIndex = subVariants.findIndex((sv) => sv.subVariantName === subVariantName);
+
+      if (subIndex >= 0) {
+        const subVar = subVariants[subIndex];
+        const subSubVariants = subVar.subSubVariants || [];
+        const subSubIndex = subSubVariants.findIndex(
+          (ssv) => ssv.subSubVariantName === subSubVariant.name,
+        );
+
+        const newSubSubVariant = {
+          subSubVariantName: subSubVariant.name,
+          optionValue: subSubOption.value,
+        };
+
+        if (subSubIndex >= 0) {
+          subSubVariants[subSubIndex] = newSubSubVariant;
+        } else {
+          subSubVariants.push(newSubSubVariant);
+        }
+
+        subVariants[subIndex] = {
+          ...subVar,
+          subSubVariants: subSubVariants,
+        };
+
+        updatedVariants[parentIndex] = {
+          ...parent,
+          subVariants: subVariants,
+        };
+
+        onVariantChange(updatedVariants);
+      }
+    }
+  };
+
+  const isOptionSelected = (variantName: string, optionValue: string): boolean => {
+    return selectedVariants.some(
+      (sv) => sv.variantName === variantName && sv.optionValue === optionValue,
+    );
+  };
+
+  const isSubOptionSelected = (
+    parentVariantName: string,
+    subVariantName: string,
+    optionValue: string,
+  ): boolean => {
+    const parent = selectedVariants.find((sv) => sv.variantName === parentVariantName);
+    return (
+      parent?.subVariants?.some(
+        (sv) => sv.subVariantName === subVariantName && sv.optionValue === optionValue,
+      ) || false
+    );
+  };
+
+  const isSubSubOptionSelected = (
+    parentVariantName: string,
+    subVariantName: string,
+    subSubVariantName: string,
+    optionValue: string,
+  ): boolean => {
+    const parent = selectedVariants.find((sv) => sv.variantName === parentVariantName);
+    const subVar = parent?.subVariants?.find((sv) => sv.subVariantName === subVariantName);
+    return (
+      subVar?.subSubVariants?.some(
+        (ssv) => ssv.subSubVariantName === subSubVariantName && ssv.optionValue === optionValue,
+      ) || false
+    );
+  };
+
+  const getSelectedOption = (variantName: string): SelectedVariant | undefined => {
+    return selectedVariants.find((sv) => sv.variantName === variantName);
+  };
+
+  
+  return (
+    <div className="space-y-6">
+      {variants.map((variant) => {
+        const selectedOption = getSelectedOption(variant.name);
+
+        const isColorVariant =
+          variant.type === 'color' || variant.name.toLowerCase().includes('color');
+
+       
+
+        return (
+          <div key={variant.name} className="space-y-4">
+     
+
+              <h4 className="font-semibold text-lg py-2 ">{variant.name}</h4>
+            <div className="flex gap-3 flex-wrap">
+              {' '}
+              {variant.options.map((option: VariantOption, optionIndex: number) => {
+                const isSelected = isOptionSelected(variant.name, option.value);
+                const isOutOfStock = (option.stock || 0) <= 0;
+
+                if (isColorVariant) {
+                  // Color variant - round color button with gradient support
+                  const isRgbColor = option.value.startsWith('rgb');
+                  const gradientStyle = isRgbColor
+                    ? {
+                        background: `linear-gradient(45deg, ${option.value}, ${option.value}dd, ${option.value}88)`,
+                        border: '2px solid #e5e7eb',
+                      }
+                    : {
+                        backgroundColor: option.value,
+                        border:
+                          option.value === '#ffffff' || option.value === 'white'
+                            ? '2px solid #e5e7eb'
+                            : undefined,
+                      };
+
+                  return (
+                    <button
+                      key={`${option._id}-${optionIndex}`}
+                      disabled={isOutOfStock}
+                      onClick={() => handleVariantSelection(variant, option)}
+                      className={`w-12 h-12 rounded-full border-2 transition-all ${
+                        isSelected
+                          ? 'border-blue-500 ring-2 ring-blue-200'
+                          : 'border-gray-300 hover:border-gray-400'
+                      } ${isOutOfStock ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                      style={gradientStyle}
+                      title={`${option.label}${isOutOfStock ? ' (Out of Stock)' : ''}`}
+                    >
+                      {isSelected && (
+                        <div className="w-3 h-3 bg-white rounded-full mx-auto border border-gray-300"></div>
+                      )}
+                    </button>
+                  );
+                } else {
+                  // Regular variant - simple round button
+                  return (
+                    <button
+                      key={`${option._id}-${optionIndex}`}
+                      onClick={() => !isOutOfStock && handleVariantSelection(variant, option)}
+                      disabled={isOutOfStock}
+                      className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
+                        isSelected
+                          ? 'border-blue-500 bg-blue-50 text-blue-700'
+                          : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                      } ${isOutOfStock ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                    >
+                      {option.label}
+                      
+                    </button>
+                  );
+                }
+              })}
+            </div>
+
+            {/* Show sub-variants if main variant is selected */}
+            {selectedOption &&
+              (() => {
+                const selectedMainOption = variant.options.find(
+                  (o) => o.value === selectedOption.optionValue,
+                );
+                
+                                
+                if (
+                  Array.isArray(selectedMainOption?.subVariants) &&
+                  selectedMainOption.subVariants.length > 0
+                ) {
+                  return (
+                    <div className="mt-4">
+                     
+                      <div className="space-y-4">
+                        {selectedMainOption.subVariants.map((subVariant) => {
+                          const isSubColorVariant =
+                            subVariant.type === 'color' ||
+                            subVariant.name.toLowerCase().includes('color');
+
+                          return (
+                            <div key={subVariant._id}>
+                              <h5 className="text-md font-medium text-gray-600 mb-2">
+                                {subVariant.name}
+                              </h5>
+                              <div className="flex gap-2 flex-wrap">
+                                {subVariant.options.map((subOption) => {
+                                  const isSubSelected = isSubOptionSelected(
+                                    variant.name,
+                                    subVariant.name,
+                                    subOption.value,
+                                  );
+                                  const isSubOutOfStock = (subOption.stock || 0) <= 0;
+
+                                  if (isSubColorVariant) {
+                                    // Sub-variant color - round button with gradient support
+                                    const isRgbColor = subOption.value.startsWith('rgb');
+                                    const gradientStyle = isRgbColor
+                                      ? {
+                                          background: `linear-gradient(45deg, ${subOption.value}, ${subOption.value}dd, ${subOption.value}88)`,
+                                          border: '2px solid #e5e7eb',
+                                        }
+                                      : {
+                                          backgroundColor: subOption.value,
+                                          border:
+                                            subOption.value === '#ffffff' ||
+                                            subOption.value === 'white'
+                                              ? '2px solid #e5e7eb'
+                                              : undefined,
+                                        };
+
+                                    return (
+                                      <button
+                                        key={subOption._id}
+                                        disabled={isSubOutOfStock}
+                                        onClick={() =>
+                                          handleSubVariantSelection(
+                                            variant.name,
+                                            subVariant,
+                                            subOption,
+                                          )
+                                        }
+                                        className={`w-10 h-10 rounded-full border-2 transition-all ${
+                                          isSubSelected
+                                            ? 'border-blue-500 ring-1 ring-blue-200'
+                                            : 'border-gray-300 hover:border-gray-400'
+                                        } ${
+                                          isSubOutOfStock
+                                            ? 'opacity-50 cursor-not-allowed'
+                                            : 'cursor-pointer'
+                                        }`}
+                                        style={gradientStyle}
+                                        title={`${subOption.label}${isSubOutOfStock ? ' (Out of Stock)' : ''}`}
+                                      >
+                                        {isSubSelected && (
+                                          <div className="w-3 h-3 bg-white rounded-full mx-auto border border-gray-300"></div>
+                                        )}
+                                      </button>
+                                    );
+                                  } else {
+                                    // Regular sub-variant - simple tag button
+                                    return (
+                                      <button
+                                        key={subOption._id}
+                                        onClick={() =>
+                                          !isSubOutOfStock &&
+                                          handleSubVariantSelection(
+                                            variant.name,
+                                            subVariant,
+                                            subOption,
+                                          )
+                                        }
+                                        disabled={isSubOutOfStock}
+                                        className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
+                                          isSubSelected
+                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                            : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                                        } ${
+                                          isSubOutOfStock
+                                            ? 'opacity-50 cursor-not-allowed'
+                                            : 'cursor-pointer'
+                                        }`}
+                                      >
+                                        {subOption.label}
+                                      </button>
+                                    );
+                                  }
+                                })}
+                              </div>
+
+                              {/* Show sub-sub-variants if sub-variant is selected */}
+                              {(() => {
+                                const selectedSubVariant = selectedOption.subVariants?.find(
+                                  (sv) => sv.subVariantName === subVariant.name,
+                                );
+                                const selectedSubOption = subVariant.options.find(
+                                  (so) => so.value === selectedSubVariant?.optionValue,
+                                );
+
+                                if (
+                                  selectedSubVariant &&
+                                  Array.isArray(selectedSubOption?.subSubVariants) &&
+                                  selectedSubOption.subSubVariants.length > 0
+                                ) {
+                                  return (
+                                    <div className="py-3">
+                                     
+                                      {selectedSubOption.subSubVariants.map((subSubVariant) => {
+                                        const isSubSubColorVariant =
+                                          subSubVariant.type === 'color' ||
+                                          subSubVariant.name.toLowerCase().includes('color');
+
+                                        return (
+                                          <div key={subSubVariant._id} className="space-y-1">
+                                            <span className="text-md font-medium">
+                                              {subSubVariant.name}
+                                            </span>
+                                            <div
+                                              className={
+                                                isSubSubColorVariant
+                                                  ? 'flex gap-1 flex-wrap'
+                                                  : 'grid grid-cols-3 gap-1'
+                                              }
+                                            >
+                                              {subSubVariant.options.map((subSubOption) => {
+                                                const isSubSubSelected = isSubSubOptionSelected(
+                                                  variant.name,
+                                                  subVariant.name,
+                                                  subSubVariant.name,
+                                                  subSubOption.value,
+                                                );
+                                                const isSubSubOutOfStock =
+                                                  (subSubOption.stock || 0) <= 0;
+
+                                                if (isSubSubColorVariant) {
+                                                  // Sub-sub-variant color - round button with gradient support
+                                                  const isRgbColor =
+                                                    subSubOption.value.startsWith('rgb');
+                                                  const gradientStyle = isRgbColor
+                                                    ? {
+                                                        background: `linear-gradient(45deg, ${subSubOption.value}, ${subSubOption.value}dd, ${subSubOption.value}88)`,
+                                                        border: '2px solid #e5e7eb',
+                                                      }
+                                                    : {
+                                                        backgroundColor: subSubOption.value,
+                                                        border:
+                                                          subSubOption.value === '#ffffff' ||
+                                                          subSubOption.value === 'white'
+                                                            ? '2px solid #e5e7eb'
+                                                            : undefined,
+                                                      };
+
+                                                  return (
+                                                    <button
+                                                      key={subSubOption._id}
+                                                      disabled={isSubSubOutOfStock}
+                                                      onClick={() =>
+                                                        handleSubSubVariantSelection(
+                                                          variant.name,
+                                                          subVariant.name,
+                                                          subSubVariant,
+                                                          subSubOption,
+                                                        )
+                                                      }
+                                                      className={`relative w-8 h-8 rounded-full border-2 transition-all ${
+                                                        isSubSubSelected
+                                                          ? 'border-blue-500 ring-1 ring-blue-200'
+                                                          : 'border-gray-300 hover:border-gray-400'
+                                                      } ${
+                                                        isSubSubOutOfStock
+                                                          ? 'opacity-50 cursor-not-allowed'
+                                                          : 'cursor-pointer'
+                                                      }`}
+                                                      style={gradientStyle}
+                                                      title={`${subSubOption.label} - ${subSubOption.stock} left`}
+                                                    >
+                                                      {isSubSubSelected && (
+                                                        <div className="w-2 h-2 bg-white rounded-full mx-auto border border-gray-300"></div>
+                                                      )}
+                                                    </button>
+                                                  );
+                                                } else {
+                                                  // Regular sub-sub-variant - simple tag button
+                                                  return (
+                                                    <button
+                                                      key={subSubOption._id}
+                                                      onClick={() =>
+                                                        !isSubSubOutOfStock &&
+                                                        handleSubSubVariantSelection(
+                                                          variant.name,
+                                                          subVariant.name,
+                                                          subSubVariant,
+                                                          subSubOption,
+                                                        )
+                                                      }
+                                                      disabled={isSubSubOutOfStock}
+                                                      className={`py-1 rounded-lg border text-sm font-medium transition-all ${
+                                                        isSubSubSelected
+                                                          ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                                          : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                                                      } ${
+                                                        isSubSubOutOfStock
+                                                          ? 'opacity-50 cursor-not-allowed'
+                                                          : 'cursor-pointer'
+                                                      }`}
+                                                    >
+                                                      {subSubOption.label}
+                                                    </button>
+                                                  );
+                                                }
+                                              })}
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              })()}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+export default VariantSelector;
