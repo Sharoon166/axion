@@ -910,7 +910,7 @@ const ProductPage = () => {
                     disabled={Boolean(
                       user?.isAdmin || user?.role === 'admin' || user?.role === 'order admin',
                     )}
-                    onClick={() => {
+                    onClick={async () => {
                       const config = createProductConfiguration(product);
                       const availableStock = calculateAvailableStock(config);
 
@@ -1016,22 +1016,25 @@ const ProductPage = () => {
                         (v) => v.variantName.toLowerCase() === 'size',
                       );
 
-                      addToCart({
-                        _id: product._id.toString(),
-                        name: product.name,
-                        price: summaryForCart,
-                        image: variantImage || product.images[0],
-                        color: colorVariant ? colorVariant.optionValue : selectedColor,
-                        size: sizeVariant ? sizeVariant.optionValue : selectedSize,
-                        slug: product.slug,
-                        quantity: cappedQty,
-                        variants: variantsForCart,
-                        addons: selectedAddons,
-                        saleName: saleName ?? undefined,
-                        salePercent: salePercent || undefined,
-                      });
-                      // Show success toast
-                      toast.success(`${product.name} added to cart!`);
+                      try {
+                        await addToCart({
+                          _id: product._id.toString(),
+                          name: product.name,
+                          price: summaryForCart,
+                          image: variantImage || product.images[0],
+                          color: colorVariant ? colorVariant.optionValue : selectedColor,
+                          size: sizeVariant ? sizeVariant.optionValue : selectedSize,
+                          slug: product.slug,
+                          quantity: cappedQty,
+                          variants: variantsForCart,
+                          addons: selectedAddons,
+                          saleName: saleName ?? undefined,
+                          salePercent: salePercent || undefined,
+                        });
+                      } catch (error) {
+                        console.error('Error adding to cart:', error);
+                        toast.error('Failed to add item to cart. Please try again.');
+                      }
                     }}
                   >
                     <ShoppingCart className="mr-2 h-4 w-4" />

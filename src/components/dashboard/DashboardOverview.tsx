@@ -111,7 +111,7 @@ export default function DashboardOverview({
         </div>
 
         {/* Last 5 Orders */}
-        <Card className="bg-white border border-gray-200">
+        <Card className="bg-white col-span-2 lg:col-span-1 border border-gray-200">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-lg font-semibold text-gray-900">Last 5 Orders</CardTitle>
@@ -143,7 +143,7 @@ export default function DashboardOverview({
           </CardContent>
         </Card>
         {/* Top Products */}
-        <Card className="bg-white border border-gray-200">
+        <Card className="bg-white col-span-2 lg:col-span-1 border border-gray-200">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">

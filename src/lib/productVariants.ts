@@ -32,6 +32,8 @@ export interface SubVariant {
 }
 
 export interface SubSubVariantOption {
+  name: string;
+  options: SubSubVariantOption[];
   _id: string;
   label: string;
   value: string;
@@ -146,6 +148,42 @@ export function calculateFinalPrice(config: ProductConfiguration): number {
       const option = variant.options.find((o) => o.value === selectedVariant.optionValue);
       if (option) {
         finalPrice += option.priceModifier;
+
+        // Add sub-variant price modifiers
+        if (selectedVariant.subVariants && selectedVariant.subVariants.length > 0) {
+          selectedVariant.subVariants.forEach((selectedSubVariant) => {
+            if (Array.isArray(option.subVariants)) {
+              const subVariant = option.subVariants.find(
+                (sv: SubVariant) => sv.name === selectedSubVariant.subVariantName,
+              );
+              if (subVariant) {
+                const subOption = subVariant.options.find(
+                  (so: SubVariantOption) => so.value === selectedSubVariant.optionValue,
+                );
+                if (subOption) {
+                  finalPrice += subOption.priceModifier;
+
+                  // Add sub-sub-variant price modifiers
+                  if (selectedSubVariant.subSubVariants && selectedSubVariant.subSubVariants.length > 0) {
+                    selectedSubVariant.subSubVariants.forEach((selectedSubSubVariant) => {
+                      const subSubVariant = subOption.subSubVariants?.find(
+                        (ssv) => ssv.name === selectedSubSubVariant.subSubVariantName,
+                      );
+                      if (subSubVariant) {
+                        const subSubOption = subSubVariant.options.find(
+                          (sso) => sso.value === selectedSubSubVariant.optionValue,
+                        );
+                        if (subSubOption) {
+                          finalPrice += subSubOption.priceModifier;
+                        }
+                      }
+                    });
+                  }
+                }
+              }
+            }
+          });
+        }
       }
     }
   });

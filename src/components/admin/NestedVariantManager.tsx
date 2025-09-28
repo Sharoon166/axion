@@ -1,6 +1,6 @@
 'use client';
 
-import { Trash2, Plus, Edit, X, ChevronDown, ChevronRight } from 'lucide-react';
+import { Trash2, Plus, Edit, ChevronDown, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -530,6 +530,8 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
         _id: `subsuboption-${Date.now()}`,
         label: isColorVariant ? '#000000' : '',
         value: isColorVariant ? '#000000' : '',
+        name: '',
+        options: [],
         priceModifier: 0,
         stock: 0,
         specifications: isColorVariant ? [{ name: 'Color', value: '#000000' }] : [],
@@ -725,7 +727,7 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
         <Button
           type="button"
           onClick={addVariant}
-          className="bg-blue-600 text-white hover:bg-blue-700"
+          className="bg-(--color-logo) text-white hover:bg-(--color-logo)/90"
           size="sm"
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -777,7 +779,7 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
           </div>
 
           {editingVariant === variantIndex && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4  rounded">
               <div>
                 <Label htmlFor={`variant-name-${variantIndex}`}>Variant Name</Label>
                 <Input
@@ -839,7 +841,11 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                         {variant.type === 'color' && (
                           <div
                             className="w-4 h-4 rounded-full border border-gray-300"
-                            style={{ backgroundColor: isColorValue(option.value) ? option.value : '#ffffff' }}
+                            style={{
+                              backgroundColor: isColorValue(option.value)
+                                ? option.value
+                                : '#ffffff',
+                            }}
                           />
                         )}
                         <span className="font-medium text-sm">
@@ -877,7 +883,7 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
 
                     {editingOption?.variantIndex === variantIndex &&
                       editingOption?.optionIndex === optionIndex && (
-                        <div className="space-y-4 p-4 bg-gray-50 rounded">
+                        <div className="space-y-4 p-4  rounded">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
                               <Label>Display Name</Label>
@@ -944,16 +950,18 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                               <Input
                                 type="number"
                                 step="0.01"
-                                value={option.priceModifier}
-                                onChange={(e) =>
+                                value={option.priceModifier === 0 ? '' : option.priceModifier}
+                                onChange={(e) => {
+                                  const value = e.target.value === '' ? 0 : parseFloat(e.target.value);
                                   updateOption(
                                     variantIndex,
                                     optionIndex,
                                     'priceModifier',
-                                    Number(e.target.value),
-                                  )
-                                }
-                                placeholder="0"
+                                    isNaN(value) ? 0 : value,
+                                  );
+                                }}
+                                placeholder="0.00"
+                                className="w-full"
                               />
                             </div>
                             <div>
@@ -961,16 +969,18 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                               <Input
                                 type="number"
                                 min="0"
-                                value={option.stock}
-                                onChange={(e) =>
+                                value={option.stock === 0 ? '' : option.stock}
+                                onChange={(e) => {
+                                  const value = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
                                   updateOption(
                                     variantIndex,
                                     optionIndex,
                                     'stock',
-                                    Number(e.target.value),
-                                  )
-                                }
+                                    isNaN(value) ? 0 : Math.max(0, value),
+                                  );
+                                }}
                                 placeholder="0"
+                                className="w-full"
                               />
                             </div>
                             <div>
@@ -988,14 +998,15 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                       )}
 
                     {isExpanded && (
-                      <div className="ml-6 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <h6 className="font-medium text-sm">Sub-Variants</h6>
+                      <div className="ml-1 sm:ml-6 space-y-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                          <h6 className="font-medium">Sub-Variants</h6>
                           <Button
                             type="button"
                             variant="outline"
                             size="sm"
                             onClick={(e) => addSubVariant(e, variantIndex, optionIndex)}
+                            className="w-full sm:w-auto h-7 text-xs px-2"
                           >
                             <Plus className="w-3 h-3 mr-1" />
                             Add Sub-Variant
@@ -1011,15 +1022,16 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                               return (
                                 <div
                                   key={subVariant._id}
-                                  className="border border-gray-200 rounded p-3 space-y-2"
+                                  className="border border-gray-200 rounded p-1 sm:p-3 space-y-1 sm:space-y-2"
                                 >
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
+                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
+                                    <div className="flex items-center gap-1 sm:gap-2">
                                       <Button
                                         type="button"
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => toggleExpanded('subvariant', subVariantKey)}
+                                        className="p-0.5 sm:p-1 h-6 w-6"
                                       >
                                         {isSubExpanded ? (
                                           <ChevronDown className="w-3 h-3" />
@@ -1027,12 +1039,12 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                           <ChevronRight className="w-3 h-3" />
                                         )}
                                       </Button>
-                                      <span className="text-sm font-medium">
+                                      <span className="text-xs sm:text-sm font-medium break-words">
                                         {subVariant.name || 'Unnamed Sub-Variant'} (
                                         {subVariant.options.length} options)
                                       </span>
                                     </div>
-                                    <div className="flex gap-1">
+                                    <div className="flex gap-0.5 sm:gap-1 ml-auto sm:ml-0">
                                       <Button
                                         type="button"
                                         variant="outline"
@@ -1046,6 +1058,7 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                               : { variantIndex, optionIndex, subVariantIndex },
                                           )
                                         }
+                                        className="p-0.5 sm:p-1 h-6 w-6"
                                       >
                                         <Edit className="w-3 h-3" />
                                       </Button>
@@ -1060,6 +1073,7 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                             subVariantIndex,
                                           )
                                         }
+                                        className="p-0.5 sm:p-1 h-6 w-6"
                                       >
                                         <Trash2 className="w-3 h-3" />
                                       </Button>
@@ -1069,9 +1083,11 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                   {editingSubVariant?.variantIndex === variantIndex &&
                                     editingSubVariant?.optionIndex === optionIndex &&
                                     editingSubVariant?.subVariantIndex === subVariantIndex && (
-                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 bg-gray-50 rounded">
-                                        <div>
-                                          <Label>Sub-Variant Name</Label>
+                                      <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2 p-1.5 sm:p-3 bg-gray-50 rounded">
+                                        <div className="w-full">
+                                          <Label className="text-xs sm:text-sm">
+                                            Sub-Variant Name
+                                          </Label>
                                           <Input
                                             value={subVariant.name}
                                             onChange={(e) =>
@@ -1084,6 +1100,7 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                               )
                                             }
                                             placeholder="e.g., Size, Finish"
+                                            className="w-full text-xs sm:text-sm"
                                           />
                                         </div>
                                         <div className="flex items-center gap-2">
@@ -1100,15 +1117,17 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                               )
                                             }
                                           />
-                                          <Label>Required</Label>
+                                          <Label className="text-xs sm:text-sm">Required</Label>
                                         </div>
                                       </div>
                                     )}
 
                                   {isSubExpanded && (
-                                    <div className="ml-6 space-y-2">
-                                      <div className="flex items-center justify-between">
-                                        <span className="text-sm font-medium">Sub-Options</span>
+                                    <div className="ml-1 sm:ml-6 space-y-1 sm:space-y-2">
+                                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
+                                        <span className="text-xs sm:text-sm font-medium">
+                                          Sub-Options
+                                        </span>
                                         <Button
                                           type="button"
                                           variant="outline"
@@ -1116,6 +1135,7 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                           onClick={() =>
                                             addSubOption(variantIndex, optionIndex, subVariantIndex)
                                           }
+                                          className="w-full sm:w-auto text-xs h-7 px-2"
                                         >
                                           <Plus className="w-3 h-3 mr-1" />
                                           Add Sub-Option
@@ -1125,32 +1145,34 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                       {subVariant.options.map((subOption, subOptionIndex) => (
                                         <div
                                           key={subOption._id}
-                                          className="border border-gray-100 rounded p-2 space-y-2"
+                                          className="border border-gray-100 rounded p-1 sm:p-2 space-y-1 sm:space-y-2"
                                         >
-                                          <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
+                                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
+                                            <div className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0">
                                               {subVariant.type === 'color' && (
                                                 <div
-                                                  className="w-4 h-4 rounded-full border border-gray-300"
-                                                  style={{ backgroundColor: isColorValue(subOption.value) ? subOption.value : '#ffffff' }}
+                                                  className="w-3 h-3 sm:w-4 sm:h-4 rounded-full border border-gray-300 flex-shrink-0"
+                                                  style={{
+                                                    backgroundColor: isColorValue(subOption.value)
+                                                      ? subOption.value
+                                                      : '#ffffff',
+                                                  }}
                                                 />
                                               )}
-                                              <span className="text-sm">
+                                              <span className="text-xs sm:text-sm truncate">
                                                 {subOption.label || 'Unnamed'} (Stock:{' '}
                                                 {subOption.stock})
                                               </span>
                                             </div>
-                                            <div className="flex gap-1">
+                                            <div className="flex gap-0.5 sm:gap-1 ml-auto sm:ml-0 flex-shrink-0">
                                               <Button
                                                 type="button"
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={() =>
                                                   setEditingSubOption(
-                                                    editingSubOption?.variantIndex ===
-                                                      variantIndex &&
-                                                      editingSubOption?.optionIndex ===
-                                                        optionIndex &&
+                                                    editingSubOption?.variantIndex === variantIndex &&
+                                                      editingSubOption?.optionIndex === optionIndex &&
                                                       editingSubOption?.subVariantIndex ===
                                                         subVariantIndex &&
                                                       editingSubOption?.subOptionIndex ===
@@ -1164,6 +1186,7 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                                         },
                                                   )
                                                 }
+                                                className="p-0.5 sm:p-1 h-6 w-6"
                                               >
                                                 <Edit className="w-3 h-3" />
                                               </Button>
@@ -1179,6 +1202,7 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                                     subOptionIndex,
                                                   )
                                                 }
+                                                className="p-0.5 sm:p-1 h-6 w-6"
                                               >
                                                 <Trash2 className="w-3 h-3" />
                                               </Button>
@@ -1189,117 +1213,160 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                             editingSubOption?.optionIndex === optionIndex &&
                                             editingSubOption?.subVariantIndex === subVariantIndex &&
                                             editingSubOption?.subOptionIndex === subOptionIndex && (
-                                              <div className="grid grid-cols-2 gap-2 p-2 bg-gray-50 rounded text-sm">
-                                                <div>
-                                                  <Label className="text-xs">Label</Label>
-                                                  <Input
-                                                    value={subOption.label}
-                                                    onChange={(e) =>
-                                                      updateSubOption(
-                                                        variantIndex,
-                                                        optionIndex,
-                                                        subVariantIndex,
-                                                        subOptionIndex,
-                                                        'label',
-                                                        e.target.value,
-                                                      )
-                                                    }
-                                                    placeholder="Label"
-                                                  />
-                                                </div>
-                                                <div>
-                                                  <Label className="text-xs">Value</Label>
-                                                  <div className="relative">
+                                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2 p-1.5 sm:p-2 bg-gray-50 rounded text-sm">
+                                                <div className="col-span-1 sm:col-span-2 grid grid-cols-2 gap-1.5 sm:gap-2">
+                                                  <div>
+                                                    <Label className="text-xs">Label</Label>
                                                     <Input
-                                                      value={subOption.value}
+                                                      value={subOption.label}
                                                       onChange={(e) =>
                                                         updateSubOption(
                                                           variantIndex,
                                                           optionIndex,
                                                           subVariantIndex,
                                                           subOptionIndex,
-                                                          'value',
+                                                          'label',
                                                           e.target.value,
                                                         )
                                                       }
-                                                      placeholder={subVariant.type === 'color' ? '#FF0000' : 'Value'}
-                                                      className={subVariant.type === 'color' ? 'pl-10' : ''}
+                                                      placeholder="Label"
+                                                      className="text-sm"
                                                     />
-                                                    {subVariant.type === 'color' && (
-                                                      <>
-                                                        <div
-                                                          className="absolute left-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border border-gray-300 cursor-pointer"
-                                                          style={{
-                                                            backgroundColor: isColorValue(subOption.value) ? subOption.value : '#ffffff',
-                                                          }}
-                                                          onClick={() =>
-                                                            setShowColorPicker({
-                                                              type: 'subvariant',
-                                                              variantIndex,
-                                                              optionIndex,
-                                                              subVariantIndex,
-                                                              subOptionIndex,
-                                                            })
-                                                          }
-                                                        />
-                                                        {showColorPicker?.type === 'subvariant' &&
-                                                          showColorPicker?.variantIndex === variantIndex &&
-                                                          showColorPicker?.optionIndex === optionIndex &&
-                                                          showColorPicker?.subVariantIndex === subVariantIndex &&
-                                                          showColorPicker?.subOptionIndex === subOptionIndex && (
-                                                            <div className="absolute z-10 mt-1">
-                                                              <div className="fixed inset-0" onClick={() => setShowColorPicker(null)} />
-                                                              <ChromePicker
-                                                                color={isColorValue(subOption.value) ? subOption.value : '#000000'}
-                                                                onChange={(color: ColorResult) => handleColorChange(color, showColorPicker)}
-                                                              />
-                                                            </div>
-                                                          )}
-                                                      </>
-                                                    )}
+                                                  </div>
+                                                  <div>
+                                                    <Label className="text-xs">Value</Label>
+                                                    <div className="relative">
+                                                      <Input
+                                                        value={subOption.value}
+                                                        onChange={(e) =>
+                                                          updateSubOption(
+                                                            variantIndex,
+                                                            optionIndex,
+                                                            subVariantIndex,
+                                                            subOptionIndex,
+                                                            'value',
+                                                            e.target.value,
+                                                          )
+                                                        }
+                                                        placeholder={
+                                                          subVariant.type === 'color'
+                                                            ? '#FF0000'
+                                                            : 'Value'
+                                                        }
+                                                        className={`text-sm ${
+                                                          subVariant.type === 'color' ? 'pl-10' : ''
+                                                        }`}
+                                                      />
+                                                      {subVariant.type === 'color' && (
+                                                        <>
+                                                          <div
+                                                            className="absolute left-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border border-gray-300 cursor-pointer"
+                                                            style={{
+                                                              backgroundColor: isColorValue(
+                                                                subOption.value,
+                                                              )
+                                                                ? subOption.value
+                                                                : '#ffffff',
+                                                            }}
+                                                            onClick={() =>
+                                                              setShowColorPicker({
+                                                                type: 'subvariant',
+                                                                variantIndex,
+                                                                optionIndex,
+                                                                subVariantIndex,
+                                                                subOptionIndex,
+                                                              })
+                                                            }
+                                                          />
+                                                          {showColorPicker?.type === 'subvariant' &&
+                                                            showColorPicker?.variantIndex ===
+                                                              variantIndex &&
+                                                            showColorPicker?.optionIndex ===
+                                                              optionIndex &&
+                                                            showColorPicker?.subVariantIndex ===
+                                                              subVariantIndex &&
+                                                            showColorPicker?.subOptionIndex ===
+                                                              subOptionIndex && (
+                                                              <div className="absolute z-10 mt-1 right-0">
+                                                                <div
+                                                                  className="fixed inset-0"
+                                                                  onClick={() =>
+                                                                    setShowColorPicker(null)
+                                                                  }
+                                                                />
+                                                                <ChromePicker
+                                                                  color={
+                                                                    isColorValue(subOption.value)
+                                                                      ? subOption.value
+                                                                      : '#000000'
+                                                                  }
+                                                                  onChange={(color: ColorResult) =>
+                                                                    handleColorChange(
+                                                                      color,
+                                                                      showColorPicker,
+                                                                    )
+                                                                  }
+                                                                />
+                                                              </div>
+                                                            )}
+                                                        </>
+                                                      )}
+                                                    </div>
                                                   </div>
                                                 </div>
-                                                <div>
-                                                  <Label className="text-xs">Price +/-</Label>
-                                                  <Input
-                                                    type="number"
-                                                    step="0.01"
-                                                    value={subOption.priceModifier}
-                                                    onChange={(e) =>
-                                                      updateSubOption(
-                                                        variantIndex,
-                                                        optionIndex,
-                                                        subVariantIndex,
-                                                        subOptionIndex,
-                                                        'priceModifier',
-                                                        Number(e.target.value),
-                                                      )
-                                                    }
-                                                    placeholder="0"
-                                                  />
+                                                <div className="grid grid-cols-2 gap-1.5 sm:gap-2 col-span-1 sm:col-span-2">
+                                                  <div>
+                                                    <Label className="text-xs">Price +/-</Label>
+                                                    <Input
+                                                      type="number"
+                                                      step="0.01"
+                                                      value={
+                                                        subOption.priceModifier === 0
+                                                          ? ''
+                                                          : subOption.priceModifier
+                                                      }
+                                                      onChange={(e) => {
+                                                        const value = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                                                        updateSubOption(
+                                                          variantIndex,
+                                                          optionIndex,
+                                                          subVariantIndex,
+                                                          subOptionIndex,
+                                                          'priceModifier',
+                                                          isNaN(value) ? 0 : value,
+                                                        );
+                                                      }}
+                                                      placeholder="0.00"
+                                                      className="h-8 text-xs"
+                                                    />
+                                                  </div>
+                                                  <div>
+                                                    <Label className="text-xs">Stock</Label>
+                                                    <Input
+                                                      type="number"
+                                                      min="0"
+                                                      value={
+                                                        subOption.stock === 0 ? '' : subOption.stock
+                                                      }
+                                                      onChange={(e) => {
+                                                        const value = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+                                                        updateSubOption(
+                                                          variantIndex,
+                                                          optionIndex,
+                                                          subVariantIndex,
+                                                          subOptionIndex,
+                                                          'stock',
+                                                          isNaN(value) ? 0 : Math.max(0, value),
+                                                        );
+                                                      }}
+                                                      placeholder="0"
+                                                      className="h-8 text-xs"
+                                                    />
+                                                  </div>
                                                 </div>
-                                                <div>
-                                                  <Label className="text-xs">Stock</Label>
-                                                  <Input
-                                                    type="number"
-                                                    min="0"
-                                                    value={subOption.stock}
-                                                    onChange={(e) =>
-                                                      updateSubOption(
-                                                        variantIndex,
-                                                        optionIndex,
-                                                        subVariantIndex,
-                                                        subOptionIndex,
-                                                        'stock',
-                                                        Number(e.target.value),
-                                                      )
-                                                    }
-                                                    placeholder=" "
-                                                  />
-                                                </div>
-                                                <div className="col-span-2">
-                                                  <div className="flex items-center justify-between">
-                                                    <Label className="text-xs">
+                                                <div className="col-span-1 sm:col-span-2">
+                                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
+                                                    <Label className="text-xs font-medium">
                                                       Sub-Sub-Variants
                                                     </Label>
                                                     <Button
@@ -1314,311 +1381,472 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                                           subOptionIndex,
                                                         )
                                                       }
+                                                      className="text-xs w-full sm:w-auto h-6 px-2"
                                                     >
-                                                      <Plus className="w-3 h-3 mr-1" />
+                                                      <Plus className="w-2 h-2 mr-1" />
                                                       Add Sub-Sub-Variant
                                                     </Button>
                                                   </div>
-                                                  {subOption.subSubVariants && subOption.subSubVariants.length > 0 && (
-                                                    <div className="mt-2 space-y-2">
-                                                      {subOption.subSubVariants.map((subSubVariant, subSubVariantIndex) => (
-                                                        <div key={subSubVariant._id} className="border border-gray-200 rounded p-2 space-y-2">
-                                                          <div className="flex items-center justify-between">
-                                                            <span className="text-xs font-medium">
-                                                              {subSubVariant.name || 'Unnamed Sub-Sub-Variant'} ({subSubVariant.options.length} options)
-                                                            </span>
-                                                            <div className="flex gap-1">
-                                                              <Button
-                                                                type="button"
-                                                                variant="outline"
-                                                                size="sm"
-                                                                onClick={() =>
-                                                                  setEditingSubSubVariant(
-                                                                    editingSubSubVariant?.variantIndex === variantIndex &&
-                                                                    editingSubSubVariant?.optionIndex === optionIndex &&
-                                                                    editingSubSubVariant?.subVariantIndex === subVariantIndex &&
-                                                                    editingSubSubVariant?.subOptionIndex === subOptionIndex &&
-                                                                    editingSubSubVariant?.subSubVariantIndex === subSubVariantIndex
-                                                                      ? null
-                                                                      : { variantIndex, optionIndex, subVariantIndex, subOptionIndex, subSubVariantIndex }
-                                                                  )
-                                                                }
-                                                              >
-                                                                <Edit className="w-3 h-3" />
-                                                              </Button>
-                                                              <Button
-                                                                type="button"
-                                                                variant="destructive"
-                                                                size="sm"
-                                                                onClick={() =>
-                                                                  removeSubSubVariant(
-                                                                    variantIndex,
-                                                                    optionIndex,
-                                                                    subVariantIndex,
-                                                                    subOptionIndex,
-                                                                    subSubVariantIndex,
-                                                                  )
-                                                                }
-                                                              >
-                                                                <Trash2 className="w-3 h-3" />
-                                                              </Button>
-                                                            </div>
-                                                          </div>
-
-                                                          {editingSubSubVariant?.variantIndex === variantIndex &&
-                                                           editingSubSubVariant?.optionIndex === optionIndex &&
-                                                           editingSubSubVariant?.subVariantIndex === subVariantIndex &&
-                                                           editingSubSubVariant?.subOptionIndex === subOptionIndex &&
-                                                           editingSubSubVariant?.subSubVariantIndex === subSubVariantIndex && (
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-2 bg-gray-50 rounded">
-                                                              <div>
-                                                                <Label className="text-xs">Sub-Sub-Variant Name</Label>
-                                                                <Input
-                                                                  value={subSubVariant.name}
-                                                                  onChange={(e) =>
-                                                                    updateSubSubVariant(
-                                                                      variantIndex,
-                                                                      optionIndex,
-                                                                      subVariantIndex,
-                                                                      subOptionIndex,
-                                                                      subSubVariantIndex,
-                                                                      'name',
-                                                                      e.target.value,
-                                                                    )
-                                                                  }
-                                                                  placeholder="e.g., Finish"
-                                                                />
-                                                              </div>
-                                                              <div className="flex items-center gap-2">
-                                                                <input
-                                                                  type="checkbox"
-                                                                  checked={subSubVariant.required}
-                                                                  onChange={(e) =>
-                                                                    updateSubSubVariant(
-                                                                      variantIndex,
-                                                                      optionIndex,
-                                                                      subVariantIndex,
-                                                                      subOptionIndex,
-                                                                      subSubVariantIndex,
-                                                                      'required',
-                                                                      e.target.checked,
-                                                                    )
-                                                                  }
-                                                                />
-                                                                <Label className="text-xs">Required</Label>
-                                                              </div>
-                                                            </div>
-                                                          )}
-
-                                                          <div className="flex items-center justify-between">
-                                                            <span className="text-xs font-medium">Sub-Sub-Options</span>
-                                                            <Button
-                                                              type="button"
-                                                              variant="outline"
-                                                              size="sm"
-                                                              onClick={() =>
-                                                                addSubSubOption(
-                                                                  variantIndex,
-                                                                  optionIndex,
-                                                                  subVariantIndex,
-                                                                  subOptionIndex,
-                                                                  subSubVariantIndex,
-                                                                )
-                                                              }
+                                                  {subOption.subSubVariants &&
+                                                    subOption.subSubVariants.length > 0 && (
+                                                      <div className="mt-1 sm:mt-2 space-y-1 sm:space-y-2">
+                                                        {subOption.subSubVariants.map(
+                                                          (subSubVariant, subSubVariantIndex) => (
+                                                            <div
+                                                              key={subSubVariant._id}
+                                                              className="border border-gray-200 rounded p-1.5 sm:p-2 space-y-1 sm:space-y-2 bg-white"
                                                             >
-                                                              <Plus className="w-3 h-3 mr-1" />
-                                                              Add Option
-                                                            </Button>
-                                                          </div>
-
-                                                          <div className="space-y-2">
-                                                            {subSubVariant.options.map((subSubOption, subSubOptionIndex) => (
-                                                              <div key={subSubOption._id} className="border border-gray-100 rounded p-2 space-y-2">
-                                                                <div className="flex items-center justify-between">
-                                                                  <div className="flex items-center gap-2">
-                                                                    {subSubVariant.type === 'color' && (
-                                                                      <div
-                                                                        className="w-4 h-4 rounded-full border border-gray-300"
-                                                                        style={{ backgroundColor: isColorValue(subSubOption.value) ? subSubOption.value : '#ffffff' }}
-                                                                      />
-                                                                    )}
-                                                                    <span className="text-xs">
-                                                                      {subSubOption.label || 'Unnamed'} (Stock: {subSubOption.stock})
-                                                                    </span>
-                                                                  </div>
-                                                                  <div className="flex gap-1">
-                                                                    <Button
-                                                                      type="button"
-                                                                      variant="outline"
-                                                                      size="sm"
-                                                                      onClick={() =>
-                                                                        setEditingSubSubOption(
-                                                                          editingSubSubOption?.variantIndex === variantIndex &&
-                                                                          editingSubSubOption?.optionIndex === optionIndex &&
-                                                                          editingSubSubOption?.subVariantIndex === subVariantIndex &&
-                                                                          editingSubSubOption?.subOptionIndex === subOptionIndex &&
-                                                                          editingSubSubOption?.subSubVariantIndex === subSubVariantIndex &&
-                                                                          editingSubSubOption?.subSubOptionIndex === subSubOptionIndex
-                                                                            ? null
-                                                                            : { variantIndex, optionIndex, subVariantIndex, subOptionIndex, subSubVariantIndex, subSubOptionIndex }
-                                                                        )
-                                                                      }
-                                                                    >
-                                                                      <Edit className="w-3 h-3" />
-                                                                    </Button>
-                                                                    <Button
-                                                                      type="button"
-                                                                      variant="destructive"
-                                                                      size="sm"
-                                                                      onClick={() =>
-                                                                        removeSubSubOption(
-                                                                          variantIndex,
-                                                                          optionIndex,
-                                                                          subVariantIndex,
-                                                                          subOptionIndex,
-                                                                          subSubVariantIndex,
-                                                                          subSubOptionIndex,
-                                                                        )
-                                                                      }
-                                                                    >
-                                                                      <Trash2 className="w-3 h-3" />
-                                                                    </Button>
-                                                                  </div>
-                                                                </div>
-
-                                                                {editingSubSubOption?.variantIndex === variantIndex &&
-                                                                 editingSubSubOption?.optionIndex === optionIndex &&
-                                                                 editingSubSubOption?.subVariantIndex === subVariantIndex &&
-                                                                 editingSubSubOption?.subOptionIndex === subOptionIndex &&
-                                                                 editingSubSubOption?.subSubVariantIndex === subSubVariantIndex &&
-                                                                 editingSubSubOption?.subSubOptionIndex === subSubOptionIndex && (
-                                                                  <div className="grid grid-cols-2 gap-2 p-2 bg-gray-50 rounded text-xs">
-                                                                    <div>
-                                                                      <Label className="text-xs">Label</Label>
-                                                                      <Input
-                                                                        value={subSubOption.label}
-                                                                        onChange={(e) =>
-                                                                          updateSubSubOption(
-                                                                            variantIndex,
-                                                                            optionIndex,
-                                                                            subVariantIndex,
-                                                                            subOptionIndex,
-                                                                            subSubVariantIndex,
-                                                                            subSubOptionIndex,
-                                                                            'label',
-                                                                            e.target.value,
-                                                                          )
-                                                                        }
-                                                                        placeholder="Label"
-                                                                      />
-                                                                    </div>
-                                                                    <div>
-                                                                      <Label className="text-xs">Value</Label>
-                                                                      <div className="relative">
-                                                                        <Input
-                                                                          value={subSubOption.value}
-                                                                          onChange={(e) =>
-                                                                            updateSubSubOption(
+                                                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
+                                                                <span className="text-xs font-medium break-words">
+                                                                  {subSubVariant.name ||
+                                                                    'Unnamed Sub-Sub-Variant'}{' '}
+                                                                  ({subSubVariant.options.length}{' '}
+                                                                  options)
+                                                                </span>
+                                                                <div className="flex gap-0.5 sm:gap-1 ml-auto sm:ml-0 flex-shrink-0">
+                                                                  <Button
+                                                                    type="button"
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() =>
+                                                                      setEditingSubSubVariant(
+                                                                        editingSubSubVariant?.variantIndex ===
+                                                                          variantIndex &&
+                                                                          editingSubSubVariant?.optionIndex ===
+                                                                            optionIndex &&
+                                                                          editingSubSubVariant?.subVariantIndex ===
+                                                                            subVariantIndex &&
+                                                                          editingSubSubVariant?.subOptionIndex ===
+                                                                            subOptionIndex &&
+                                                                          editingSubSubVariant?.subSubVariantIndex ===
+                                                                            subSubVariantIndex
+                                                                          ? null
+                                                                          : {
                                                                               variantIndex,
                                                                               optionIndex,
                                                                               subVariantIndex,
                                                                               subOptionIndex,
                                                                               subSubVariantIndex,
-                                                                              subSubOptionIndex,
-                                                                              'value',
-                                                                              e.target.value,
-                                                                            )
-                                                                          }
-                                                                          placeholder={subSubVariant.type === 'color' ? '#FF0000' : 'Value'}
-                                                                          className={subSubVariant.type === 'color' ? 'pl-10' : ''}
-                                                                        />
-                                                                        {subSubVariant.type === 'color' && (
-                                                                          <>
-                                                                            <div
-                                                                              className="absolute left-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border border-gray-300 cursor-pointer"
-                                                                              style={{ backgroundColor: isColorValue(subSubOption.value) ? subSubOption.value : '#ffffff' }}
-                                                                              onClick={() =>
-                                                                                setShowColorPicker({
-                                                                                  type: 'subsubvariant',
-                                                                                  variantIndex,
-                                                                                  optionIndex,
-                                                                                  subVariantIndex,
-                                                                                  subOptionIndex,
-                                                                                  subSubVariantIndex,
-                                                                                  subSubOptionIndex,
-                                                                                })
-                                                                              }
-                                                                            />
-                                                                            {showColorPicker?.type === 'subsubvariant' &&
-                                                                              showColorPicker?.variantIndex === variantIndex &&
-                                                                              showColorPicker?.optionIndex === optionIndex &&
-                                                                              showColorPicker?.subVariantIndex === subVariantIndex &&
-                                                                              showColorPicker?.subOptionIndex === subOptionIndex &&
-                                                                              showColorPicker?.subSubVariantIndex === subSubVariantIndex &&
-                                                                              showColorPicker?.subSubOptionIndex === subSubOptionIndex && (
-                                                                                <div className="absolute z-10 mt-1">
-                                                                                  <div className="fixed inset-0" onClick={() => setShowColorPicker(null)} />
-                                                                                  <ChromePicker
-                                                                                    color={isColorValue(subSubOption.value) ? subSubOption.value : '#000000'}
-                                                                                    onChange={(color: ColorResult) => handleColorChange(color, showColorPicker)}
-                                                                                  />
-                                                                                </div>
-                                                                              )}
-                                                                          </>
-                                                                        )}
-                                                                      </div>
-                                                                    </div>
+                                                                            },
+                                                                      )
+                                                                    }
+                                                                    className="p-0.5 h-5 w-5"
+                                                                  >
+                                                                    <Edit className="w-2 h-2" />
+                                                                  </Button>
+                                                                  <Button
+                                                                    type="button"
+                                                                    variant="destructive"
+                                                                    size="sm"
+                                                                    onClick={() =>
+                                                                      removeSubSubVariant(
+                                                                        variantIndex,
+                                                                        optionIndex,
+                                                                        subVariantIndex,
+                                                                        subOptionIndex,
+                                                                        subSubVariantIndex,
+                                                                      )
+                                                                    }
+                                                                    className="p-0.5 h-5 w-5"
+                                                                  >
+                                                                    <Trash2 className="w-2 h-2" />
+                                                                  </Button>
+                                                                </div>
+                                                              </div>
+
+                                                              {editingSubSubVariant?.variantIndex ===
+                                                                variantIndex &&
+                                                                editingSubSubVariant?.optionIndex ===
+                                                                  optionIndex &&
+                                                                editingSubSubVariant?.subVariantIndex ===
+                                                                  subVariantIndex &&
+                                                                editingSubSubVariant?.subOptionIndex ===
+                                                                  subOptionIndex &&
+                                                                editingSubSubVariant?.subSubVariantIndex ===
+                                                                  subSubVariantIndex && (
+                                                                  <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2 p-2 bg-gray-50 rounded">
                                                                     <div>
-                                                                      <Label className="text-xs">Price +/-</Label>
+                                                                      <Label className="text-xs">
+                                                                        Sub-Sub-Variant Name
+                                                                      </Label>
                                                                       <Input
-                                                                        type="number"
-                                                                        step="0.01"
-                                                                        value={subSubOption.priceModifier}
+                                                                        value={subSubVariant.name}
                                                                         onChange={(e) =>
-                                                                          updateSubSubOption(
+                                                                          updateSubSubVariant(
                                                                             variantIndex,
                                                                             optionIndex,
                                                                             subVariantIndex,
                                                                             subOptionIndex,
                                                                             subSubVariantIndex,
-                                                                            subSubOptionIndex,
-                                                                            'priceModifier',
-                                                                            Number(e.target.value),
+                                                                            'name',
+                                                                            e.target.value,
                                                                           )
                                                                         }
-                                                                        placeholder="0"
+                                                                        placeholder="e.g., Finish"
+                                                                        className="text-xs"
                                                                       />
                                                                     </div>
-                                                                    <div>
-                                                                      <Label className="text-xs">Stock</Label>
-                                                                      <Input
-                                                                        type="number"
-                                                                        min="0"
-                                                                        value={subSubOption.stock}
+                                                                    <div className="flex items-center gap-2">
+                                                                      <input
+                                                                        type="checkbox"
+                                                                        checked={
+                                                                          subSubVariant.required
+                                                                        }
                                                                         onChange={(e) =>
-                                                                          updateSubSubOption(
+                                                                          updateSubSubVariant(
                                                                             variantIndex,
                                                                             optionIndex,
                                                                             subVariantIndex,
                                                                             subOptionIndex,
                                                                             subSubVariantIndex,
-                                                                            subSubOptionIndex,
-                                                                            'stock',
-                                                                            Number(e.target.value),
+                                                                            'required',
+                                                                            e.target.checked,
                                                                           )
                                                                         }
-                                                                        placeholder="0"
                                                                       />
+                                                                      <Label className="text-xs">
+                                                                        Required
+                                                                      </Label>
                                                                     </div>
                                                                   </div>
                                                                 )}
+
+                                                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                                                <span className="text-xs font-medium">
+                                                                  Sub-Sub-Options
+                                                                </span>
+                                                                <Button
+                                                                  type="button"
+                                                                  variant="outline"
+                                                                  size="sm"
+                                                                  onClick={() =>
+                                                                    addSubSubOption(
+                                                                      variantIndex,
+                                                                      optionIndex,
+                                                                      subVariantIndex,
+                                                                      subOptionIndex,
+                                                                      subSubVariantIndex,
+                                                                    )
+                                                                  }
+                                                                  className="text-xs w-full sm:w-auto h-5 px-1"
+                                                                >
+                                                                  <Plus className="w-2 h-2 mr-0.5" />
+                                                                  Add Option
+                                                                </Button>
                                                               </div>
-                                                            ))}
-                                                          </div>
-                                                        </div>
-                                                      ))}
-                                                    </div>
-                                                  )}
+
+                                                              <div className="space-y-2 overflow-x-auto">
+                                                                {subSubVariant.options.map(
+                                                                  (
+                                                                    subSubOption,
+                                                                    subSubOptionIndex,
+                                                                  ) => (
+                                                                    <div
+                                                                      key={subSubOption._id}
+                                                                      className="border border-gray-100 rounded p-2 space-y-2 min-w-0"
+                                                                    >
+                                                                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                                                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                                          {subSubVariant.type ===
+                                                                            'color' && (
+                                                                            <div
+                                                                              className="w-4 h-4 rounded-full border border-gray-300 flex-shrink-0"
+                                                                              style={{
+                                                                                backgroundColor:
+                                                                                  isColorValue(
+                                                                                    subSubOption.value,
+                                                                                  )
+                                                                                    ? subSubOption.value
+                                                                                    : '#ffffff',
+                                                                              }}
+                                                                            />
+                                                                          )}
+                                                                          <span className="text-xs truncate">
+                                                                            {subSubOption.label ||
+                                                                              'Unnamed'}{' '}
+                                                                            (Stock:{' '}
+                                                                            {subSubOption.stock})
+                                                                          </span>
+                                                                        </div>
+                                                                        <div className="flex gap-1 ml-auto sm:ml-0 flex-shrink-0">
+                                                                          <Button
+                                                                            type="button"
+                                                                            variant="outline"
+                                                                            size="sm"
+                                                                            onClick={() =>
+                                                                              setEditingSubSubOption(
+                                                                                editingSubSubOption?.variantIndex ===
+                                                                                  variantIndex &&
+                                                                                  editingSubSubOption?.optionIndex ===
+                                                                                    optionIndex &&
+                                                                                  editingSubSubOption?.subVariantIndex ===
+                                                                                    subVariantIndex &&
+                                                                                  editingSubSubOption?.subOptionIndex ===
+                                                                                    subOptionIndex &&
+                                                                                  editingSubSubOption?.subSubVariantIndex ===
+                                                                                    subSubVariantIndex &&
+                                                                                  editingSubSubOption?.subSubOptionIndex ===
+                                                                                    subSubOptionIndex
+                                                                                  ? null
+                                                                                  : {
+                                                                                      variantIndex,
+                                                                                      optionIndex,
+                                                                                      subVariantIndex,
+                                                                                      subOptionIndex,
+                                                                                      subSubVariantIndex,
+                                                                                      subSubOptionIndex,
+                                                                                    },
+                                                                              )
+                                                                            }
+                                                                            className="p-0.5 h-5 w-5"
+                                                                          >
+                                                                            <Edit className="w-2 h-2" />
+                                                                          </Button>
+                                                                          <Button
+                                                                            type="button"
+                                                                            variant="destructive"
+                                                                            size="sm"
+                                                                            onClick={() =>
+                                                                              removeSubSubOption(
+                                                                                variantIndex,
+                                                                                optionIndex,
+                                                                                subVariantIndex,
+                                                                                subOptionIndex,
+                                                                                subSubVariantIndex,
+                                                                                subSubOptionIndex,
+                                                                              )
+                                                                            }
+                                                                            className="p-0.5 h-5 w-5"
+                                                                          >
+                                                                            <Trash2 className="w-2 h-2" />
+                                                                          </Button>
+                                                                        </div>
+                                                                      </div>
+
+                                                                      {editingSubSubOption?.variantIndex ===
+                                                                        variantIndex &&
+                                                                        editingSubSubOption?.optionIndex ===
+                                                                          optionIndex &&
+                                                                        editingSubSubOption?.subVariantIndex ===
+                                                                          subVariantIndex &&
+                                                                        editingSubSubOption?.subOptionIndex ===
+                                                                          subOptionIndex &&
+                                                                        editingSubSubOption?.subSubVariantIndex ===
+                                                                          subSubVariantIndex &&
+                                                                        editingSubSubOption?.subSubOptionIndex ===
+                                                                          subSubOptionIndex && (
+                                                                          <div className="space-y-2 p-2 bg-gray-50 rounded">
+                                                                            <div className="grid grid-cols-2 gap-2">
+                                                                              <div>
+                                                                                <Label className="text-xs">
+                                                                                  Label
+                                                                                </Label>
+                                                                                <Input
+                                                                                  value={
+                                                                                    subSubOption.label
+                                                                                  }
+                                                                                  onChange={(e) =>
+                                                                                    updateSubSubOption(
+                                                                                      variantIndex,
+                                                                                      optionIndex,
+                                                                                      subVariantIndex,
+                                                                                      subOptionIndex,
+                                                                                      subSubVariantIndex,
+                                                                                      subSubOptionIndex,
+                                                                                      'label',
+                                                                                      e.target
+                                                                                        .value,
+                                                                                    )
+                                                                                  }
+                                                                                  placeholder="Label"
+                                                                                  className="text-xs"
+                                                                                />
+                                                                              </div>
+                                                                              <div>
+                                                                                <Label className="text-xs">
+                                                                                  Value
+                                                                                </Label>
+                                                                                <div className="relative">
+                                                                                  <Input
+                                                                                    value={
+                                                                                      subSubOption.value
+                                                                                    }
+                                                                                    onChange={(e) =>
+                                                                                      updateSubSubOption(
+                                                                                        variantIndex,
+                                                                                        optionIndex,
+                                                                                        subVariantIndex,
+                                                                                        subOptionIndex,
+                                                                                        subSubVariantIndex,
+                                                                                        subSubOptionIndex,
+                                                                                        'value',
+                                                                                        e.target
+                                                                                          .value,
+                                                                                      )
+                                                                                    }
+                                                                                    placeholder={
+                                                                                      subSubVariant.type ===
+                                                                                      'color'
+                                                                                        ? '#FF0000'
+                                                                                        : 'Value'
+                                                                                    }
+                                                                                    className={`text-xs ${
+                                                                                      subSubVariant.type ===
+                                                                                      'color'
+                                                                                        ? 'pl-8'
+                                                                                        : ''
+                                                                                    }`}
+                                                                                  />
+                                                                                  {subSubVariant.type ===
+                                                                                    'color' && (
+                                                                                    <>
+                                                                                      <div
+                                                                                        className="absolute left-1 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full border border-gray-300 cursor-pointer"
+                                                                                        style={{
+                                                                                          backgroundColor:
+                                                                                            isColorValue(
+                                                                                              subSubOption.value,
+                                                                                            )
+                                                                                              ? subSubOption.value
+                                                                                              : '#ffffff',
+                                                                                        }}
+                                                                                        onClick={() =>
+                                                                                          setShowColorPicker(
+                                                                                            {
+                                                                                              type: 'subsubvariant',
+                                                                                              variantIndex,
+                                                                                              optionIndex,
+                                                                                              subVariantIndex,
+                                                                                              subOptionIndex,
+                                                                                              subSubVariantIndex,
+                                                                                              subSubOptionIndex,
+                                                                                            },
+                                                                                          )
+                                                                                        }
+                                                                                      />
+                                                                                      {showColorPicker?.type ===
+                                                                                        'subsubvariant' &&
+                                                                                        showColorPicker?.variantIndex ===
+                                                                                          variantIndex &&
+                                                                                        showColorPicker?.optionIndex ===
+                                                                                          optionIndex &&
+                                                                                        showColorPicker?.subVariantIndex ===
+                                                                                          subVariantIndex &&
+                                                                                        showColorPicker?.subOptionIndex ===
+                                                                                          subOptionIndex &&
+                                                                                        showColorPicker?.subSubVariantIndex ===
+                                                                                          subSubVariantIndex &&
+                                                                                        showColorPicker?.subSubOptionIndex ===
+                                                                                          subSubOptionIndex && (
+                                                                                          <div className="absolute z-20 mt-1 right-0">
+                                                                                            <div
+                                                                                              className="fixed inset-0"
+                                                                                              onClick={() =>
+                                                                                                setShowColorPicker(
+                                                                                                  null,
+                                                                                                )
+                                                                                              }
+                                                                                            />
+                                                                                            <ChromePicker
+                                                                                              color={
+                                                                                                isColorValue(
+                                                                                                  subSubOption.value,
+                                                                                                )
+                                                                                                  ? subSubOption.value
+                                                                                                  : '#000000'
+                                                                                              }
+                                                                                              onChange={(
+                                                                                                color: ColorResult,
+                                                                                              ) =>
+                                                                                                handleColorChange(
+                                                                                                  color,
+                                                                                                  showColorPicker,
+                                                                                                )
+                                                                                              }
+                                                                                            />
+                                                                                          </div>
+                                                                                        )}
+                                                                                    </>
+                                                                                  )}
+                                                                                </div>
+                                                                              </div>
+                                                                            </div>
+                                                                            <div className="grid grid-cols-2 gap-2">
+                                                                              <div>
+                                                                                <Label className="text-xs">
+                                                                                  Price +/-
+                                                                                </Label>
+                                                                                <Input
+                                                                                  type="number"
+                                                                                  step="0.01"
+                                                                                  value={
+                                                                                    subSubOption.priceModifier ===
+                                                                                    0
+                                                                                      ? ''
+                                                                                      : subSubOption.priceModifier
+                                                                                  }
+                                                                                  onChange={(e) => {
+                                                                                    const value = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                                                                                    updateSubSubOption(
+                                                                                      variantIndex,
+                                                                                      optionIndex,
+                                                                                      subVariantIndex,
+                                                                                      subOptionIndex,
+                                                                                      subSubVariantIndex,
+                                                                                      subSubOptionIndex,
+                                                                                      'priceModifier',
+                                                                                      isNaN(value) ? 0 : value,
+                                                                                    );
+                                                                                  }}
+                                                                                  placeholder="0.00"
+                                                                                  className="h-8 text-xs"
+                                                                                />
+                                                                              </div>
+                                                                              <div>
+                                                                                <Label className="text-xs">
+                                                                                  Stock
+                                                                                </Label>
+                                                                                <Input
+                                                                                  type="number"
+                                                                                  min="0"
+                                                                                  value={
+                                                                                    subSubOption.stock
+                                                                                  }
+                                                                                  onChange={(e) => {
+                                                                                    const value =
+                                                                                      e.target
+                                                                                        .value;
+                                                                                    updateSubSubOption(
+                                                                                      variantIndex,
+                                                                                      optionIndex,
+                                                                                      subVariantIndex,
+                                                                                      subOptionIndex,
+                                                                                      subSubVariantIndex,
+                                                                                      subSubOptionIndex,
+                                                                                      'stock',
+                                                                                      value === ''
+                                                                                        ? 0
+                                                                                        : Number(
+                                                                                            value,
+                                                                                          ),
+                                                                                    );
+                                                                                  }}
+                                                                                  placeholder="0"
+                                                                                  className="text-xs"
+                                                                                />
+                                                                              </div>
+                                                                            </div>
+                                                                          </div>
+                                                                        )}
+                                                                    </div>
+                                                                  ),
+                                                                )}
+                                                              </div>
+                                                            </div>
+                                                          ),
+                                                        )}
+                                                      </div>
+                                                    )}
                                                 </div>
                                               </div>
                                             )}
@@ -1639,29 +1867,6 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
           )}
         </div>
       ))}
-
-      {/* Color Picker Modal */}
-      {showColorPicker && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-4 rounded-lg">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-medium">Choose Color</h3>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowColorPicker(null)}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-            <ChromePicker
-              color="#000000"
-              onChange={(color: ColorResult) => handleColorChange(color, showColorPicker)}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 };

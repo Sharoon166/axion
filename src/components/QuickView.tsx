@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
-import type { SelectedVariant, ProductConfiguration, Variant } from '@/lib/productVariants';
+import type { SelectedVariant, ProductConfiguration, Variant, SubSubVariantOption } from '@/lib/productVariants';
 import { calculateAvailableStock } from '@/lib/productVariants';
 import VariantSelector from '@/components/VariantSelector';
 import { toast } from 'sonner';
@@ -23,6 +23,22 @@ interface ProductVariantOption {
   image?: string;
   sku?: string;
   customProperties?: Record<string, unknown>;
+  subVariants?: Array<{
+    name: string;
+    type: 'color' | 'text' | 'size' | 'dropdown';
+    required: boolean;
+    options: Array<{
+      label: string;
+      value: string;
+      priceModifier: number;
+      stock: number;
+      sku?: string;
+      subSubVariants?: Array<SubSubVariantOption>;
+      specifications?: Array<{ name: string; value: string }>;
+      _id: string;
+    }>;
+    _id: string;
+  }>;
 }
 
 interface ProductVariant {
@@ -65,15 +81,58 @@ const QuickView: React.FC<QuickViewProps> = ({ product, onClose }) => {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedVariants, setSelectedVariants] = useState<SelectedVariant[]>([]);
-  // Always accept updates from EnhancedVariantSelector, including sub-variants
+
   const handleVariantChange = (updated: SelectedVariant[]) => {
     if (!product?.variants) return;
     setSelectedVariants(updated);
   };
 
-  // Compute available stock for the selected path (like product page)
+  // Calculate the final price including all variant price modifiers
+  const finalPrice = useMemo(() => {
+    if (!product) return 0;
+    
+    let totalPrice = product.price;
+    
+    // Add price modifiers from selected variants
+    selectedVariants.forEach(sv => {
+      const variant = product.variants?.find(v => v.name === sv.variantName);
+      const option = variant?.options.find(o => o.value === sv.optionValue);
+      
+      if (option) {
+        totalPrice += option.priceModifier || 0;
+        
+        // Add price modifiers from sub-variants
+        sv.subVariants?.forEach(ssv => {
+          const subVariant = option.subVariants?.find(sub => sub.name === ssv.subVariantName);
+          const subOption = subVariant?.options.find(so => so.value === ssv.optionValue);
+          if (subOption) {
+            totalPrice += subOption.priceModifier || 0;
+            
+            // Add price modifiers from sub-sub-variants if they exist
+            ssv.subSubVariants?.forEach(sssv => {
+              const subSubVariant = subOption.subSubVariants?.find(subsub => subsub.name === sssv.subSubVariantName);
+              const subSubOption = subSubVariant?.options.find((ssso: { value: string }) => ssso.value === sssv.optionValue);
+              if (subSubOption) {
+                totalPrice += subSubOption.priceModifier || 0;
+              }
+            });
+          }
+        });
+      }
+    });
+    
+    // Apply sale discount if exists
+    if (product.saleInfo?.discountPercent) {
+      totalPrice = calculateSalePrice(totalPrice, product.saleInfo.discountPercent);
+    }
+    
+    return totalPrice;
+  }, [product, selectedVariants]);
+
+  // Compute available stock for the selected path
   const availableStock = useMemo(() => {
     if (!product) return 0;
+    
     const configuration: ProductConfiguration = {
       variants: (product.variants as Variant[]) || [],
       addons: [],
@@ -81,10 +140,11 @@ const QuickView: React.FC<QuickViewProps> = ({ product, onClose }) => {
       selectedVariants: selectedVariants,
       selectedAddons: [],
     };
+    
     try {
       return calculateAvailableStock(configuration);
     } catch {
-      // fallback to legacy flags if calculation fails
+      // Fallback to legacy flags if calculation fails
       if (typeof product.stock === 'number') return product.stock;
       return product.inStock ? 999 : 0;
     }
@@ -121,12 +181,11 @@ const QuickView: React.FC<QuickViewProps> = ({ product, onClose }) => {
 
       return hasChanges ? newSelectedVariants : prev;
     });
-  }, [product?._id, product?.variants]); // Reset when product or variants change
+  }, [product?._id, product?.variants]);
 
   const { addToCart } = useCart();
   const { user } = useAuth();
 
-  // Check if user is admin
   const isAdmin = user?.role === 'admin';
 
   if (!product) return null;
@@ -138,57 +197,88 @@ const QuickView: React.FC<QuickViewProps> = ({ product, onClose }) => {
   const handleAddToCart = async () => {
     if (!product) return;
 
-    // Prevent admin from adding to cart
     if (isAdmin) {
       toast.error('Admin users cannot add items to cart');
       return;
     }
 
-    // Skip variant validation if no variants exist
-    if (!product.variants?.length) {
-      try {
-        const itemToAdd = {
-          _id: product._id,
-          name: product.name,
-          price: product.saleInfo?.discountPercent
-            ? calculateSalePrice(product.price, product.saleInfo.discountPercent)
-            : product.price,
-          image: product.images?.[0] || '/placeholder-product.jpg',
-          quantity,
-          slug: product.slug,
-          color: '',
-          size: '',
-          variants: [],
-          addons: [],
-        };
-
-        addToCart(itemToAdd);
-        toast.success('Added to cart!');
-        onClose();
-      } catch (error) {
-        console.error('Error adding to cart:', error);
-        toast.error('Failed to add to cart');
+    // Validate required variants
+    if (product.variants?.length) {
+      const missingVariants: string[] = [];
+      
+      product.variants.forEach(variant => {
+        if (variant.required) {
+          const isSelected = selectedVariants.some(sv => sv.variantName === variant.name);
+          if (!isSelected) {
+            missingVariants.push(variant.name);
+          }
+        }
+      });
+      
+      if (missingVariants.length > 0) {
+        toast.error(`Please select: ${missingVariants.join(', ')}`);
+        return;
       }
-      return;
     }
 
     try {
+      // Convert selectedVariants with full details for cart including sub-variants
+      const variantsForCart = selectedVariants.map(sv => {
+        const variantDef = product.variants?.find(v => v.name === sv.variantName);
+        const opt = variantDef?.options.find(o => o.value === sv.optionValue);
+
+        // Process sub-variants if they exist
+        const subVariantsForCart = (sv.subVariants || []).map(ssv => {
+          const subVariantDef = opt?.subVariants?.find(subVar => subVar.name === ssv.subVariantName);
+          const subOpt = subVariantDef?.options.find(so => so.value === ssv.optionValue);
+
+          // Process sub-sub-variants if they exist
+          const subSubForCart = (ssv.subSubVariants || []).map(sss => {
+            const subSubVariantDef = subOpt?.subSubVariants?.find(def => def.name === sss.subSubVariantName);
+            const subSubOpt = subSubVariantDef?.options.find((o: { value: string }) => o.value === sss.optionValue);
+            return {
+              subSubVariantName: sss.subSubVariantName,
+              optionValue: subSubOpt?.label || sss.optionValue,
+              optionLabel: subSubOpt?.label,
+            };
+          });
+
+          return {
+            subVariantName: ssv.subVariantName,
+            optionValue: subOpt?.label || ssv.optionValue,
+            optionLabel: subOpt?.label,
+            subSubVariants: subSubForCart.length > 0 ? subSubForCart : undefined,
+          };
+        });
+
+        return {
+          variantName: sv.variantName,
+          optionValue: opt?.label || sv.optionValue,
+          optionLabel: opt?.label,
+          subVariants: subVariantsForCart.length > 0 ? subVariantsForCart : undefined,
+        };
+      });
+
+      // Determine color and size from variants if using variants, otherwise use empty strings
+      const colorVariant = variantsForCart.find(v => v.variantName.toLowerCase() === 'color');
+      const sizeVariant = variantsForCart.find(v => v.variantName.toLowerCase() === 'size');
+
       const itemToAdd = {
         _id: product._id,
         name: product.name,
-        price: product.saleInfo?.discountPercent
-          ? calculateSalePrice(product.price, product.saleInfo.discountPercent)
-          : product.price,
+        price: finalPrice, // Use the calculated final price
         image: product.images?.[0] || '/placeholder-product.jpg',
         quantity,
         slug: product.slug,
-        color: '',
-        size: '',
-        variants: selectedVariants,
+        color: colorVariant ? colorVariant.optionValue : '',
+        size: sizeVariant ? sizeVariant.optionValue : '',
+        variants: variantsForCart,
         addons: [],
+        saleName: product.saleInfo?.saleName,
+        salePercent: product.saleInfo?.discountPercent,
       };
 
-      addToCart(itemToAdd);
+      await(addToCart(itemToAdd));
       toast.success('Added to cart!');
       onClose();
     } catch (error) {
@@ -196,9 +286,6 @@ const QuickView: React.FC<QuickViewProps> = ({ product, onClose }) => {
       toast.error('Failed to add to cart');
     }
   };
-
-  // Wishlist functionality removed from QuickView to keep it simple
-  // Users can use the main product page for wishlist actions
 
   const getImageUrl = (imagePath: string): string => {
     if (!imagePath) return '/placeholder-product.jpg';
@@ -287,39 +374,28 @@ const QuickView: React.FC<QuickViewProps> = ({ product, onClose }) => {
                   <span className="text-gray-500 text-sm">{product?.numReviews} Review(s)</span>
                 </div>
 
-                {/* Price */}
+                {/* Price - Now shows calculated final price */}
                 <div className="space-y-2">
-                  {product.saleInfo ? (
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                        <span className="text-xl sm:text-2xl lg:text-3xl font-bold text-red-600">
-                          Rs.{' '}
-                          {calculateSalePrice(
-                            product.price,
-                            product.saleInfo.discountPercent,
-                          ).toLocaleString()}
-                        </span>
-                        <span className="text-sm sm:text-base lg:text-lg text-gray-500 line-through">
-                          Rs. {product.price.toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="bg-red-100 text-red-800 text-xs sm:text-sm font-medium px-2 py-0.5 rounded-full">
-                          {product.saleInfo.discountPercent}% OFF
-                        </span>
-                        <span className="text-green-600 font-medium text-sm">
-                          You save Rs.{' '}
-                          {(
-                            product.price -
-                            calculateSalePrice(product.price, product.saleInfo.discountPercent)
-                          ).toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                  ) : (
-                    <span className="text-xl sm:text-2xl lg:text-3xl font-bold">
-                      Rs. {product.price.toLocaleString()}
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <span className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-600">
+                      Rs. {finalPrice.toLocaleString()}
                     </span>
+                    {finalPrice !== product.price && (
+                      <span className="text-sm sm:text-base lg:text-lg text-gray-500 line-through">
+                        Rs. {product.price.toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+                  {product.saleInfo && (
+                    <div className="flex items-center gap-2">
+                      <span className="bg-red-100 text-red-800 text-xs sm:text-sm font-medium px-2 py-0.5 rounded-full">
+                        {product.saleInfo.discountPercent}% OFF
+                      </span>
+                      <span className="text-green-600 font-medium text-sm">
+                        You save Rs.{' '}
+                        {(product.price - finalPrice).toLocaleString()}
+                      </span>
+                    </div>
                   )}
                 </div>
 
@@ -327,6 +403,17 @@ const QuickView: React.FC<QuickViewProps> = ({ product, onClose }) => {
                 <div className="max-w-none text-sm line-clamp-3 text-muted-foreground">
                   <p>{product.description || 'No description available'}</p>
                 </div>
+
+                {/* Variants */}
+                {product.variants && product.variants.length > 0 && (
+                  <div className="mt-6">
+                    <VariantSelector
+                      variants={product.variants as Variant[]}
+                      selectedVariants={selectedVariants}
+                      onVariantChange={handleVariantChange}
+                    />
+                  </div>
+                )}
 
                 {/* Quantity Selector */}
                 <div className="mt-2">
@@ -369,17 +456,6 @@ const QuickView: React.FC<QuickViewProps> = ({ product, onClose }) => {
                   </p>
                 </div>
 
-                {/* Variants (same behavior as product page) */}
-                {product.variants && product.variants.length > 0 && (
-                  <div className="mt-6">
-                    <VariantSelector
-                      variants={product.variants as Variant[]}
-                      selectedVariants={selectedVariants}
-                      onVariantChange={handleVariantChange}
-                    />
-                  </div>
-                )}
-
                 {/* Category & Availability */}
                 <div className="grid gap-4 text-sm text-gray-600 border-t border-gray-200 pt-4">
                   <div>
@@ -390,8 +466,8 @@ const QuickView: React.FC<QuickViewProps> = ({ product, onClose }) => {
                     <span className="font-medium">Availability:</span>{' '}
                     <span className={isInStock ? 'text-green-600' : 'text-red-600'}>
                       {isInStock
-                        ? product.stock !== undefined
-                          ? `In Stock (${product.stock} ${product.stock === 1 ? 'unit' : 'units'})`
+                        ? availableStock !== undefined
+                          ? `In Stock (${availableStock} ${availableStock === 1 ? 'unit' : 'units'})`
                           : 'In Stock'
                         : 'Out of Stock'}
                     </span>
