@@ -26,8 +26,8 @@ export default function App() {
       <HowItWorksSection />
       <BlogSection />
       {/* <TeamSection /> */}
-      <BulkOrder/>
       <div className="max-w-[85rem] mx-auto px-4 sm:px-6">
+        <BulkOrder />
         <NewsletterSection />
       </div>
     </>

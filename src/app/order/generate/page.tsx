@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { getImageUrl } from '@/lib/utils';
+import { formatPhoneNumber, getImageUrl } from '@/lib/utils';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import {
@@ -39,7 +39,7 @@ const OrderGeneratePage = () => {
   const { cartItems, getTotalPrice, clearCart } = useCart();
   const { user } = useAuth();
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'jazzcash' | 'bank'>('jazzcash');
+  const [paymentMethod, setPaymentMethod] = useState<'easypaisa' | 'bank'>('easypaisa');
   const [customerDetails, setCustomerDetails] = useState<CustomerDetails>({
     name: '',
     email: '',
@@ -110,7 +110,7 @@ const OrderGeneratePage = () => {
         postalCode: customerDetails.postalCode,
         phone: customerDetails.phone,
       },
-      paymentMethod: paymentMethod === 'jazzcash' ? 'JazzCash' : 'Bank Transfer',
+      paymentMethod: paymentMethod === 'easypaisa' ? 'easypaisa' : 'Bank Transfer',
       itemsPrice: getTotalPrice(),
       shippingPrice: 0,
       taxPrice: 0,
@@ -475,26 +475,26 @@ const OrderGeneratePage = () => {
                 <label className="text-sm font-medium">Payment Method</label>
                 <Select
                   value={paymentMethod}
-                  onValueChange={(v: 'jazzcash' | 'bank') => setPaymentMethod(v)}
+                  onValueChange={(v: 'easypaisa' | 'bank') => setPaymentMethod(v)}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a method" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="jazzcash">JazzCash</SelectItem>
+                    <SelectItem value="easypaisa">Easypaisa</SelectItem>
                     <SelectItem value="bank">Bank Transfer</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {/* Method Details */}
-              {paymentMethod === 'jazzcash' ? (
+              {paymentMethod === 'easypaisa' ? (
                 <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                  <h3 className="font-semibold text-gray-900 mb-2">JazzCash Details</h3>
+                  <h3 className="font-semibold text-gray-900 mb-2">EasyPaisa Details</h3>
                   <div className="text-sm text-gray-700 space-y-1">
                     <p>
                       <span className="font-medium">Number:</span>{' '}
-                      {process.env.NEXT_PUBLIC_JAZZCASH}
+                      {formatPhoneNumber(process.env.NEXT_PUBLIC_EASYPAISA || '')}
                     </p>
                     <p>
                       <span className="font-medium">Name:</span> Axion Lighting

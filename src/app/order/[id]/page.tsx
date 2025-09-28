@@ -20,7 +20,7 @@ async function getOrderById(orderId: string) {
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/orders/${orderId}`,
       {
-        cache: 'no-store',
+        cache: 'no-cache',
       },
     );
 
@@ -96,7 +96,7 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
                   </div>
                   <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
                     <span className="text-gray-600 font-medium">Payment Method:</span>
-                    <span className="text-gray-900">{order.paymentMethod}</span>
+                    <span className="text-gray-900 capitalize">{order.paymentMethod}</span>
                   </div>
                   <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
                     <span className="text-gray-600 font-medium">Delivery Type:</span>

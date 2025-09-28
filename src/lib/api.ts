@@ -1,4 +1,5 @@
 import { toast } from 'sonner';
+import { refreshDashboardData } from './actions/dashboard';
 
 export interface PaginationInfo {
   totalItems: number;
@@ -321,9 +322,10 @@ class ApiClient {
       }).then(async (res) => {
         const data = await res.json();
         if (!res.ok) throw new Error(data?.error || 'Update failed');
+        refreshDashboardData()
         return data;
       });
-
+      
       toast.promise(promise, {
         loading: 'Updating order status...',
         success: 'Order status updated successfully!',

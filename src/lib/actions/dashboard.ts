@@ -212,6 +212,6 @@ export async function getDashboardData(): Promise<DashboardData> {
 }
 
 export async function refreshDashboardData() {
-  revalidatePath('/dashboard');
+  revalidatePath('/dashboard', "page");
   return getDashboardData();
 }
