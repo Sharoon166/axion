@@ -952,7 +952,8 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                 step="0.01"
                                 value={option.priceModifier === 0 ? '' : option.priceModifier}
                                 onChange={(e) => {
-                                  const value = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                                  const value =
+                                    e.target.value === '' ? 0 : parseFloat(e.target.value);
                                   updateOption(
                                     variantIndex,
                                     optionIndex,
@@ -971,7 +972,8 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                 min="0"
                                 value={option.stock === 0 ? '' : option.stock}
                                 onChange={(e) => {
-                                  const value = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+                                  const value =
+                                    e.target.value === '' ? 0 : parseInt(e.target.value, 10);
                                   updateOption(
                                     variantIndex,
                                     optionIndex,
@@ -998,15 +1000,15 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                       )}
 
                     {isExpanded && (
-                      <div className="ml-1 sm:ml-6 space-y-2">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                          <h6 className="font-medium">Sub-Variants</h6>
+                      <div className="space-y-2">
+                        <div className="flex flex-col gap-2">
+                          <h6 className="font-medium text-sm">Sub-Variants</h6>
                           <Button
                             type="button"
                             variant="outline"
                             size="sm"
                             onClick={(e) => addSubVariant(e, variantIndex, optionIndex)}
-                            className="w-full sm:w-auto h-7 text-xs px-2"
+                            className="w-full h-8 text-xs px-3"
                           >
                             <Plus className="w-3 h-3 mr-1" />
                             Add Sub-Variant
@@ -1022,16 +1024,16 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                               return (
                                 <div
                                   key={subVariant._id}
-                                  className="border border-gray-200 rounded p-1 sm:p-3 space-y-1 sm:space-y-2"
+                                  className="border border-gray-200 rounded p-2 space-y-2"
                                 >
-                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
-                                    <div className="flex items-center gap-1 sm:gap-2">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2 min-w-0">
                                       <Button
                                         type="button"
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => toggleExpanded('subvariant', subVariantKey)}
-                                        className="p-0.5 sm:p-1 h-6 w-6"
+                                        className="p-1 h-6 w-6 flex-shrink-0"
                                       >
                                         {isSubExpanded ? (
                                           <ChevronDown className="w-3 h-3" />
@@ -1039,12 +1041,12 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                           <ChevronRight className="w-3 h-3" />
                                         )}
                                       </Button>
-                                      <span className="text-xs sm:text-sm font-medium break-words">
+                                      <span className="text-sm font-medium break-words">
                                         {subVariant.name || 'Unnamed Sub-Variant'} (
                                         {subVariant.options.length} options)
                                       </span>
                                     </div>
-                                    <div className="flex gap-0.5 sm:gap-1 ml-auto sm:ml-0">
+                                    <div className="flex gap-1 flex-shrink-0">
                                       <Button
                                         type="button"
                                         variant="outline"
@@ -1058,7 +1060,7 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                               : { variantIndex, optionIndex, subVariantIndex },
                                           )
                                         }
-                                        className="p-0.5 sm:p-1 h-6 w-6"
+                                        className="p-1 h-6 w-6"
                                       >
                                         <Edit className="w-3 h-3" />
                                       </Button>
@@ -1073,7 +1075,7 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                             subVariantIndex,
                                           )
                                         }
-                                        className="p-0.5 sm:p-1 h-6 w-6"
+                                        className="p-1 h-6 w-6"
                                       >
                                         <Trash2 className="w-3 h-3" />
                                       </Button>
@@ -1083,11 +1085,9 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                   {editingSubVariant?.variantIndex === variantIndex &&
                                     editingSubVariant?.optionIndex === optionIndex &&
                                     editingSubVariant?.subVariantIndex === subVariantIndex && (
-                                      <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2 p-1.5 sm:p-3 bg-gray-50 rounded">
-                                        <div className="w-full">
-                                          <Label className="text-xs sm:text-sm">
-                                            Sub-Variant Name
-                                          </Label>
+                                      <div className="space-y-2 p-2 bg-gray-50 rounded">
+                                        <div>
+                                          <Label className="text-sm">Sub-Variant Name</Label>
                                           <Input
                                             value={subVariant.name}
                                             onChange={(e) =>
@@ -1100,7 +1100,7 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                               )
                                             }
                                             placeholder="e.g., Size, Finish"
-                                            className="w-full text-xs sm:text-sm"
+                                            className="w-full text-sm mt-1"
                                           />
                                         </div>
                                         <div className="flex items-center gap-2">
@@ -1117,17 +1117,15 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                               )
                                             }
                                           />
-                                          <Label className="text-xs sm:text-sm">Required</Label>
+                                          <Label className="text-sm">Required</Label>
                                         </div>
                                       </div>
                                     )}
 
                                   {isSubExpanded && (
-                                    <div className="ml-1 sm:ml-6 space-y-1 sm:space-y-2">
-                                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
-                                        <span className="text-xs sm:text-sm font-medium">
-                                          Sub-Options
-                                        </span>
+                                    <div className="space-y-2">
+                                      <div className="flex flex-col gap-2">
+                                        <span className="text-sm font-medium">Sub-Options</span>
                                         <Button
                                           type="button"
                                           variant="outline"
@@ -1135,7 +1133,7 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                           onClick={() =>
                                             addSubOption(variantIndex, optionIndex, subVariantIndex)
                                           }
-                                          className="w-full sm:w-auto text-xs h-7 px-2"
+                                          className="w-full text-xs h-8 px-3"
                                         >
                                           <Plus className="w-3 h-3 mr-1" />
                                           Add Sub-Option
@@ -1145,13 +1143,13 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                       {subVariant.options.map((subOption, subOptionIndex) => (
                                         <div
                                           key={subOption._id}
-                                          className="border border-gray-100 rounded p-1 sm:p-2 space-y-1 sm:space-y-2"
+                                          className="border border-gray-100 rounded p-2 space-y-2"
                                         >
-                                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
-                                            <div className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0">
+                                          <div className="flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-2 flex-1 min-w-0">
                                               {subVariant.type === 'color' && (
                                                 <div
-                                                  className="w-3 h-3 sm:w-4 sm:h-4 rounded-full border border-gray-300 flex-shrink-0"
+                                                  className="w-4 h-4 rounded-full border border-gray-300 flex-shrink-0"
                                                   style={{
                                                     backgroundColor: isColorValue(subOption.value)
                                                       ? subOption.value
@@ -1159,20 +1157,22 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                                   }}
                                                 />
                                               )}
-                                              <span className="text-xs sm:text-sm truncate">
+                                              <span className="text-sm truncate">
                                                 {subOption.label || 'Unnamed'} (Stock:{' '}
                                                 {subOption.stock})
                                               </span>
                                             </div>
-                                            <div className="flex gap-0.5 sm:gap-1 ml-auto sm:ml-0 flex-shrink-0">
+                                            <div className="flex gap-1 flex-shrink-0">
                                               <Button
                                                 type="button"
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={() =>
                                                   setEditingSubOption(
-                                                    editingSubOption?.variantIndex === variantIndex &&
-                                                      editingSubOption?.optionIndex === optionIndex &&
+                                                    editingSubOption?.variantIndex ===
+                                                      variantIndex &&
+                                                      editingSubOption?.optionIndex ===
+                                                        optionIndex &&
                                                       editingSubOption?.subVariantIndex ===
                                                         subVariantIndex &&
                                                       editingSubOption?.subOptionIndex ===
@@ -1186,7 +1186,7 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                                         },
                                                   )
                                                 }
-                                                className="p-0.5 sm:p-1 h-6 w-6"
+                                                className="p-1 h-6 w-6"
                                               >
                                                 <Edit className="w-3 h-3" />
                                               </Button>
@@ -1202,7 +1202,7 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                                     subOptionIndex,
                                                   )
                                                 }
-                                                className="p-0.5 sm:p-1 h-6 w-6"
+                                                className="p-1 h-6 w-6"
                                               >
                                                 <Trash2 className="w-3 h-3" />
                                               </Button>
@@ -1213,8 +1213,8 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                             editingSubOption?.optionIndex === optionIndex &&
                                             editingSubOption?.subVariantIndex === subVariantIndex &&
                                             editingSubOption?.subOptionIndex === subOptionIndex && (
-                                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2 p-1.5 sm:p-2 bg-gray-50 rounded text-sm">
-                                                <div className="col-span-1 sm:col-span-2 grid grid-cols-2 gap-1.5 sm:gap-2">
+                                              <div className="space-y-3 p-2 bg-gray-50 rounded text-sm">
+                                                <div className="grid grid-cols-2 gap-2">
                                                   <div>
                                                     <Label className="text-xs">Label</Label>
                                                     <Input
@@ -1230,12 +1230,12 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                                         )
                                                       }
                                                       placeholder="Label"
-                                                      className="text-sm"
+                                                      className="text-sm mt-1"
                                                     />
                                                   </div>
                                                   <div>
                                                     <Label className="text-xs">Value</Label>
-                                                    <div className="relative">
+                                                    <div className="relative mt-1">
                                                       <Input
                                                         value={subOption.value}
                                                         onChange={(e) =>
@@ -1314,7 +1314,7 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                                     </div>
                                                   </div>
                                                 </div>
-                                                <div className="grid grid-cols-2 gap-1.5 sm:gap-2 col-span-1 sm:col-span-2">
+                                                <div className="grid grid-cols-2 gap-2">
                                                   <div>
                                                     <Label className="text-xs">Price +/-</Label>
                                                     <Input
@@ -1326,7 +1326,10 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                                           : subOption.priceModifier
                                                       }
                                                       onChange={(e) => {
-                                                        const value = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                                                        const value =
+                                                          e.target.value === ''
+                                                            ? 0
+                                                            : parseFloat(e.target.value);
                                                         updateSubOption(
                                                           variantIndex,
                                                           optionIndex,
@@ -1337,7 +1340,7 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                                         );
                                                       }}
                                                       placeholder="0.00"
-                                                      className="h-8 text-xs"
+                                                      className="h-8 text-xs mt-1"
                                                     />
                                                   </div>
                                                   <div>
@@ -1349,7 +1352,10 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                                         subOption.stock === 0 ? '' : subOption.stock
                                                       }
                                                       onChange={(e) => {
-                                                        const value = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+                                                        const value =
+                                                          e.target.value === ''
+                                                            ? 0
+                                                            : parseInt(e.target.value, 10);
                                                         updateSubOption(
                                                           variantIndex,
                                                           optionIndex,
@@ -1360,12 +1366,13 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                                         );
                                                       }}
                                                       placeholder="0"
-                                                      className="h-8 text-xs"
+                                                      className="h-8 text-xs mt-1"
                                                     />
                                                   </div>
                                                 </div>
-                                                <div className="col-span-1 sm:col-span-2">
-                                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
+
+                                                <div>
+                                                  <div className="flex flex-col gap-2">
                                                     <Label className="text-xs font-medium">
                                                       Sub-Sub-Variants
                                                     </Label>
@@ -1381,29 +1388,30 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                                           subOptionIndex,
                                                         )
                                                       }
-                                                      className="text-xs w-full sm:w-auto h-6 px-2"
+                                                      className="text-xs w-full h-7 px-2"
                                                     >
                                                       <Plus className="w-2 h-2 mr-1" />
                                                       Add Sub-Sub-Variant
                                                     </Button>
                                                   </div>
+
                                                   {subOption.subSubVariants &&
                                                     subOption.subSubVariants.length > 0 && (
-                                                      <div className="mt-1 sm:mt-2 space-y-1 sm:space-y-2">
+                                                      <div className="mt-2 space-y-2">
                                                         {subOption.subSubVariants.map(
                                                           (subSubVariant, subSubVariantIndex) => (
                                                             <div
                                                               key={subSubVariant._id}
-                                                              className="border border-gray-200 rounded p-1.5 sm:p-2 space-y-1 sm:space-y-2 bg-white"
+                                                              className="border border-gray-200 rounded p-2 space-y-2 bg-white"
                                                             >
-                                                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
+                                                              <div className="flex items-center justify-between gap-2">
                                                                 <span className="text-xs font-medium break-words">
                                                                   {subSubVariant.name ||
                                                                     'Unnamed Sub-Sub-Variant'}{' '}
                                                                   ({subSubVariant.options.length}{' '}
                                                                   options)
                                                                 </span>
-                                                                <div className="flex gap-0.5 sm:gap-1 ml-auto sm:ml-0 flex-shrink-0">
+                                                                <div className="flex gap-1 flex-shrink-0">
                                                                   <Button
                                                                     type="button"
                                                                     variant="outline"
@@ -1464,7 +1472,7 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                                                   subOptionIndex &&
                                                                 editingSubSubVariant?.subSubVariantIndex ===
                                                                   subSubVariantIndex && (
-                                                                  <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2 p-2 bg-gray-50 rounded">
+                                                                  <div className="space-y-2 p-2 bg-gray-50 rounded">
                                                                     <div>
                                                                       <Label className="text-xs">
                                                                         Sub-Sub-Variant Name
@@ -1483,7 +1491,7 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                                                           )
                                                                         }
                                                                         placeholder="e.g., Finish"
-                                                                        className="text-xs"
+                                                                        className="text-xs mt-1"
                                                                       />
                                                                     </div>
                                                                     <div className="flex items-center gap-2">
@@ -1511,7 +1519,7 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                                                   </div>
                                                                 )}
 
-                                                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                                              <div className="flex flex-col gap-2">
                                                                 <span className="text-xs font-medium">
                                                                   Sub-Sub-Options
                                                                 </span>
@@ -1528,14 +1536,14 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                                                       subSubVariantIndex,
                                                                     )
                                                                   }
-                                                                  className="text-xs w-full sm:w-auto h-5 px-1"
+                                                                  className="text-xs w-full h-6 px-2"
                                                                 >
                                                                   <Plus className="w-2 h-2 mr-0.5" />
                                                                   Add Option
                                                                 </Button>
                                                               </div>
 
-                                                              <div className="space-y-2 overflow-x-auto">
+                                                              <div className="space-y-2">
                                                                 {subSubVariant.options.map(
                                                                   (
                                                                     subSubOption,
@@ -1543,9 +1551,9 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                                                   ) => (
                                                                     <div
                                                                       key={subSubOption._id}
-                                                                      className="border border-gray-100 rounded p-2 space-y-2 min-w-0"
+                                                                      className="border border-gray-100 rounded p-2 space-y-2"
                                                                     >
-                                                                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                                                      <div className="flex items-center justify-between gap-2">
                                                                         <div className="flex items-center gap-2 flex-1 min-w-0">
                                                                           {subSubVariant.type ===
                                                                             'color' && (
@@ -1568,7 +1576,7 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                                                             {subSubOption.stock})
                                                                           </span>
                                                                         </div>
-                                                                        <div className="flex gap-1 ml-auto sm:ml-0 flex-shrink-0">
+                                                                        <div className="flex gap-1 flex-shrink-0">
                                                                           <Button
                                                                             type="button"
                                                                             variant="outline"
@@ -1659,14 +1667,14 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                                                                     )
                                                                                   }
                                                                                   placeholder="Label"
-                                                                                  className="text-xs"
+                                                                                  className="text-xs mt-1"
                                                                                 />
                                                                               </div>
                                                                               <div>
                                                                                 <Label className="text-xs">
                                                                                   Value
                                                                                 </Label>
-                                                                                <div className="relative">
+                                                                                <div className="relative mt-1">
                                                                                   <Input
                                                                                     value={
                                                                                       subSubOption.value
@@ -1786,7 +1794,15 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                                                                       : subSubOption.priceModifier
                                                                                   }
                                                                                   onChange={(e) => {
-                                                                                    const value = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                                                                                    const value =
+                                                                                      e.target
+                                                                                        .value ===
+                                                                                      ''
+                                                                                        ? 0
+                                                                                        : parseFloat(
+                                                                                            e.target
+                                                                                              .value,
+                                                                                          );
                                                                                     updateSubSubOption(
                                                                                       variantIndex,
                                                                                       optionIndex,
@@ -1795,11 +1811,13 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                                                                       subSubVariantIndex,
                                                                                       subSubOptionIndex,
                                                                                       'priceModifier',
-                                                                                      isNaN(value) ? 0 : value,
+                                                                                      isNaN(value)
+                                                                                        ? 0
+                                                                                        : value,
                                                                                     );
                                                                                   }}
                                                                                   placeholder="0.00"
-                                                                                  className="h-8 text-xs"
+                                                                                  className="h-8 text-xs mt-1"
                                                                                 />
                                                                               </div>
                                                                               <div>
@@ -1832,7 +1850,7 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                                                                     );
                                                                                   }}
                                                                                   placeholder="0"
-                                                                                  className="text-xs"
+                                                                                  className="text-xs mt-1"
                                                                                 />
                                                                               </div>
                                                                             </div>

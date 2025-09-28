@@ -227,15 +227,15 @@ const VariantSelector: React.FC<VariantSelectorProps> = ({
                       type="button"
                       className={`relative flex items-center justify-center rounded-md border px-3 py-2 text-sm font-medium focus:outline-none ${
                         isSelected
-                          ? 'border-transparent text-white shadow-sm'
+                          ? isRGB(option.value) 
+                            ? 'border-gray-300 shadow-sm' 
+                            : 'border-transparent text-white shadow-sm bg-gray-800'
                           : 'border-gray-300 text-gray-900 hover:bg-gray-50'
-                      } ${
-                        isSelected && isRGB(option.value) ? 'bg-transparent' : ''
                       }`}
-                      style={isSelected ? getBackgroundStyle(option.value, variant.name) : {}}
+                      style={isRGB(option.value) ? getBackgroundStyle(option.value, variant.name) : {}}
                       onClick={() => handleVariantSelection(variant, option)}
                     >
-                      <span className={`${isSelected && isRGB(option.value) ? 'bg-black/30 px-2 py-1 rounded' : ''}`}>
+                      <span className={`${isSelected && isRGB(option.value) ? 'bg-black/30 px-2 py-1 rounded' : ''} ${isRGB(option.value) ? 'text-white mix-blend-difference' : ''}`}>
                         {option.label || option.value}
                       </span>
                     </button>

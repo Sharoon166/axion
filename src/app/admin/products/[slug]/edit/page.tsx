@@ -579,7 +579,7 @@ export default function EditProductPage() {
               ) : (
                 <Save className="w-4 h-4 mr-2" />
               )}
-              Create Product
+              Edit Product
             </Button>
           </div>
         </form>
