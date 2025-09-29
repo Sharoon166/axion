@@ -449,21 +449,7 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
                                 )}
                               </div>
                             )}
-                            {/* Legacy color/size */}
-                            {(item.color || item.size) && (
-                              <div className="mt-1 flex gap-2 text-xs">
-                                {item.color && (
-                                  <span className="bg-gray-100 px-2 py-0.5 rounded">
-                                    Color: {item.color}
-                                  </span>
-                                )}
-                                {item.size && (
-                                  <span className="bg-gray-100 px-2 py-0.5 rounded">
-                                    Size: {item.size}
-                                  </span>
-                                )}
-                              </div>
-                            )}
+                          
                           </div>
                         </td>
                         <td className="py-4">{item.qty}</td>

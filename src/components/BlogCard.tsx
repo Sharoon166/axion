@@ -28,11 +28,11 @@ const BlogCard: React.FC<BlogCardProps> = ({ href, image, title, description, cl
 
       {/* Content */}
       <div className="p-5 md:p-6 group">
-        <h3 className="text-lg md:text-xl  font-bold text-black mb-3 leading-tight line-clamp-1" title={title}>
+        <h3 className="text-lg md:text-xl break-all font-bold text-black mb-3 leading-tight line-clamp-1" title={title}>
           {title}
         </h3>
         {description && (
-          <p className="text-sm text-gray-600 mb-4 line-clamp-3">
+          <p className="text-sm text-gray-600 mb-4 line-clamp-2">
             {description.replace(/<\/?[^>]+(>|$)/g, '').slice(0, 120)}...
           </p>
         )}

@@ -77,13 +77,47 @@ export default function DownloadPDFButton({ order, orderId }: DownloadPDFButtonP
       const totalShippingPrice = order.shippingPrice;
       // Products Table
       const tableData =
-        order.orderItems?.map((item) => [
-          item.name,
-          item.qty.toString(),
-          `Rs. ${item.price?.toLocaleString()}`,
-          `Rs. ${totalShippingPrice.toLocaleString()}`,
-          `Rs. ${(item.price * item.qty)?.toLocaleString()}`,
-        ]) || [];
+        order.orderItems?.map((item) => {
+          // Build multiline details: variants -> subVariants -> subSubVariants, and addons if present
+          const details: string[] = [];
+          try {
+            if (Array.isArray(item.variants) && item.variants.length > 0) {
+              for (const v of item.variants) {
+                const vLabel = v.optionLabel || v.optionValue;
+                details.push(`- ${v.variantName}: ${vLabel}`);
+                if (Array.isArray(v.subVariants) && v.subVariants.length > 0) {
+                  for (const sv of v.subVariants) {
+                    const svLabel = sv.optionLabel || sv.optionValue;
+                    details.push(`  • ${sv.subVariantName}: ${svLabel}`);
+                    if (Array.isArray(sv.subSubVariants) && sv.subSubVariants.length > 0) {
+                      for (const ssv of sv.subSubVariants) {
+                        const ssvLabel = ssv.optionLabel || ssv.optionValue;
+                        details.push(`    ◦ ${ssv.subSubVariantName}: ${ssvLabel}`);
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            // Optional addons support (if API includes it)
+            // @ts-expect-error: addons may not exist on OrderItem type but could be present at runtime
+            if (Array.isArray(item.addons) && item.addons.length > 0) {
+              // @ts-expect-error: addons shape is { addonName, optionLabel, quantity }
+              for (const ad of item.addons) {
+                details.push(`+ Add-on: ${ad.addonName} - ${ad.optionLabel} x${ad.quantity}`);
+              }
+            }
+          } catch {}
+
+          const nameWithDetails = [item.name, ...details].join('\n');
+          return [
+            nameWithDetails,
+            item.qty.toString(),
+            `Rs. ${item.price?.toLocaleString()}`,
+            `Rs. ${totalShippingPrice.toLocaleString()}`,
+            `Rs. ${(item.price * item.qty)?.toLocaleString()}`,
+          ];
+        }) || [];
 
       autoTable(doc, {
         startY: 280,
@@ -102,7 +136,7 @@ export default function DownloadPDFButton({ order, orderId }: DownloadPDFButtonP
           }
         },
         columnStyles: {
-          0: { cellWidth: 180 },
+          0: { cellWidth: 220 },
           1: { cellWidth: 60, halign: 'center' },
           2: { cellWidth: 80, halign: 'right' },
           3: { cellWidth: 80, halign: 'right' },

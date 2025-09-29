@@ -30,6 +30,11 @@ interface OrderItemForStock {
 export async function restoreStockForCancelledOrder(orderItems: OrderItemForStock[]): Promise<StockUpdateResult[]> {
   const results: StockUpdateResult[] = [];
 
+  // Early return to ensure function always returns an array
+  if (!orderItems || orderItems.length === 0) {
+    return results;
+  }
+
   for (const item of orderItems) {
     try {
       const product = await Product.findById(item.product);
@@ -145,15 +150,19 @@ export async function restoreStockForCancelledOrder(orderItems: OrderItemForStoc
                     opt.label?.toLowerCase() === subSubOptionValue?.toLowerCase() ||
                     opt.value?.toLowerCase() === subSubOptionValue?.toLowerCase()
                 );
-
                 if (subSubOptionIndex === -1) {
                   console.warn(`Sub-sub-option not found: ${subSubOptionValue} in sub-sub-variant ${subSubVariantName}`);
                   continue;
                 }
 
-                // Restore sub-sub-variant stock
+                // Restore stock at all levels: variant option, sub-variant option, and sub-sub-variant option
                 const updateQuery = {
                   $inc: {
+                    // parent variant option
+                    [`variants.$[v].options.${optionIndex}.stock`]: item.quantity,
+                    // sub-variant option
+                    [`variants.$[v].options.${optionIndex}.subVariants.$[sv].options.${subOptionIndex}.stock`]: item.quantity,
+                    // sub-sub-variant option
                     [`variants.$[v].options.${optionIndex}.subVariants.$[sv].options.${subOptionIndex}.subSubVariants.$[ssv].options.${subSubOptionIndex}.stock`]: item.quantity
                   }
                 };
@@ -173,9 +182,12 @@ export async function restoreStockForCancelledOrder(orderItems: OrderItemForStoc
                 console.log(`Successfully restored ${item.quantity} units to sub-sub-variant ${subSubVariantName}:${subSubOptionValue}`);
               }
             } else {
-              // Restore sub-variant stock
+              // Restore stock at variant option and sub-variant option levels
               const updateQuery = {
                 $inc: {
+                  // parent variant option
+                  [`variants.$[v].options.${optionIndex}.stock`]: item.quantity,
+                  // sub-variant option
                   [`variants.$[v].options.${optionIndex}.subVariants.$[sv].options.${subOptionIndex}.stock`]: item.quantity
                 }
               };
@@ -244,6 +256,11 @@ export async function restoreStockForCancelledOrder(orderItems: OrderItemForStoc
  */
 export async function reduceStockForOrder(orderItems: OrderItemForStock[]): Promise<StockUpdateResult[]> {
   const results: StockUpdateResult[] = [];
+
+  // Early return to ensure function always returns an array
+  if (!orderItems || orderItems.length === 0) {
+    return results;
+  }
 
   for (const item of orderItems) {
     try {
@@ -362,9 +379,14 @@ export async function reduceStockForOrder(orderItems: OrderItemForStock[]): Prom
                   continue;
                 }
 
-                // Reduce sub-sub-variant stock
+                // Reduce stock at all levels: variant option, sub-variant option, and sub-sub-variant option
                 const updateQuery = {
                   $inc: {
+                    // parent variant option stock
+                    [`variants.$[v].options.${optionIndex}.stock`]: -item.quantity,
+                    // sub-variant option stock
+                    [`variants.$[v].options.${optionIndex}.subVariants.$[sv].options.${subOptionIndex}.stock`]: -item.quantity,
+                    // sub-sub-variant option stock
                     [`variants.$[v].options.${optionIndex}.subVariants.$[sv].options.${subOptionIndex}.subSubVariants.$[ssv].options.${subSubOptionIndex}.stock`]: -item.quantity
                   }
                 };
@@ -382,13 +404,15 @@ export async function reduceStockForOrder(orderItems: OrderItemForStock[]): Prom
                 );
               }
             } else {
-              // Reduce sub-variant stock
+              // Reduce stock at variant option and sub-variant option levels
               const updateQuery = {
                 $inc: {
+                  // parent variant option stock
+                  [`variants.$[v].options.${optionIndex}.stock`]: -item.quantity,
+                  // sub-variant option stock
                   [`variants.$[v].options.${optionIndex}.subVariants.$[sv].options.${subOptionIndex}.stock`]: -item.quantity
                 }
               };
-
               await Product.updateOne(
                 { _id: item.product },
                 updateQuery,
@@ -400,31 +424,14 @@ export async function reduceStockForOrder(orderItems: OrderItemForStock[]): Prom
                 }
               );
             }
-          }
-        } else {
-          // Reduce main variant stock
-          const updateQuery = {
-            $inc: {
-              [`variants.$[v].options.${optionIndex}.stock`]: -item.quantity
-            }
-          };
-
-          await Product.updateOne(
-            { _id: item.product },
-            updateQuery,
-            {
-              arrayFilters: [
-                { 'v._id': productVariant._id }
-              ]
-            }
-          );
-        }
+        } 
       }
+    } // Added missing closing brace for the outer for loop
 
-      results.push({
-        success: true,
-        productId: item.product
-      });
+    results.push({
+      success: true,
+      productId: item.product
+    });
     } catch (error) {
       console.error(`Error reducing stock for product ${item.product}:`, error);
       results.push({

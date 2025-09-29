@@ -285,7 +285,7 @@ const ProductsPage: React.FC = () => {
               {/* Left: title + counts */}
               <div className="flex items-center gap-3">
                 <h2 className="text-xl font-semibold tracking-tight">Products</h2>
-                
+
               </div>
 
               {/* Right: filters + action */}
@@ -388,8 +388,8 @@ const ProductsPage: React.FC = () => {
                         className="inline-flex items-center"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 mr-2">
-                        <path d="M18 6L6 18M6 6l12 12" />
-                      </svg>
+                          <path d="M18 6L6 18M6 6l12 12" />
+                        </svg>
                         Clear all filters
                       </Button>
                     </div>
@@ -399,21 +399,20 @@ const ProductsPage: React.FC = () => {
             )}
 
             {/* Pagination */}
-            <div className="mt-8 flex justify-end">
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
-            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+
           </div>
         </div>
       </div>
 
       {/* Quick View Component */}
-      <QuickView 
-        product={quickViewProduct} 
-        onClose={() => setQuickViewProduct(null)} 
+      <QuickView
+        product={quickViewProduct}
+        onClose={() => setQuickViewProduct(null)}
       />
     </div>
   );

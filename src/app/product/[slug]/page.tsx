@@ -923,6 +923,52 @@ const ProductPage = () => {
                         return;
                       }
 
+                      // Validate required sub-variants
+                      const missingSubVariants: string[] = [];
+                      selectedVariants.forEach((variant) => {
+                        const variantDef = product.variants?.find(v => v.name === variant.variantName);
+                        const option = variantDef?.options.find(o => o.value === variant.optionValue);
+                        
+                        // Check if variant has required sub-variants that aren't selected
+                        if (Array.isArray(option?.subVariants) && option.subVariants.length > 0) {
+                          option.subVariants.forEach((subVariant) => {
+                            const selectedSub = variant.subVariants?.find(
+                              sv => sv.subVariantName === subVariant.name
+                            );
+
+                            // If this required sub-variant is missing entirely
+                            if (!selectedSub) {
+                              missingSubVariants.push(`${variant.variantName} - ${subVariant.name}`);
+                              return;
+                            }
+
+                            // If a sub-variant is selected, verify required sub-sub-variants on the chosen option
+                            const subOption = subVariant.options.find(
+                              so => so.value === selectedSub.optionValue
+                            );
+                            const subSubDefs = subOption?.subSubVariants;
+                            if (Array.isArray(subSubDefs) && subSubDefs.length > 0) {
+                              subSubDefs.forEach((subSubDef) => {
+                                // If any sub-sub-variant exists, it must be selected
+                                const hasSubSub = selectedSub.subSubVariants?.some(
+                                  ssv => ssv.subSubVariantName === subSubDef.name
+                                );
+                                if (!hasSubSub) {
+                                  missingSubVariants.push(
+                                    `${variant.variantName} - ${subVariant.name} - ${subSubDef.name}`,
+                                  );
+                                }
+                              });
+                            }
+                          });
+                        }
+                      });
+
+                      if (missingSubVariants.length > 0) {
+                        toast.error(`Please select: ${missingSubVariants.join(', ')}`);
+                        return;
+                      }
+
                       // Validate required add-ons
                       const addonValidation = validateRequiredAddons(config);
                       if (!addonValidation.isValid) {

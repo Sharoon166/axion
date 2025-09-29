@@ -3,28 +3,28 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Leaf, Lightbulb, Zap, Star, TrendingUp, Eye } from 'lucide-react';
 
-const teamMembers = [
-  {
-    name: 'Leslie Anderson',
-    title: 'Studio Director',
-    image: 'https://randomuser.me/api/portraits/women/1.jpg',
-  },
-  {
-    name: 'Sarah Williams',
-    title: 'Creative Director',
-    image: 'https://randomuser.me/api/portraits/women/2.jpg',
-  },
-  {
-    name: 'David Smith',
-    title: 'Product Designer',
-    image: 'https://randomuser.me/api/portraits/men/3.jpg',
-  },
-  {
-    name: 'James Turner',
-    title: 'Lead Engineer',
-    image: 'https://randomuser.me/api/portraits/men/4.jpg',
-  },
-];
+// const teamMembers = [
+//   {
+//     name: 'Leslie Anderson',
+//     title: 'Studio Director',
+//     image: 'https://randomuser.me/api/portraits/women/1.jpg',
+//   },
+//   {
+//     name: 'Sarah Williams',
+//     title: 'Creative Director',
+//     image: 'https://randomuser.me/api/portraits/women/2.jpg',
+//   },
+//   {
+//     name: 'David Smith',
+//     title: 'Product Designer',
+//     image: 'https://randomuser.me/api/portraits/men/3.jpg',
+//   },
+//   {
+//     name: 'James Turner',
+//     title: 'Lead Engineer',
+//     image: 'https://randomuser.me/api/portraits/men/4.jpg',
+//   },
+// ];
 
 export default function AboutPage() {
   return (
@@ -65,11 +65,11 @@ export default function AboutPage() {
             {/* Team Photo */}
             <div className="flex justify-center items-center">
               <Image
-                src="https://images.unsplash.com/photo-1557426272-fc759fdf7a8d?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                src="/about-image.png"
                 alt="Axion Team"
                 width={500}
-                height={350}
-                className="rounded-2xl object-cover shadow-xl w-full h-auto max-w-lg"
+                height={500}
+                className="rounded-2xl object-cover shadow-xl w-full h-auto max-w-xl"
                 priority
               />
             </div>
@@ -104,7 +104,7 @@ export default function AboutPage() {
         </div>
 
         {/* Our Team Section */}
-        <section className="py-12 sm:py-20 bg-[var(--color-background)]">
+        {/* <section className="py-12 sm:py-20 bg-[var(--color-background)]">
           <div className="max-w-[85rem] mx-auto px-4 sm:px-6">
             <div className="text-center mb-12">
               <h2 className="text-2xl sm:text-3xl font-bold text-black mb-2">Our Team</h2>
@@ -135,7 +135,7 @@ export default function AboutPage() {
               ))}
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* Why Choose Us Section */}
         <section className="py-12 sm:py-20">

@@ -31,11 +31,44 @@ const VariantSelector: React.FC<VariantSelectorProps> = ({
 
     const updatedVariants = [...selectedVariants];
     const existingIndex = updatedVariants.findIndex((sv) => sv.variantName === variant.name);
+    const targetIndex = existingIndex >= 0 ? existingIndex : updatedVariants.length;
 
     if (existingIndex >= 0) {
       updatedVariants[existingIndex] = newSelectedVariant;
     } else {
       updatedVariants.push(newSelectedVariant);
+    }
+
+    // Auto-select single sub-variants if they exist
+    const selectedOption = variant.options.find((o) => o.value === option.value);
+    if (selectedOption?.subVariants && Array.isArray(selectedOption.subVariants)) {
+      selectedOption.subVariants.forEach((subVariant: SubVariant) => {
+        if (subVariant.options && subVariant.options.length === 1) {
+          const subOption = subVariant.options[0];
+          const parentVariant = updatedVariants[targetIndex];
+          const subVariants = [...(parentVariant.subVariants || [])];
+          
+          const subIndex = subVariants.findIndex(
+            (sv) => sv.subVariantName === subVariant.name
+          );
+
+          const newSubVariant = {
+            subVariantName: subVariant.name,
+            optionValue: subOption.value,
+          };
+          
+          if (subIndex >= 0) {
+            subVariants[subIndex] = newSubVariant;
+          } else {
+            subVariants.push(newSubVariant);
+          }
+          
+          updatedVariants[targetIndex] = {
+            ...parentVariant,
+            subVariants,
+          };
+        }
+      });
     }
 
     onVariantChange(updatedVariants);
