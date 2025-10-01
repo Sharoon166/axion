@@ -22,7 +22,7 @@ export default function ServicesSection() {
       <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-6">
         {/* Our Services Card */}
         <div className="bg-white rounded-lg shadow-md p-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Services</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Our Services</h2>
           <p className="text-gray-600 mb-6">
             Delivering professional solutions to enhance your home and business with quality and care
           </p>
@@ -55,7 +55,7 @@ export default function ServicesSection() {
 
         {/* Bulk Orders Card */}
         <div className="bg-white rounded-lg shadow-md p-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Bulk Orders</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Bulk Orders</h2>
           <p className="text-gray-600 mb-6">
             Get exclusive discounts and dedicated support when purchasing in larger quantities
           </p>
@@ -83,62 +83,63 @@ export default function ServicesSection() {
 
       {/* Dialog for Bulk Orders */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh]">
-          <ScrollArea className="max-h-[70vh] pr-4">
+        <DialogContent className="max-w-2xl max-h-[90vh]">
+          <ScrollArea className="max-h-[80vh] pr-4">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold">Bulk Order Benefits</DialogTitle>
-              <DialogDescription className="text-base mt-2">
+              <DialogTitle className="text-2xl font-semibold">Bulk Order Benefits</DialogTitle>
+              <DialogDescription className="text-base -mt-1.5">
                 Unlock exclusive advantages when ordering in larger quantities
               </DialogDescription>
             </DialogHeader>
 
             <div className="mt-6 space-y-6">
               <div>
-                <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
+                <h3 className="font-semibold text-lg flex items-center gap-3">
                   <Tag className="w-5 h-5 text-blue-600" />
                   Exclusive Discounts
                 </h3>
-                <p className="text-gray-600 ml-7">
-                  If you order in bulk, we will give you special discount rates that scale with your order volume. The more you order, the more you save!
+                <p className="text-gray-600 ml-8">
+                  If you order in bulk, we will give you special discount rates that scale with your order volume.
                 </p>
               </div>
 
               <div>
-                <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
+                <h3 className="font-semibold text-lg flex items-center gap-3">
                   <BookOpen className="w-5 h-5 text-blue-600" />
                   Priority Processing
                 </h3>
-                <p className="text-gray-600 ml-7">
-                  Your bulk orders will be prioritized in our production queue, ensuring faster turnaround times and expedited delivery.
+                <p className="text-gray-600 ml-8">
+                  Enjoy priority production and expedited delivery, ensuring you receive your bulk orders quickly and efficiently.
                 </p>
               </div>
 
               <div>
-                <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
+                <h3 className="font-semibold text-lg flex items-center gap-3">
                   <Headphones className="w-5 h-5 text-blue-600" />
                   Dedicated Support
                 </h3>
-                <p className="text-gray-600 ml-7">
-                  Get assigned a dedicated account manager who will handle your bulk order from start to finish, providing personalized assistance throughout the process.
+                <p className="text-gray-600 ml-8">
+                  Receive personalized support from a dedicated account manager, ensuring a seamless and efficient bulk order experience.
                 </p>
               </div>
 
               <div className="bg-blue-50 p-4 rounded-lg">
-                <h4 className="font-semibold mb-2">Ready to get started?</h4>
-                <p className="text-gray-700 text-sm mb-4">
+                <h4 className="font-semibold text-center mb-4">Let's Get Started</h4>
+                <p className="text-gray-700 text-sm text-center mb-6">
                   Contact us today to discuss your bulk order requirements and receive a customized quote tailored to your needs.
                 </p>
-                <Button asChild onClick={() => setIsDialogOpen(true)} className='w-full bg-(--color-logo) hover:bg-(--color-logo)/80'>
-
-                  <a
-                    href={bulkOrderWhatsappLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-logo inline-block text-white font-semibold py-2 px-6 rounded-lg transition-opacity"
-                  >
-                    Contact Us on WhatsApp
-                  </a>
-                </Button>
+                <div className="flex items-center justify-center">
+                  <Button asChild onClick={() => setIsDialogOpen(true)} className='w-full bg-(--color-logo) hover:bg-(--color-logo)/80 py-2 px-6 rounded-lg transition-opacity'>
+                    <a
+                      href={bulkOrderWhatsappLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-logo inline-block text-white font-semibold"
+                    >
+                      Contact Us on WhatsApp
+                    </a>
+                  </Button>
+                </div>
               </div>
             </div>
           </ScrollArea>

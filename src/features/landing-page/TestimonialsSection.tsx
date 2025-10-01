@@ -160,13 +160,13 @@ const TestimonialsSection = () => {
         {/* Testimonial Card with side arrows */}
         <div className="relative max-w-5xl mx-auto" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
           {/* Card */}
-          <div className={`rounded-2xl overflow-hidden shadow-xl h-[500px] sm:h-[550px] md:h-[400px] lg:h-[450px] ${slideClass()}`}>
-            <div className="grid grid-cols-1 md:grid-cols-2 h-full">
+          <div className={`rounded-2xl overflow-hidden shadow-xl ${slideClass()}`}>
+            <div className="grid grid-cols-1 md:grid-cols-2 md:h-full">
               {/* Left: Gradient content */}
-              <div className="order-2 md:order-1 p-6 md:p-8 lg:p-10 bg-gradient-to-br from-[#1E8263] to-[#3C6CCB] text-white flex flex-col justify-between h-full md:h-auto">
+              <div className="order-2 md:order-1 p-6 md:py-14 lg:py-24 lg:px-8 bg-gradient-to-br from-[#1E8263] to-[#3C6CCB] text-white flex flex-col justify-between h-full md:h-auto">
                 <div className="flex-1 flex flex-col">
                   <div className="text-base md:text-lg font-semibold mb-3">Client Feedback</div>
-                  <blockquote className="text-sm md:text-lg lg:text-xl text-white/90 leading-relaxed italic flex-1 flex items-center">
+                  <blockquote className="text-sm md:text-lg text-pretty text-white/90 leading-relaxed italic flex-1 flex items-center">
                     {`"${currentTestimonial.text}"`}
                   </blockquote>
                 </div>
@@ -193,7 +193,7 @@ const TestimonialsSection = () => {
                   src={currentTestimonial.image}
                   alt="Lighting fixture"
                   fill
-                  className="object-cover"
+                  className="object-cover object-top"
                   sizes="(max-width: 768px) 100vw, 600px"
                   priority
                 />
@@ -205,14 +205,14 @@ const TestimonialsSection = () => {
           <button
             aria-label="Previous"
             onClick={prevTestimonial}
-            className="hidden sm:flex absolute left-[-1.25rem] top-1/2 -translate-y-1/2  -translate-x-10 w-8 h-8 md:w-9 md:h-9 rounded-full bg-[var(--color-logo)] text-white items-center justify-center shadow-md hover:bg-[#102743]"
+            className="hidden sm:flex absolute left-8 md:left-[-1.25rem]  top-1/2 -translate-y-1/2  -translate-x-10 w-8 h-8 md:w-9 md:h-9 rounded-full bg-[var(--color-logo)] text-white items-center justify-center shadow-md hover:bg-[#102743]"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
           <button
             aria-label="Next"
             onClick={nextTestimonial}
-            className="hidden sm:flex absolute right-[-1.25rem] top-1/2 -translate-y-1/2 translate-x-10 w-8 h-8 md:w-9 md:h-9 rounded-full bg-[var(--color-logo)] text-white items-center justify-center shadow-md hover:bg-[#102743]"
+            className="hidden sm:flex absolute right-8 md:right-[-1.25rem] top-1/2 -translate-y-1/2 translate-x-10 w-8 h-8 md:w-9 md:h-9 rounded-full bg-[var(--color-logo)] text-white items-center justify-center shadow-md hover:bg-[#102743]"
           >
             <ArrowRight className="w-4 h-4" />
           </button>
