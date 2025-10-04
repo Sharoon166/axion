@@ -348,7 +348,6 @@ const QuickView: React.FC<QuickViewProps> = ({ product, onClose }) => {
       };
 
       await addToCart(itemToAdd);
-      toast.success('Added to cart!');
       onClose();
     } catch (error) {
       console.error('Error adding to cart:', error);

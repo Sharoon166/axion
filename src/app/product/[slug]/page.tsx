@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, JSX } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Star, Heart, Minus, Plus, ShoppingCart } from 'lucide-react';
+import { Star, Heart, Minus, Plus, ShoppingCart, MessageCircle } from 'lucide-react';
 import { ReviewImageUpload } from '@/components/ReviewImageUpload';
 
 interface ReviewType {
@@ -104,6 +104,13 @@ const ProductPage = () => {
   const { slug } = useParams();
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+
+  // Bulk order WhatsApp functionality
+  const bulkOrderNumber = process.env.NEXT_PUBLIC_CONTACT_BULK_ORDER;
+  const bulkOrderMessage = encodeURIComponent(
+    `Hi! I'm interested in bulk orders for this product: ${typeof window !== 'undefined' ? window.location.href : ''} and would like to request a quote with discount.`,
+  );
+  const bulkOrderWhatsappLink = `https://wa.me/${bulkOrderNumber}?text=${bulkOrderMessage}`;
 
   // Type for wishlist item
   interface WishlistItemType {
@@ -904,231 +911,254 @@ const ProductPage = () => {
                 </div>
 
                 {/* Buttons */}
-                <div className="flex gap-4 mt-8">
-                  <Button
-                    className="flex-1 bg-blue-900 text-white hover:bg-blue-800"
-                    disabled={Boolean(
-                      user?.isAdmin || user?.role === 'admin' || user?.role === 'order admin',
-                    )}
-                    onClick={async () => {
-                      const config = createProductConfiguration(product);
-                      const availableStock = calculateAvailableStock(config);
+                <div className="flex flex-col gap-4 mt-8">
+                  <div className="flex gap-4">
+                    <Button
+                      className="flex-1 bg-blue-900 text-white hover:bg-blue-800"
+                      disabled={Boolean(
+                        user?.isAdmin || user?.role === 'admin' || user?.role === 'order admin',
+                      )}
+                      onClick={async () => {
+                        const config = createProductConfiguration(product);
+                        const availableStock = calculateAvailableStock(config);
 
-                      // Validate required variants
-                      const variantValidation = validateRequiredVariants(config);
-                      if (!variantValidation.isValid) {
-                        toast.error(
-                          `Please select: ${variantValidation.missingVariants.join(', ')}`,
-                        );
-                        return;
-                      }
-
-                      // Validate required sub-variants
-                      const missingSubVariants: string[] = [];
-                      selectedVariants.forEach((variant) => {
-                        const variantDef = product.variants?.find(
-                          (v) => v.name === variant.variantName,
-                        );
-                        const option = variantDef?.options.find(
-                          (o) => o.value === variant.optionValue,
-                        );
-
-                        // Check if variant has required sub-variants that aren't selected
-                        if (Array.isArray(option?.subVariants) && option.subVariants.length > 0) {
-                          option.subVariants.forEach((subVariant) => {
-                            const selectedSub = variant.subVariants?.find(
-                              (sv) => sv.subVariantName === subVariant.name,
-                            );
-
-                            // If this required sub-variant is missing entirely
-                            if (!selectedSub) {
-                              missingSubVariants.push(
-                                `${variant.variantName} - ${subVariant.name}`,
-                              );
-                              return;
-                            }
-
-                            // If a sub-variant is selected, verify required sub-sub-variants on the chosen option
-                            const subOption = subVariant.options.find(
-                              (so) => so.value === selectedSub.optionValue,
-                            );
-                            const subSubDefs = subOption?.subSubVariants;
-                            if (Array.isArray(subSubDefs) && subSubDefs.length > 0) {
-                              subSubDefs.forEach((subSubDef) => {
-                                // If any sub-sub-variant exists, it must be selected
-                                const hasSubSub = selectedSub.subSubVariants?.some(
-                                  (ssv) => ssv.subSubVariantName === subSubDef.name,
-                                );
-                                if (!hasSubSub) {
-                                  missingSubVariants.push(
-                                    `${variant.variantName} - ${subVariant.name} - ${subSubDef.name}`,
-                                  );
-                                }
-                              });
-                            }
-                          });
+                        // Validate required variants
+                        const variantValidation = validateRequiredVariants(config);
+                        if (!variantValidation.isValid) {
+                          toast.error(
+                            `Please select: ${variantValidation.missingVariants.join(', ')}`,
+                          );
+                          return;
                         }
-                      });
 
-                      if (missingSubVariants.length > 0) {
-                        toast.error(`Please select: ${missingSubVariants.join(', ')}`);
-                        return;
-                      }
-
-                      // Validate required add-ons
-                      const addonValidation = validateRequiredAddons(config);
-                      if (!addonValidation.isValid) {
-                        toast.error(
-                          `Please select required add-ons: ${addonValidation.missingAddons.join(', ')}`,
-                        );
-                        return;
-                      }
-
-                      const cappedQty = Math.min(quantity, availableStock);
-                      if (availableStock <= 0) {
-                        toast.error('This product is out of stock');
-                        return;
-                      }
-                      if (quantity > availableStock) {
-                        toast.warning(`Quantity reduced to available stock (${availableStock}).`);
-                      }
-
-                      const finalPrice = calculateFinalPrice(config);
-                      const variantImage = getVariantImage(config, product.images);
-
-                      // Apply discount ONLY on base product price, not variants or add-ons
-                      const summaryForCart = (() => {
-                        const addonsTotal = (selectedAddons || []).reduce((sum, sa) => {
-                          const addon = (product.addons || []).find((a) => a.name === sa.addonName);
-                          const option = addon?.options.find((o) => o.label === sa.optionLabel);
-                          return sum + (option ? option.price * sa.quantity : 0);
-                        }, 0);
-                        const variantAdjustment = finalPrice - product.price - addonsTotal;
-                        const pct = Math.max(product?.discount || 0, salePercent || 0);
-                        const discountedBase = isOnSale(pct)
-                          ? calculateSalePrice(product.price, pct)
-                          : product.price;
-                        return discountedBase + variantAdjustment + addonsTotal;
-                      })();
-
-                      // Convert selectedVariants with full details for cart including sub-variants
-                      const variantsForCart = (selectedVariants || []).map((sv) => {
-                        const variantDef = (product.variants || []).find(
-                          (v) => v.name === sv.variantName,
-                        );
-                        const opt = variantDef?.options.find((o) => o.value === sv.optionValue);
-
-                        // Process sub-variants if they exist
-                        const subVariantsForCart = (sv.subVariants || []).map((ssv) => {
-                          // Check if subVariants is an array (not a string)
-                          const subVariantDef = Array.isArray(opt?.subVariants)
-                            ? opt.subVariants.find((subVar) => subVar.name === ssv.subVariantName)
-                            : undefined;
-                          const subOpt = subVariantDef?.options.find(
-                            (so) => so.value === ssv.optionValue,
+                        // Validate required sub-variants
+                        const missingSubVariants: string[] = [];
+                        selectedVariants.forEach((variant) => {
+                          const variantDef = product.variants?.find(
+                            (v) => v.name === variant.variantName,
+                          );
+                          const option = variantDef?.options.find(
+                            (o) => o.value === variant.optionValue,
                           );
 
-                          // Process sub-sub-variants if they exist
-                          const subSubForCart = (ssv.subSubVariants || []).map((sss) => {
-                            const subSubVariantDef = subOpt?.subSubVariants?.find(
-                              (def) => def.name === sss.subSubVariantName,
+                          // Check if variant has required sub-variants that aren't selected
+                          if (Array.isArray(option?.subVariants) && option.subVariants.length > 0) {
+                            option.subVariants.forEach((subVariant) => {
+                              const selectedSub = variant.subVariants?.find(
+                                (sv) => sv.subVariantName === subVariant.name,
+                              );
+
+                              // If this required sub-variant is missing entirely
+                              if (!selectedSub) {
+                                missingSubVariants.push(
+                                  `${variant.variantName} - ${subVariant.name}`,
+                                );
+                                return;
+                              }
+
+                              // If a sub-variant is selected, verify required sub-sub-variants on the chosen option
+                              const subOption = subVariant.options.find(
+                                (so) => so.value === selectedSub.optionValue,
+                              );
+                              const subSubDefs = subOption?.subSubVariants;
+                              if (Array.isArray(subSubDefs) && subSubDefs.length > 0) {
+                                subSubDefs.forEach((subSubDef) => {
+                                  // If any sub-sub-variant exists, it must be selected
+                                  const hasSubSub = selectedSub.subSubVariants?.some(
+                                    (ssv) => ssv.subSubVariantName === subSubDef.name,
+                                  );
+                                  if (!hasSubSub) {
+                                    missingSubVariants.push(
+                                      `${variant.variantName} - ${subVariant.name} - ${subSubDef.name}`,
+                                    );
+                                  }
+                                });
+                              }
+                            });
+                          }
+                        });
+
+                        if (missingSubVariants.length > 0) {
+                          toast.error(`Please select: ${missingSubVariants.join(', ')}`);
+                          return;
+                        }
+
+                        // Validate required add-ons
+                        const addonValidation = validateRequiredAddons(config);
+                        if (!addonValidation.isValid) {
+                          toast.error(
+                            `Please select required add-ons: ${addonValidation.missingAddons.join(', ')}`,
+                          );
+                          return;
+                        }
+
+                        const cappedQty = Math.min(quantity, availableStock);
+                        if (availableStock <= 0) {
+                          toast.error('This product is out of stock');
+                          return;
+                        }
+                        if (quantity > availableStock) {
+                          toast.warning(`Quantity reduced to available stock (${availableStock}).`);
+                        }
+
+                        const finalPrice = calculateFinalPrice(config);
+                        const variantImage = getVariantImage(config, product.images);
+
+                        // Apply discount ONLY on base product price, not variants or add-ons
+                        const summaryForCart = (() => {
+                          const addonsTotal = (selectedAddons || []).reduce((sum, sa) => {
+                            const addon = (product.addons || []).find(
+                              (a) => a.name === sa.addonName,
                             );
-                            const subSubOpt = subSubVariantDef?.options.find(
-                              (o) => o.value === sss.optionValue,
+                            const option = addon?.options.find((o) => o.label === sa.optionLabel);
+                            return sum + (option ? option.price * sa.quantity : 0);
+                          }, 0);
+                          const variantAdjustment = finalPrice - product.price - addonsTotal;
+                          const pct = Math.max(product?.discount || 0, salePercent || 0);
+                          const discountedBase = isOnSale(pct)
+                            ? calculateSalePrice(product.price, pct)
+                            : product.price;
+                          return discountedBase + variantAdjustment + addonsTotal;
+                        })();
+
+                        // Convert selectedVariants with full details for cart including sub-variants
+                        const variantsForCart = (selectedVariants || []).map((sv) => {
+                          const variantDef = (product.variants || []).find(
+                            (v) => v.name === sv.variantName,
+                          );
+                          const opt = variantDef?.options.find((o) => o.value === sv.optionValue);
+
+                          // Process sub-variants if they exist
+                          const subVariantsForCart = (sv.subVariants || []).map((ssv) => {
+                            // Check if subVariants is an array (not a string)
+                            const subVariantDef = Array.isArray(opt?.subVariants)
+                              ? opt.subVariants.find((subVar) => subVar.name === ssv.subVariantName)
+                              : undefined;
+                            const subOpt = subVariantDef?.options.find(
+                              (so) => so.value === ssv.optionValue,
                             );
+
+                            // Process sub-sub-variants if they exist
+                            const subSubForCart = (ssv.subSubVariants || []).map((sss) => {
+                              const subSubVariantDef = subOpt?.subSubVariants?.find(
+                                (def) => def.name === sss.subSubVariantName,
+                              );
+                              const subSubOpt = subSubVariantDef?.options.find(
+                                (o) => o.value === sss.optionValue,
+                              );
+                              return {
+                                subSubVariantName: sss.subSubVariantName,
+                                optionValue: subSubOpt?.label || sss.optionValue,
+                                optionLabel: subSubOpt?.label,
+                              };
+                            });
+
                             return {
-                              subSubVariantName: sss.subSubVariantName,
-                              optionValue: subSubOpt?.label || sss.optionValue,
-                              optionLabel: subSubOpt?.label,
+                              subVariantName: ssv.subVariantName,
+                              optionValue: subOpt?.label || ssv.optionValue,
+                              optionLabel: subOpt?.label,
+                              subSubVariants: subSubForCart.length > 0 ? subSubForCart : undefined,
                             };
                           });
 
                           return {
-                            subVariantName: ssv.subVariantName,
-                            optionValue: subOpt?.label || ssv.optionValue,
-                            optionLabel: subOpt?.label,
-                            subSubVariants: subSubForCart.length > 0 ? subSubForCart : undefined,
+                            variantName: sv.variantName,
+                            optionValue: opt?.label || sv.optionValue,
+                            optionLabel: opt?.label,
+                            subVariants:
+                              subVariantsForCart.length > 0 ? subVariantsForCart : undefined,
                           };
                         });
 
-                        return {
-                          variantName: sv.variantName,
-                          optionValue: opt?.label || sv.optionValue,
-                          optionLabel: opt?.label,
-                          subVariants:
-                            subVariantsForCart.length > 0 ? subVariantsForCart : undefined,
-                        };
-                      });
+                        // Determine color and size from variants if using variants, otherwise use legacy selection
+                        const colorVariant = variantsForCart.find(
+                          (v) => v.variantName.toLowerCase() === 'color',
+                        );
+                        const sizeVariant = variantsForCart.find(
+                          (v) => v.variantName.toLowerCase() === 'size',
+                        );
 
-                      // Determine color and size from variants if using variants, otherwise use legacy selection
-                      const colorVariant = variantsForCart.find(
-                        (v) => v.variantName.toLowerCase() === 'color',
-                      );
-                      const sizeVariant = variantsForCart.find(
-                        (v) => v.variantName.toLowerCase() === 'size',
-                      );
-
-                      try {
-                        await addToCart({
+                        try {
+                          await addToCart({
+                            _id: product._id.toString(),
+                            name: product.name,
+                            price: summaryForCart,
+                            image: variantImage || product.images[0],
+                            color: colorVariant ? colorVariant.optionValue : selectedColor,
+                            size: sizeVariant ? sizeVariant.optionValue : selectedSize,
+                            slug: product.slug,
+                            quantity: cappedQty,
+                            variants: variantsForCart,
+                            addons: selectedAddons,
+                            saleName: saleName ?? undefined,
+                            salePercent: salePercent || undefined,
+                          });
+                        } catch (error) {
+                          console.error('Error adding to cart:', error);
+                          toast.error('Failed to add item to cart. Please try again.');
+                        }
+                      }}
+                    >
+                      <ShoppingCart className="mr-2 h-4 w-4" />
+                      Add to Cart
+                    </Button>
+                    <Button
+                      variant="outline"
+                      disabled={Boolean(
+                        user?.isAdmin ||
+                          user?.role === 'order admin' ||
+                          user?.role === 'admin' ||
+                          !userData,
+                      )}
+                      onClick={async (e: React.MouseEvent) => {
+                        e.preventDefault();
+                        const wishlistItem: WishlistItemType = {
                           _id: product._id.toString(),
                           name: product.name,
-                          price: summaryForCart,
-                          image: variantImage || product.images[0],
-                          color: colorVariant ? colorVariant.optionValue : selectedColor,
-                          size: sizeVariant ? sizeVariant.optionValue : selectedSize,
+                          price: product.price,
+                          image: product.images[0], // Use first image as the main image
+                          images: product.images, // Keep all images
                           slug: product.slug,
-                          quantity: cappedQty,
-                          variants: variantsForCart,
-                          addons: selectedAddons,
-                          saleName: saleName ?? undefined,
-                          salePercent: salePercent || undefined,
-                        });
-                      } catch (error) {
-                        console.error('Error adding to cart:', error);
-                        toast.error('Failed to add item to cart. Please try again.');
+                        };
+
+                        try {
+                          if (isInWishlist(product._id.toString())) {
+                            await removeFromWishlist(product._id.toString());
+                            toast.success('Removed from wishlist');
+                          } else {
+                            await addToWishlist(wishlistItem);
+                            toast.success('Added to wishlist');
+                          }
+                        } catch (err) {
+                          console.error('Wishlist operation failed:', err);
+                          toast.error('Failed to update wishlist');
+                        }
+                      }}
+                      className={
+                        isInWishlist(product._id.toString()) ? 'text-red-500 border-red-500' : ''
                       }
-                    }}
-                  >
-                    <ShoppingCart className="mr-2 h-4 w-4" />
-                    Add to Cart
-                  </Button>
+                    >
+                      <Heart
+                        className={isInWishlist(product._id.toString()) ? 'fill-current' : ''}
+                      />
+                    </Button>
+                  </div>
+
+                  {/* Bulk Order Button */}
                   <Button
                     variant="outline"
-                    disabled={Boolean(
-                      user?.isAdmin ||
-                        user?.role === 'order admin' ||
-                        user?.role === 'admin' ||
-                        !userData,
-                    )}
-                    onClick={async (e: React.MouseEvent) => {
-                      e.preventDefault();
-                      const wishlistItem: WishlistItemType = {
-                        _id: product._id.toString(),
-                        name: product.name,
-                        price: product.price,
-                        image: product.images[0], // Use first image as the main image
-                        images: product.images, // Keep all images
-                        slug: product.slug,
-                      };
-
-                      try {
-                        if (isInWishlist(product._id.toString())) {
-                          await removeFromWishlist(product._id.toString());
-                          toast.success('Removed from wishlist');
-                        } else {
-                          await addToWishlist(wishlistItem);
-                          toast.success('Added to wishlist');
-                        }
-                      } catch (err) {
-                        console.error('Wishlist operation failed:', err);
-                        toast.error('Failed to update wishlist');
-                      }
-                    }}
-                    className={
-                      isInWishlist(product._id.toString()) ? 'text-red-500 border-red-500' : ''
-                    }
+                    className="w-full border-green-500 hover:text-green-500 text-green-600 hover:bg-green-50 hover:border-green-600"
+                    asChild
                   >
-                    <Heart className={isInWishlist(product._id.toString()) ? 'fill-current' : ''} />
+                    <a
+                      href={bulkOrderWhatsappLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      Make bulk order and get a discount
+                    </a>
                   </Button>
                 </div>
               </div>
