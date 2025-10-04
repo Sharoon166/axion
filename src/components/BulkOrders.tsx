@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Tag, BookOpen, Headphones } from 'lucide-react';
 import {
   Dialog,
@@ -15,39 +15,39 @@ import { Button } from './ui/button';
 const galleryImages = [
   {
     id: 1,
-    url: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&h=600&fit=crop',
+    url: '/services-1.jpg',
     title: 'Lighting Consultation',
     description:
       'Get expert guidance from our lighting specialists to choose the perfect solutions for your space.',
   },
   {
     id: 2,
-    url: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=600&fit=crop',
+    url: '/services-2.jpg',
     title: 'Modern Fixtures',
     description: 'Discover our collection of contemporary lighting fixtures for every room.',
   },
   {
     id: 3,
-    url: 'https://images.unsplash.com/photo-1524634126442-357e0eac3c14?w=800&h=600&fit=crop',
+    url: '/services-3.jpg',
     title: 'Smart Lighting',
     description: 'Experience the future with our smart lighting solutions and automation systems.',
   },
   {
     id: 4,
-    url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=600&fit=crop',
+    url: '/services-4.jpg',
     title: 'Outdoor Lighting',
     description: 'Transform your outdoor spaces with our weather-resistant lighting options.',
   },
   {
     id: 5,
-    url: 'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?w=800&h=600&fit=crop',
+    url: '/services-5.jpg',
     title: 'Commercial Solutions',
     description:
       'Professional lighting solutions for offices, retail spaces, and commercial buildings.',
   },
   {
     id: 6,
-    url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=600&fit=crop',
+    url: '/services-6.jpg',
     title: 'Installation Services',
     description: 'Expert installation by our certified professionals with warranty coverage.',
   },
@@ -58,9 +58,9 @@ export default function ServicesSection() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024);
+      setIsMobile(window.innerWidth < 720);
     };
 
     checkMobile();
@@ -81,42 +81,18 @@ export default function ServicesSection() {
   const bulkOrderWhatsappLink = `https://wa.me/${bulkOrderNumber}?text=${bulkOrderMessage}`;
 
   return (
-    <div className="p-8">
+    <div className='p-2'>
       <div className="w-full mx-auto">
-        <div className="flex flex-col lg:flex-row gap-8 lg:items-start">
-          {/* Left Side - Text and Buttons */}
-          <div className="flex-shrink-0 w-full lg:max-w-xl">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Core Services</h2>
-            <p className="text-gray-600 mb-8">
-              Discover our range of professional lighting solutions designed to elevate every space.
-              From expert consultation to seamless installation, we bring brilliance, precision, and
-              innovation to every project we deliver.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button variant="outline" className="px-8 py-3 hover:bg-(--color-logo)/90" asChild>
-                <a href={servicesWhatsappLink} target="_blank" rel="noopener noreferrer">
-                  Book a Service
-                </a>
-              </Button>
-              <Button
-                onClick={() => setIsDialogOpen(true)}
-                className="px-8 py-3"
-                style={{ backgroundColor: 'var(--color-logo)' }}
-              >
-                Bulk Order
-              </Button>
-            </div>
-          </div>
-
-          {/* Right Side - Image Gallery */}
-          <div className="flex gap-3 flex-1 lg:justify-end overflow-x-auto lg:overflow-x-visible">
-            {galleryImages.slice(0, isMobile ? 3 : 6).map((image, index) => (
+        <div className="flex flex-col-reverse md:flex-row gap-8 md:items-start">
+          {/* Image Gallery - Now appears first on mobile/tablet */}
+          <div className="flex gap-1 sm:gap-2 md:gap-1 flex-1 md:justify-start lg:justify-end overflow-x-auto md:overflow-x-visible order-1 md:order-2">
+            {galleryImages.map((image, index) => (
               <div
                 key={image.id}
                 className={`relative cursor-pointer transition-all duration-500 ease-in-out flex-shrink-0 rounded-2xl overflow-hidden ${
                   selectedImage === index
-                    ? 'w-64 sm:w-80 h-48 sm:h-72'
-                    : 'w-12 sm:w-16 h-48 sm:h-72'
+                    ? 'w-48 sm:w-56 md:w-60 lg:w-80 h-56 sm:h-64 md:h-72 lg:h-80'
+                    : 'w-6 sm:w-8 md:w-10 h-56 sm:h-64 md:h-72 lg:h-80'
                 }`}
                 onClick={() => setSelectedImage(index)}
               >
@@ -127,13 +103,45 @@ export default function ServicesSection() {
                   <div className="absolute inset-0 bg-black/40"></div>
                   {selectedImage === index && (
                     <div className="absolute bottom-4 left-4 right-4 text-white z-10">
-                      <h3 className="text-xl font-bold mb-2">{image.title}</h3>
-                      <p className="text-white/90 text-xs leading-relaxed">{image.description}</p>
+                      <h3 className="text-base sm:text-lg md:text-xl font-bold mb-2">
+                        {image.title}
+                      </h3>
+                      <p className="text-white/90 text-xs sm:text-sm leading-relaxed">
+                        {image.description}
+                      </p>
                     </div>
                   )}
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Text and Buttons - Now appears second on mobile/tablet */}
+          <div className="flex-shrink-0 w-full md:max-w-md lg:max-w-xl order-2 md:order-1">
+            <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-4">Core Services</h2>
+            <p className="text-gray-600 mb-6 sm:mb-8 text-sm sm:text-base">
+              Discover our range of professional lighting solutions designed to elevate every space.
+              From expert consultation to seamless installation, we bring brilliance, precision, and
+              innovation to every project we deliver.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button
+                variant="outline"
+                className="px-6 sm:px-8 py-3 hover:bg-(--color-logo)/90"
+                asChild
+              >
+                <a href={servicesWhatsappLink} target="_blank" rel="noopener noreferrer">
+                  Book a Service
+                </a>
+              </Button>
+              <Button
+                onClick={() => setIsDialogOpen(true)}
+                className="px-6 sm:px-8 py-3"
+                style={{ backgroundColor: 'var(--color-logo)' }}
+              >
+                Bulk Order
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -214,7 +222,7 @@ export default function ServicesSection() {
                   </p>
                   <Button
                     asChild
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-base font-semibold rounded-lg transition-colors"
+                    className="bg-(--color-logo) hover:bg-(--color-logo)/90 text-white px-8 py-6 text-base font-semibold rounded-lg transition-colors"
                   >
                     <a href={bulkOrderWhatsappLink} target="_blank" rel="noopener noreferrer">
                       Get in Touch

@@ -45,7 +45,7 @@ export default function ShippingPolicyPage() {
               <p className="text-gray-600 leading-relaxed">
                 If you have any query regarding your orders or you are having trouble dealing with a
                 parcel/shipment, you can contact us at{' '}
-                <span className="font-semibold">(+92) 343 9227883</span>.
+                <span className="font-semibold">{process.env.NEXT_PUBLIC_CONTACT_BULK_ORDER}</span>.
               </p>
             </section>
           </div>
