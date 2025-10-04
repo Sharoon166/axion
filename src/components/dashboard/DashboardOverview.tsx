@@ -181,74 +181,76 @@ export default function DashboardOverview({
 
         {/* Low Stock Products */}
         <Card className="bg-white border border-gray-200">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5" />
-                Low Stock Products
-              </CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-4 gap-4 text-sm font-medium text-gray-500 border-b pb-2">
-                <div>Product</div>
-                <div>Stock</div>
-                <div>Status</div>
-                <div>Action</div>
+  <CardHeader className="flex flex-row items-center justify-between">
+    <div>
+      <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+        <AlertTriangle className="w-5 h-5" />
+        Low Stock Products
+      </CardTitle>
+    </div>
+  </CardHeader>
+  <CardContent>
+    <div className="space-y-4">
+      <div className="grid grid-cols-4 gap-4 text-sm font-medium text-gray-500 border-b pb-2">
+        <div>Product</div>
+        <div>Stock</div>
+        <div>Status</div>
+        <div>Action</div>
+      </div>
+      {loadingData ? (
+        <Loading />
+      ) : dashboardData.lowStockProducts.length > 0 ? (
+        paginatedLowStock.map((product, idx) => (
+          <div key={idx} className="grid grid-cols-4 gap-4 items-center py-2">
+            <div className="min-w-0">
+              <div className="text-sm font-medium text-gray-900 truncate">
+                {product.name.split("—")[0]?.trim()}
               </div>
-              {loadingData ? (
-                <Loading />
-              ) : dashboardData.lowStockProducts.length > 0 ? (
-                paginatedLowStock.map((product, idx) => (
-                  <div key={idx} className="grid grid-cols-4 gap-2 items-center">
-                    <div className="">
-                      <span className="text-sm font-medium text-gray-900 truncate">
-                        {product.name.split("—")[0]}
-                      </span>
-                      <div className="text-xs font-medium text-muted-foreground ">
-                        ({product.name.split("—")[1]})
-                      </div>
-                    </div>
-                    <div className="text-sm text-gray-600">{product.stock} pc(s)</div>
-                    <div>
-                      <Badge
-                        className={`${product.status === 'Low'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-orange-100 text-orange-800'
-                          }`}
-                      >
-                        {product.status}
-                      </Badge>
-                    </div>
-                    <div>
-                      <Button asChild variant="outline" size="sm" className="text-xs">
-                        <Link href={`/admin/products/${product.slug}/edit`}>
-                          <Edit className="w-3 h-3 mr-1" />
-                          Edit
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">No low stock products</div>
-              )}
-
-              {/* Pagination Controls */}
-              {!loadingData && dashboardData.lowStockProducts.length > 0 && (
-                <div className="pt-4 flex items-center justify-end">
-                 
-                  <Pagination
-                    currentPage={safePage}
-                    totalPages={totalLsPages}
-                    onPageChange={(page) => setLsPage(Math.max(1, Math.min(totalLsPages, page)))}
-                  />
+              {product.name.includes("—") && (
+                <div className="text-xs text-gray-500 mt-0.5">
+                  {product.name.split("—")[1]?.trim()}
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
+            <div className="text-sm text-gray-600">{product.stock} pc(s)</div>
+            <div>
+              <Badge
+                className={`${
+                  product.status === 'Low'
+                    ? 'bg-red-100 text-red-800'
+                    : 'bg-orange-100 text-orange-800'
+                }`}
+              >
+                {product.status}
+              </Badge>
+            </div>
+            <div>
+              <Button asChild variant="outline" size="sm" className="text-xs">
+                <Link href={`/admin/products/${product.slug}/edit`}>
+                  <Edit className="w-3 h-3 mr-1" />
+                  Edit
+                </Link>
+              </Button>
+            </div>
+          </div>
+        ))
+      ) : (
+        <div className="text-center py-8 text-gray-500">No low stock products</div>
+      )}
+
+      {/* Pagination Controls */}
+      {!loadingData && dashboardData.lowStockProducts.length > 0 && (
+        <div className="pt-4 flex items-center justify-end border-t">
+          <Pagination
+            currentPage={safePage}
+            totalPages={totalLsPages}
+            onPageChange={(page) => setLsPage(Math.max(1, Math.min(totalLsPages, page)))}
+          />
+        </div>
+      )}
+    </div>
+  </CardContent>
+</Card>
       </div>
     </div>
   );

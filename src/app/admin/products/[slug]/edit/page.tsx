@@ -247,13 +247,38 @@ export default function EditProductPage() {
       return false;
     }
 
-    // Check if all variants have stock
+    // Check if all variants have stock (check all levels of nesting)
     let hasStock = false;
     for (const variant of variants) {
       for (const option of variant.options) {
         if (option.stock > 0) {
           hasStock = true;
           break;
+        }
+        // Check sub-variants - only process if it's an array of SubVariant objects
+        if (option.subVariants && Array.isArray(option.subVariants)) {
+          for (const subVariant of option.subVariants) {
+            for (const subOption of subVariant.options) {
+              if (subOption.stock > 0) {
+                hasStock = true;
+                break;
+              }
+              // Check sub-sub-variants
+              if (subOption.subSubVariants && Array.isArray(subOption.subSubVariants)) {
+                for (const subSubVariant of subOption.subSubVariants) {
+                  for (const subSubOption of subSubVariant.options) {
+                    if (subSubOption.stock > 0) {
+                      hasStock = true;
+                      break;
+                    }
+                  }
+                  if (hasStock) break;
+                }
+              }
+              if (hasStock) break;
+            }
+            if (hasStock) break;
+          }
         }
         if (hasStock) break;
       }

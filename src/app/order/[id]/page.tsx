@@ -64,7 +64,13 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
               {order.isCancelled && (
                 <div className="mt-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 inline-flex items-center gap-2">
                   <span className="inline-flex h-2 w-2 rounded-full bg-red-500" />
-                  <span className="text-red-700 text-xs sm:text-sm font-medium">This order was cancelled{order.cancelledAt ? ` on ${new Date(order.cancelledAt).toLocaleDateString('en-US')}` : ''}.</span>
+                  <span className="text-red-700 text-xs sm:text-sm font-medium">
+                    This order was cancelled
+                    {order.cancelledAt
+                      ? ` on ${new Date(order.cancelledAt).toLocaleDateString('en-US')}`
+                      : ''}
+                    .
+                  </span>
                 </div>
               )}
             </div>
@@ -142,11 +148,10 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
                 </div>
               </CardContent>
             </Card>
-
           </div>
-          <div className='lg:col-span-2'>
+          <div className="lg:col-span-2">
             {/* Order Timeline */}
-            <Card className='h-full'>
+            <Card className="h-full">
               <CardHeader>
                 <CardTitle>Order Timeline</CardTitle>
               </CardHeader>
@@ -185,10 +190,10 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
                       <TimelineDate>
                         {order.confirmedAt
                           ? new Date(order.confirmedAt).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })
                           : 'Pending'}
                       </TimelineDate>
                       <TimelineTitle>Order Confirmed</TimelineTitle>
@@ -212,10 +217,10 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
                       <TimelineDate>
                         {order.shippedAt
                           ? new Date(order.shippedAt).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })
                           : order.isConfirmed
                             ? 'In Progress'
                             : 'Pending'}
@@ -243,10 +248,10 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
                       <TimelineDate>
                         {order.deliveredAt
                           ? new Date(order.deliveredAt).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })
                           : 'Pending'}
                       </TimelineDate>
                       <TimelineTitle>Order Delivered</TimelineTitle>
@@ -268,236 +273,95 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
             </Card>
           </div>
         </div>
-        <Card className='mt-6'>
-          <CardHeader>
-            <CardTitle>Products</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {/* Desktop Table View */}
-            <div className="hidden md:block">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[700px]">
-                  <thead>
-                    <tr className="border-b text-left text-sm text-gray-600">
-                      <th className="pb-3">Product</th>
-                      <th className="pb-3">Name</th>
-                      <th className="pb-3">Quantity</th>
-                      <th className="pb-3">Sale</th>
-                      <th className="pb-3">Product Price</th>
-                      <th className="pb-3">Total Price</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {order.orderItems?.map((item: OrderItem, index: number) => (
-                      <tr key={index} className="border-b">
-                        <td className="py-4">
-                          <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden">
-                            <Image
-                              src={getImageUrl(item.image)}
-                              alt={item.name}
-                              width={48}
-                              height={48}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        </td>
-                        <td className="py-4">
-                          <div>
-                            <div className="font-medium">{item.name}</div>
-                            {/* Enhanced Variant Details with Sub and SubSub Variants */}
-                            {item.variants && item.variants.length > 0 && (
-                              <div className="mt-2 space-y-2">
-                                {item.variants.map(
-                                  (
-                                    variant: {
-                                      variantName: string;
-                                      optionValue: string;
-                                      optionLabel?: string;
-                                      optionDetails?: {
-                                        priceModifier?: number;
-                                        sku?: string;
-                                        customProperties?: Record<string, unknown>;
-                                      };
-                                      subVariants?: Array<{
-                                        subVariantName: string;
-                                        optionValue: string;
-                                        optionLabel?: string;
-                                        optionDetails?: {
-                                          priceModifier?: number;
-                                          sku?: string;
-                                          customProperties?: Record<string, unknown>;
-                                        };
-                                        subSubVariants?: Array<{
-                                          subSubVariantName: string;
-                                          optionValue: string;
-                                          optionLabel?: string;
-                                          optionDetails?: {
-                                            priceModifier?: number;
-                                            sku?: string;
-                                            customProperties?: Record<string, unknown>;
-                                          };
-                                        }>;
-                                      }>;
-                                    },
-                                    idx: number,
-                                  ) => (
-                                    <div key={idx} className="text-xs rounded-r-lg py-2">
-                                      <div className="flex items-center gap-2">
-                                        <span className="font-semibold capitalize">
-                                          {variant.variantName}:
-                                        </span>
-                                        <span className="bg-blue-200 px-2 py-1 rounded font-medium text-blue-900">
-                                          {variant.optionValue}
-                                        </span>
-                                        {typeof variant.optionDetails?.priceModifier === 'number' &&
-                                          variant.optionDetails.priceModifier !== 0 && (
-                                            <span
-                                              className={`px-2 py-1 rounded text-xs font-medium ${(variant.optionDetails?.priceModifier ?? 0) > 0
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-red-100 text-red-800'
-                                                }`}
-                                            >
-                                              {(variant.optionDetails?.priceModifier ?? 0) > 0 ? '+' : ''}
-                                              Rs.{variant.optionDetails?.priceModifier}
-                                            </span>
-                                          )}
-                                      </div>
+       <Card className='mt-6'>
+  <CardHeader>
+    <CardTitle>Products</CardTitle>
+  </CardHeader>
+  <CardContent>
+    {/* Desktop Table View */}
+    <div className="hidden md:block">
+      <div className="overflow-x-auto">
+        <div className="space-y-4">
+          {order.orderItems?.map((item: OrderItem, index: number) => (
+            <div key={index} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+              {/* Main Product Row */}
+              <div className="bg-white p-4">
+                <div className="flex items-start gap-4">
+                  {/* Product Image */}
+                  <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
+                    <Image
+                      src={getImageUrl(item.image)}
+                      alt={item.name}
+                      width={80}
+                      height={80}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
 
-                                      {variant.optionDetails?.sku && (
-                                        <div className="text-gray-600 mb-1">
-                                          <span className="font-medium">SKU:</span> {variant.optionDetails.sku}
-                                        </div>
-                                      )}
+                  {/* Product Details */}
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-lg text-gray-900 mb-2">{item.name}</h4>
+                    
+                    <div className="flex flex-wrap items-center gap-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-500">Quantity:</span>
+                        <span className="font-semibold text-gray-900 bg-gray-100 px-3 py-1 rounded-full">
+                          {item.qty}
+                        </span>
+                      </div>
 
-                                      {variant.optionDetails?.customProperties &&
-                                        Object.keys(variant.optionDetails.customProperties).length > 0 && (
-                                          <div className="mb-2">
-                                            <div className="font-medium text-gray-700 mb-1">Properties:</div>
-                                            {Object.entries(variant.optionDetails.customProperties).map(([key, value]: [string, unknown]) => (
-                                              <div key={key} className="text-gray-600 flex items-center gap-2">
-                                                <span className="capitalize font-medium">
-                                                  {key.replace(/_/g, ' ')}:
-                                                </span>
-                                                <span className="bg-gray-100 px-2 py-0.5 rounded">
-                                                  {typeof value === 'string' ? value : JSON.stringify(value)}
-                                                </span>
-                                              </div>
-                                            ))}
-                                          </div>
-                                        )}
+                      {typeof item.salePercent === 'number' && item.salePercent > 0 && (
+                        <div className="flex items-center gap-2">
+                          <span className="bg-green-100 text-green-700 font-semibold px-3 py-1 rounded-full text-xs">
+                            {item.salePercent}% OFF
+                            {item.saleName && ` • ${item.saleName}`}
+                          </span>
+                        </div>
+                      )}
 
-                                      {/* Sub-variants */}
-                                      {variant.subVariants && variant.subVariants.length > 0 && (
-                                        <div className="ml-3 mt-2 space-y-2 border-l-2 border-green-300 pl-3 bg-green-50 rounded-r p-2">
-                                          <div className="font-semibold text-green-800 text-xs">Sub-variants:</div>
-                                          {variant.subVariants.map((subVariant, subIdx) => (
-                                            <div key={subIdx} className="space-y-1">
-                                              <div className="flex items-center gap-2">
-                                                <span className="font-medium text-green-700">{subVariant.subVariantName}:</span>
-                                                <span className="bg-green-200 px-2 py-0.5 rounded text-green-900 font-medium">
-                                                  {subVariant.optionValue}
-                                                </span>
-                                                {typeof subVariant.optionDetails?.priceModifier === 'number' && subVariant.optionDetails.priceModifier !== 0 && (
-                                                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${(subVariant.optionDetails?.priceModifier ?? 0) > 0
-                                                    ? 'bg-orange-100 text-orange-800'
-                                                    : 'bg-cyan-100 text-cyan-800'
-                                                    }`}>
-                                                    {(subVariant.optionDetails?.priceModifier ?? 0) > 0 ? '+' : ''}Rs.{subVariant.optionDetails?.priceModifier}
-                                                  </span>
-                                                )}
-                                              </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-500">Unit Price:</span>
+                        <span className="font-semibold text-gray-900">
+                          Rs. {item.price?.toLocaleString()}
+                        </span>
+                      </div>
 
-                                              {subVariant.optionDetails?.sku && (
-                                                <div className="text-gray-600 ml-2">
-                                                  <span className="font-medium">SKU:</span> {subVariant.optionDetails.sku}
-                                                </div>
-                                              )}
-
-                                              {/* Sub-sub-variants */}
-                                              {subVariant.subSubVariants && subVariant.subSubVariants.length > 0 && (
-                                                <div className="ml-3 mt-1 space-y-1 border-l-2 border-purple-300 pl-3 bg-purple-50 rounded-r p-2">
-                                                  <div className="font-semibold text-purple-800 text-xs">Sub-sub-variants:</div>
-                                                  {subVariant.subSubVariants.map((subSubVariant, subSubIdx) => (
-                                                    <div key={subSubIdx} className="flex items-center gap-2">
-                                                      <span className="font-medium text-purple-700 text-xs">{subSubVariant.subSubVariantName}:</span>
-                                                      <span className="bg-purple-200 px-2 py-0.5 rounded text-purple-900 font-medium text-xs">
-                                                        {subSubVariant.optionValue}
-                                                      </span>
-                                                      {typeof subSubVariant.optionDetails?.priceModifier === 'number' && subSubVariant.optionDetails.priceModifier !== 0 && (
-                                                        <span className={`px-1 py-0.5 rounded text-xs font-medium ${(subSubVariant.optionDetails?.priceModifier ?? 0) > 0
-                                                          ? 'bg-pink-100 text-pink-800'
-                                                          : 'bg-teal-100 text-teal-800'
-                                                          }`}>
-                                                          {(subSubVariant.optionDetails?.priceModifier ?? 0) > 0 ? '+' : ''}Rs.{subSubVariant.optionDetails?.priceModifier}
-                                                        </span>
-                                                      )}
-                                                      {subSubVariant.optionDetails?.sku && (
-                                                        <span className="text-gray-500 text-xs ml-2">
-                                                          SKU: {subSubVariant.optionDetails.sku}
-                                                        </span>
-                                                      )}
-                                                    </div>
-                                                  ))}
-                                                </div>
-                                              )}
-                                            </div>
-                                          ))}
-                                        </div>
-                                      )}
-                                    </div>
-                                  ),
-                                )}
-                              </div>
-                            )}
-                          
-                          </div>
-                        </td>
-                        <td className="py-4">{item.qty}</td>
-                        <td className="py-4">
-                          {typeof item.salePercent === 'number' && item.salePercent > 0 ? (
-                            <span className="text-green-700 font-medium">
-                              {item.saleName ? `${item.saleName}: ` : ''}
-                              {item.salePercent}% OFF
-                            </span>
-                          ) : (
-                            <span className="text-gray-400">—</span>
-                          )}
-                        </td>
-                        <td className="py-4">Rs. {item.price?.toLocaleString()}</td>
-                        <td className="py-4 font-semibold">
+                      <div className="ml-auto flex items-center gap-2">
+                        <span className="text-gray-500">Total:</span>
+                        <span className="font-bold text-lg text-green-600">
                           Rs. {(item.price * item.qty)?.toLocaleString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Mobile Card View */}
-            <div className="md:hidden space-y-4">
-              {order.orderItems?.map((item: OrderItem, index: number) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-start gap-4">
-                    <div className="w-16 h-16 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                      <Image
-                        src={getImageUrl(item.image)}
-                        alt={item.name}
-                        width={64}
-                        height={64}
-                        className="w-full h-full object-cover"
-                      />
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-gray-900 mb-2 truncate">{item.name}</h4>
+                  </div>
+                </div>
 
-                      {/* Variant Details */}
-                      {item.variants && item.variants.length > 0 && (
-                        <div className="mb-3 space-y-2">
-                          {item.variants.map(
-                            (
-                              variant: {
-                                variantName: string;
+                {/* Variants Section */}
+                {item.variants && item.variants.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-gray-100">
+                    <div className="space-y-3">
+                      {item.variants.map(
+                        (
+                          variant: {
+                            variantName: string;
+                            optionValue: string;
+                            optionLabel?: string;
+                            optionDetails?: {
+                              priceModifier?: number;
+                              sku?: string;
+                              customProperties?: Record<string, unknown>;
+                            };
+                            subVariants?: Array<{
+                              subVariantName: string;
+                              optionValue: string;
+                              optionLabel?: string;
+                              optionDetails?: {
+                                priceModifier?: number;
+                                sku?: string;
+                                customProperties?: Record<string, unknown>;
+                              };
+                              subSubVariants?: Array<{
+                                subSubVariantName: string;
                                 optionValue: string;
                                 optionLabel?: string;
                                 optionDetails?: {
@@ -505,183 +369,346 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
                                   sku?: string;
                                   customProperties?: Record<string, unknown>;
                                 };
-                                subVariants?: Array<{
-                                  subVariantName: string;
-                                  optionValue: string;
-                                  optionLabel?: string;
-                                  optionDetails?: {
-                                    priceModifier?: number;
-                                    sku?: string;
-                                    customProperties?: Record<string, unknown>;
-                                  };
-                                  subSubVariants?: Array<{
-                                    subSubVariantName: string;
-                                    optionValue: string;
-                                    optionLabel?: string;
-                                    optionDetails?: {
-                                      priceModifier?: number;
-                                      sku?: string;
-                                      customProperties?: Record<string, unknown>;
-                                    };
-                                  }>;
-                                }>;
-                              },
-                              idx: number,
-                            ) => (
-                              <div key={idx} className="text-xs">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="font-medium text-gray-700 capitalize">
-                                    {variant.variantName}:
+                              }>;
+                            }>;
+                          },
+                          idx: number,
+                        ) => (
+                          <div key={idx} className="border-l-2 border-gray-300 pl-3 py-2">
+                            {/* Main Variant */}
+                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                              <span className="text-sm font-medium text-gray-600">
+                                {variant.variantName}:
+                              </span>
+                              <span className="text-sm font-semibold text-gray-900">
+                                {variant.optionValue}
+                              </span>
+                              {typeof variant.optionDetails?.priceModifier === 'number' &&
+                                variant.optionDetails.priceModifier !== 0 && (
+                                  <span className="text-xs text-gray-600">
+                                    ({(variant.optionDetails?.priceModifier ?? 0) > 0 ? '+' : ''}
+                                    Rs.{Math.abs(variant.optionDetails?.priceModifier)})
                                   </span>
-                                  <span className="bg-blue-100 text-white font-semibold px-2 py-1 rounded" style={{ backgroundColor: variant.optionValue.toLowerCase() }}>
-                                    {variant.optionValue}
-                                  </span>
-                                  {typeof variant.optionDetails?.priceModifier === 'number' &&
-                                    variant.optionDetails.priceModifier !== 0 && (
-                                      <span
-                                        className={`px-2 py-1 rounded text-xs ${(variant.optionDetails?.priceModifier ?? 0) > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                          }`}
-                                      >
-                                        {(variant.optionDetails?.priceModifier ?? 0) > 0 ? '+' : ''}Rs.
-                                        {variant.optionDetails?.priceModifier}
-                                      </span>
-                                    )}
-                                </div>
-                                {variant.optionDetails?.sku && (
-                                  <div className="text-gray-500 mb-1">
-                                    SKU: {variant.optionDetails?.sku}
-                                  </div>
                                 )}
-                                {variant.optionDetails?.customProperties &&
-                                  Object.keys(variant.optionDetails.customProperties).length > 0 && (
-                                    <div className="space-y-1">
-                                      {Object.entries(variant.optionDetails.customProperties).map(([key, value]: [string, unknown]) => (
-                                        <div key={key} className="text-gray-600">
-                                          <span className="capitalize">{key.replace(/_/g, ' ')}: </span>
-                                          <span className="bg-gray-100 px-1 py-0.5 rounded">
-                                            {typeof value === 'string' ? value : JSON.stringify(value)}
-                                          </span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
+                              {variant.optionDetails?.sku && (
+                                <span className="text-xs text-gray-500">
+                                  • SKU: {variant.optionDetails.sku}
+                                </span>
+                              )}
+                            </div>
 
-                                {/* Sub-variants */}
-                                {variant.subVariants && variant.subVariants.length > 0 && (
-                                  <div className="ml-2 mt-2 space-y-2 border-l border-green-200 pl-2 bg-green-50 rounded-r">
-                                    <div className="font-semibold text-green-800 text-[10px] uppercase tracking-wide">Sub-variants</div>
-                                    {variant.subVariants.map((subVariant, subIdx) => (
-                                      <div key={subIdx} className="space-y-1">
-                                        <div className="flex items-center gap-2">
-                                          <span className="font-medium text-green-700">{subVariant.subVariantName}:</span>
-                                          <span className="bg-green-200 px-2 py-0.5 rounded text-green-900 font-medium">
-                                            {subVariant.optionValue}
-                                          </span>
-                                          {typeof subVariant.optionDetails?.priceModifier === 'number' && subVariant.optionDetails.priceModifier !== 0 && (
-                                            <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${(subVariant.optionDetails?.priceModifier ?? 0) > 0 ? 'bg-orange-100 text-orange-800' : 'bg-cyan-100 text-cyan-800'}`}>
-                                              {(subVariant.optionDetails?.priceModifier ?? 0) > 0 ? '+' : ''}Rs.{subVariant.optionDetails?.priceModifier}
-                                            </span>
-                                          )}
-                                        </div>
-                                        {subVariant.optionDetails?.sku && (
-                                          <div className="text-gray-600 ml-2">
-                                            <span className="font-medium">SKU:</span> {subVariant.optionDetails.sku}
-                                          </div>
-                                        )}
-
-                                        {/* Sub-sub-variants */}
-                                        {subVariant.subSubVariants && subVariant.subSubVariants.length > 0 && (
-                                          <div className="ml-2 mt-1 space-y-1 border-l border-purple-200 pl-2 bg-purple-50 rounded-r">
-                                            <div className="font-semibold text-purple-800 text-[10px] uppercase tracking-wide">Sub-sub-variants</div>
-                                            {subVariant.subSubVariants.map((subSubVariant, subSubIdx) => (
-                                              <div key={subSubIdx} className="flex items-center gap-2">
-                                                <span className="font-medium text-purple-700 text-xs">{subSubVariant.subSubVariantName}:</span>
-                                                <span className="bg-purple-200 px-2 py-0.5 rounded text-purple-900 font-medium text-xs">
-                                                  {subSubVariant.optionValue}
-                                                </span>
-                                                {typeof subSubVariant.optionDetails?.priceModifier === 'number' && subSubVariant.optionDetails.priceModifier !== 0 && (
-                                                  <span className={`px-1 py-0.5 rounded text-[10px] font-medium ${(subSubVariant.optionDetails?.priceModifier ?? 0) > 0 ? 'bg-pink-100 text-pink-800' : 'bg-teal-100 text-teal-800'}`}>
-                                                    {(subSubVariant.optionDetails?.priceModifier ?? 0) > 0 ? '+' : ''}Rs.{subSubVariant.optionDetails?.priceModifier}
-                                                  </span>
-                                                )}
-                                                {subSubVariant.optionDetails?.sku && (
-                                                  <span className="text-gray-500 text-[10px] ml-2">SKU: {subSubVariant.optionDetails.sku}</span>
-                                                )}
-                                              </div>
-                                            ))}
-                                          </div>
-                                        )}
+                            {/* Custom Properties */}
+                            {variant.optionDetails?.customProperties &&
+                              Object.keys(variant.optionDetails.customProperties).length > 0 && (
+                                <div className="flex flex-wrap gap-2 mb-2">
+                                  {Object.entries(variant.optionDetails.customProperties).map(
+                                    ([key, value]: [string, unknown]) => (
+                                      <div key={key} className="bg-white px-2 py-1 rounded border border-gray-300 text-xs">
+                                        <span className="font-medium text-gray-700">
+                                          {key.replace(/_/g, ' ')}:
+                                        </span>{' '}
+                                        <span className="text-gray-600">
+                                          {typeof value === 'string' ? value : JSON.stringify(value)}
+                                        </span>
                                       </div>
-                                    ))}
+                                    )
+                                  )}
+                                </div>
+                              )}
+
+                            {/* Sub-variants */}
+                            {variant.subVariants && variant.subVariants.length > 0 && (
+                              <div className="mt-2 ml-4 space-y-2">
+                                {variant.subVariants.map((subVariant, subIdx) => (
+                                  <div key={subIdx} className="bg-white rounded-lg p-2 border border-gray-300 border-l-4 border-l-gray-600">
+                                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                                      <span className="text-xs font-semibold text-gray-700 uppercase">
+                                        {subVariant.subVariantName}:
+                                      </span>
+                                      <span className="bg-gray-700 text-white px-2 py-0.5 rounded text-sm font-medium">
+                                        {subVariant.optionValue}
+                                      </span>
+                                      {typeof subVariant.optionDetails?.priceModifier === 'number' &&
+                                        subVariant.optionDetails.priceModifier !== 0 && (
+                                          <span
+                                            className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                                              (subVariant.optionDetails?.priceModifier ?? 0) > 0
+                                                ? 'bg-orange-100 text-orange-700'
+                                                : 'bg-cyan-100 text-cyan-700'
+                                            }`}
+                                          >
+                                            {(subVariant.optionDetails?.priceModifier ?? 0) > 0 ? '+' : ''}
+                                            Rs.{Math.abs(subVariant.optionDetails?.priceModifier)}
+                                          </span>
+                                        )}
+                                      {subVariant.optionDetails?.sku && (
+                                        <span className="text-xs text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-300">
+                                          SKU: {subVariant.optionDetails.sku}
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    {/* Sub-sub-variants */}
+                                    {subVariant.subSubVariants && subVariant.subSubVariants.length > 0 && (
+                                      <div className="mt-2 ml-4 space-y-1">
+                                        {subVariant.subSubVariants.map((subSubVariant, subSubIdx) => (
+                                          <div
+                                            key={subSubIdx}
+                                            className="bg-gray-50 rounded px-2 py-1 border border-gray-300 border-l-2 border-l-gray-500 flex flex-wrap items-center gap-2"
+                                          >
+                                            <span className="text-xs font-semibold text-gray-700">
+                                              {subSubVariant.subSubVariantName}:
+                                            </span>
+                                            <span className="bg-gray-600 text-white px-2 py-0.5 rounded text-xs font-medium">
+                                              {subSubVariant.optionValue}
+                                            </span>
+                                            {typeof subSubVariant.optionDetails?.priceModifier === 'number' &&
+                                              subSubVariant.optionDetails.priceModifier !== 0 && (
+                                                <span
+                                                  className={`px-1.5 py-0.5 rounded text-xs font-semibold ${
+                                                    (subSubVariant.optionDetails?.priceModifier ?? 0) > 0
+                                                      ? 'bg-pink-100 text-pink-700'
+                                                      : 'bg-teal-100 text-teal-700'
+                                                  }`}
+                                                >
+                                                  {(subSubVariant.optionDetails?.priceModifier ?? 0) > 0 ? '+' : ''}
+                                                  Rs.{Math.abs(subSubVariant.optionDetails?.priceModifier)}
+                                                </span>
+                                              )}
+                                            {subSubVariant.optionDetails?.sku && (
+                                              <span className="text-xs text-gray-500 bg-white px-1.5 py-0.5 rounded">
+                                                SKU: {subSubVariant.optionDetails.sku}
+                                              </span>
+                                            )}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
                                   </div>
-                                )}
+                                ))}
                               </div>
-                            ),
-                          )}
-                        </div>
-                      )}
-
-                      {/* Legacy color/size */}
-                      {(item.color || item.size) && (
-                        <div className="mb-3 flex gap-2 text-xs">
-                          {item.color && (
-                            <span className="bg-gray-100 px-2 py-1 rounded">
-                              Color: {item.color}
-                            </span>
-                          )}
-                          {item.size && (
-                            <span className="bg-gray-100 px-2 py-1 rounded">
-                              Size: {item.size}
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      <div className="space-y-1 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Quantity:</span>
-                          <span className="font-medium">{item.qty}</span>
-                        </div>
-                        {typeof item.salePercent === 'number' && item.salePercent > 0 && (
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Sale:</span>
-                            <span className="font-medium text-green-700">
-                              {item.saleName ? `${item.saleName}: ` : ''}
-                              {item.salePercent}% OFF
-                            </span>
+                            )}
                           </div>
-                        )}
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Unit Price:</span>
-                          <span className="font-medium">
-                            Rs. {item.price?.toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="flex justify-between border-t pt-1">
-                          <span className="text-gray-600 font-medium">Total:</span>
-                          <span className="font-semibold text-green-600">
-                            Rs. {(item.price * item.qty)?.toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
+                        )
+                      )}
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-6 flex justify-end">
-              <div className="text-right">
-                <p className="text-lg sm:text-xl font-bold">
-                  Total:{' '}
-                  <span className="text-xl sm:text-2xl text-(--color-logo)">
-                    Rs. {order.totalPrice?.toLocaleString()}
-                  </span>
-                </p>
+                )}
               </div>
             </div>
-          </CardContent>
-        </Card>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    {/* Mobile Card View */}
+    <div className="md:hidden space-y-4">
+      {order.orderItems?.map((item: OrderItem, index: number) => (
+        <div key={index} className="border border-gray-200 rounded-xl overflow-hidden">
+          <div className="bg-white p-4">
+            <div className="flex items-start gap-3 mb-3">
+              <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
+                <Image
+                  src={getImageUrl(item.image)}
+                  alt={item.name}
+                  width={80}
+                  height={80}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-base text-gray-900 mb-2 leading-tight">
+                  {item.name}
+                </h4>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs text-gray-500">Qty:</span>
+                  <span className="font-semibold text-sm bg-gray-100 px-2 py-1 rounded-full">
+                    {item.qty}
+                  </span>
+                  {typeof item.salePercent === 'number' && item.salePercent > 0 && (
+                    <span className="bg-green-100 text-green-700 font-semibold px-2 py-1 rounded-full text-xs">
+                      {item.salePercent}% OFF
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Variants Section */}
+            {item.variants && item.variants.length > 0 && (
+              <div className="space-y-2 mb-3">
+                {item.variants.map(
+                  (
+                    variant: {
+                      variantName: string;
+                      optionValue: string;
+                      optionLabel?: string;
+                      optionDetails?: {
+                        priceModifier?: number;
+                        sku?: string;
+                        customProperties?: Record<string, unknown>;
+                      };
+                      subVariants?: Array<{
+                        subVariantName: string;
+                        optionValue: string;
+                        optionLabel?: string;
+                        optionDetails?: {
+                          priceModifier?: number;
+                          sku?: string;
+                          customProperties?: Record<string, unknown>;
+                        };
+                        subSubVariants?: Array<{
+                          subSubVariantName: string;
+                          optionValue: string;
+                          optionLabel?: string;
+                          optionDetails?: {
+                            priceModifier?: number;
+                            sku?: string;
+                            customProperties?: Record<string, unknown>;
+                          };
+                        }>;
+                      }>;
+                    },
+                    idx: number
+                  ) => (
+                    <div key={idx} className="bg-gray-50 rounded-lg p-2 border border-gray-200">
+                      <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                        <span className="text-xs font-semibold text-gray-700 uppercase">
+                          {variant.variantName}:
+                        </span>
+                        <span className="bg-gray-800 text-white px-2 py-0.5 rounded text-xs font-medium">
+                          {variant.optionValue}
+                        </span>
+                        {typeof variant.optionDetails?.priceModifier === 'number' &&
+                          variant.optionDetails.priceModifier !== 0 && (
+                            <span
+                              className={`px-1.5 py-0.5 rounded text-xs font-semibold ${
+                                (variant.optionDetails?.priceModifier ?? 0) > 0
+                                  ? 'bg-green-100 text-green-700'
+                                  : 'bg-red-100 text-red-700'
+                              }`}
+                            >
+                              {(variant.optionDetails?.priceModifier ?? 0) > 0 ? '+' : ''}
+                              Rs.{Math.abs(variant.optionDetails?.priceModifier)}
+                            </span>
+                          )}
+                      </div>
+
+                      {variant.optionDetails?.sku && (
+                        <div className="text-xs text-gray-500 mb-1">
+                          SKU: {variant.optionDetails.sku}
+                        </div>
+                      )}
+
+                      {variant.optionDetails?.customProperties &&
+                        Object.keys(variant.optionDetails.customProperties).length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-1">
+                            {Object.entries(variant.optionDetails.customProperties).map(
+                              ([key, value]: [string, unknown]) => (
+                                <div key={key} className="bg-white px-1.5 py-0.5 rounded text-xs border border-gray-300">
+                                  <span className="font-medium">{key.replace(/_/g, ' ')}:</span>{' '}
+                                  {typeof value === 'string' ? value : JSON.stringify(value)}
+                                </div>
+                              )
+                            )}
+                          </div>
+                        )}
+
+                      {/* Sub-variants */}
+                      {variant.subVariants && variant.subVariants.length > 0 && (
+                        <div className="mt-1.5 ml-2 space-y-1.5">
+                          {variant.subVariants.map((subVariant, subIdx) => (
+                            <div key={subIdx} className="bg-white rounded p-1.5 border border-gray-300 border-l-2 border-l-gray-600">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <span className="text-xs font-semibold text-gray-700">
+                                  {subVariant.subVariantName}:
+                                </span>
+                                <span className="bg-gray-700 text-white px-1.5 py-0.5 rounded text-xs font-medium">
+                                  {subVariant.optionValue}
+                                </span>
+                                {typeof subVariant.optionDetails?.priceModifier === 'number' &&
+                                  subVariant.optionDetails.priceModifier !== 0 && (
+                                    <span
+                                      className={`px-1.5 py-0.5 rounded text-xs font-semibold ${
+                                        (subVariant.optionDetails?.priceModifier ?? 0) > 0
+                                          ? 'bg-orange-100 text-orange-700'
+                                          : 'bg-cyan-100 text-cyan-700'
+                                      }`}
+                                    >
+                                      {(subVariant.optionDetails?.priceModifier ?? 0) > 0 ? '+' : ''}
+                                      Rs.{Math.abs(subVariant.optionDetails?.priceModifier)}
+                                    </span>
+                                  )}
+                              </div>
+
+                              {/* Sub-sub-variants */}
+                              {subVariant.subSubVariants && subVariant.subSubVariants.length > 0 && (
+                                <div className="mt-1 ml-2 space-y-1">
+                                  {subVariant.subSubVariants.map((subSubVariant, subSubIdx) => (
+                                    <div
+                                      key={subSubIdx}
+                                      className="bg-gray-50 rounded px-1.5 py-1 border border-gray-300 border-l border-l-gray-500 flex flex-wrap items-center gap-1"
+                                    >
+                                      <span className="text-xs font-semibold text-gray-700">
+                                        {subSubVariant.subSubVariantName}:
+                                      </span>
+                                      <span className="bg-gray-600 text-white px-1.5 py-0.5 rounded text-xs">
+                                        {subSubVariant.optionValue}
+                                      </span>
+                                      {typeof subSubVariant.optionDetails?.priceModifier === 'number' &&
+                                        subSubVariant.optionDetails.priceModifier !== 0 && (
+                                          <span
+                                            className={`px-1 py-0.5 rounded text-xs font-semibold ${
+                                              (subSubVariant.optionDetails?.priceModifier ?? 0) > 0
+                                                ? 'bg-pink-100 text-pink-700'
+                                                : 'bg-teal-100 text-teal-700'
+                                            }`}
+                                          >
+                                            {(subSubVariant.optionDetails?.priceModifier ?? 0) > 0 ? '+' : ''}
+                                            Rs.{Math.abs(subSubVariant.optionDetails?.priceModifier)}
+                                          </span>
+                                        )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                )}
+              </div>
+            )}
+
+            <div className="pt-3 border-t border-gray-100 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Unit Price:</span>
+                <span className="font-semibold">Rs. {item.price?.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 font-medium">Total:</span>
+                <span className="font-bold text-green-600">
+                  Rs. {(item.price * item.qty)?.toLocaleString()}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <div className="mt-6 flex justify-end">
+      <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4 border-2 border-green-200">
+        <p className="text-sm text-gray-600 mb-1">Order Total</p>
+        <p className="text-2xl sm:text-3xl font-bold text-green-600">
+          Rs. {order.totalPrice?.toLocaleString()}
+        </p>
+      </div>
+    </div>
+  </CardContent>
+</Card>
       </div>
     </div>
   );

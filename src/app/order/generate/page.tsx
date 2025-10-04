@@ -287,114 +287,147 @@ const OrderGeneratePage = () => {
 
                       {/* Enhanced variant and addon details */}
                       <div className="mt-2">
-                        {/* Legacy color/size display */}
-                        {(item.color || item.size) && (
-                          <div className="flex gap-2 text-xs mb-2">
-                            {item.color && (
-                              <span className="bg-gray-100 px-2 py-1 rounded">
-                                Color: {item.color}
-                              </span>
-                            )}
-                            {item.size && (
-                              <span className="bg-gray-100 px-2 py-1 rounded">
-                                Size: {item.size}
-                              </span>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Enhanced variants with sub and subsub variants */}
+                        {/* Enhanced variants with sub and subsub variants - Order page style */}
                         {item.variants && item.variants.length > 0 && (
                           <div className="space-y-2 mb-2">
                             {item.variants.map((variant, idx) => (
-                              <div key={idx} className="text-xs border-l-2 border-blue-200 pl-3">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="font-medium text-blue-800">{variant.variantName}:</span>
-                                  <span className="bg-blue-100 px-2 py-1 rounded font-medium">
+                              <div key={idx} className="border-l-2 border-gray-300 pl-3 py-2">
+                                {/* Main Variant */}
+                                <div className="flex flex-wrap items-center gap-2 mb-2">
+                                  <span className="text-sm font-medium text-gray-600">
+                                    {variant.variantName}:
+                                  </span>
+                                  <span className="text-sm font-semibold text-gray-900">
                                     {variant.optionValue}
                                   </span>
-                                  {variant.optionDetails && variant.optionDetails.priceModifier !== 0 && (
-                                    <span className={`px-2 py-1 rounded text-xs font-medium ${variant?.optionDetails?.priceModifier && variant.optionDetails.priceModifier > 0
-                                        ? 'bg-green-100 text-green-800'
-                                        : 'bg-red-100 text-red-800'
-                                      }`}>
-                                      {variant?.optionDetails?.priceModifier && variant.optionDetails.priceModifier > 0 ? '+' : ''}Rs.{variant.optionDetails.priceModifier}
+                                  {typeof variant.optionDetails?.priceModifier === 'number' &&
+                                    variant.optionDetails.priceModifier !== 0 && (
+                                      <span className="text-xs text-gray-600">
+                                        (
+                                        {(variant.optionDetails?.priceModifier ?? 0) > 0 ? '+' : ''}
+                                        Rs.{Math.abs(variant.optionDetails?.priceModifier)})
+                                      </span>
+                                    )}
+                                  {variant.optionDetails?.sku && (
+                                    <span className="text-xs text-gray-500">
+                                      • SKU: {variant.optionDetails.sku}
                                     </span>
                                   )}
                                 </div>
 
-                                {/* SKU */}
-                                {variant.optionDetails?.sku && (
-                                  <div className="text-gray-500 ml-2 mb-1">
-                                    <span className="font-medium">SKU:</span> {variant.optionDetails.sku}
-                                  </div>
-                                )}
-
                                 {/* Custom Properties */}
                                 {variant.optionDetails?.customProperties &&
-                                  Object.keys(variant.optionDetails.customProperties).length > 0 && (
-                                    <div className="ml-2 mb-2 space-y-1">
-                                      <div className="font-medium text-gray-700">Properties:</div>
-                                      {Object.entries(variant.optionDetails.customProperties).map(([key, value]) => (
-                                        <div key={key} className="text-gray-600 flex items-center gap-2">
-                                          <span className="capitalize font-medium">{key.replace(/_/g, ' ')}:</span>
-                                          <span className="bg-gray-100 px-2 py-0.5 rounded">
-                                            {typeof value === 'string' ? value : JSON.stringify(value)}
-                                          </span>
-                                        </div>
-                                      ))}
+                                  Object.keys(variant.optionDetails.customProperties).length >
+                                    0 && (
+                                    <div className="flex flex-wrap gap-2 mb-2">
+                                      {Object.entries(variant.optionDetails.customProperties).map(
+                                        ([key, value]: [string, unknown]) => (
+                                          <div
+                                            key={key}
+                                            className="bg-white px-2 py-1 rounded border border-gray-300 text-xs"
+                                          >
+                                            <span className="font-medium text-gray-700">
+                                              {key.replace(/_/g, ' ')}:
+                                            </span>{' '}
+                                            <span className="text-gray-600">
+                                              {typeof value === 'string'
+                                                ? value
+                                                : JSON.stringify(value)}
+                                            </span>
+                                          </div>
+                                        ),
+                                      )}
                                     </div>
                                   )}
 
                                 {/* Sub-variants */}
                                 {variant.subVariants && variant.subVariants.length > 0 && (
-                                  <div className="ml-4 space-y-1 border-l-2 border-green-200 pl-3">
-                                    <div className="font-medium text-green-800 text-xs">Sub-variants:</div>
+                                  <div className="mt-2 ml-4 space-y-2">
                                     {variant.subVariants.map((subVariant, subIdx) => (
-                                      <div key={subIdx} className="space-y-1">
-                                        <div className="flex items-center gap-2">
-                                          <span className="font-medium text-green-700">{subVariant.subVariantName}:</span>
-                                          <span className="bg-green-100 px-2 py-0.5 rounded text-xs">
+                                      <div
+                                        key={subIdx}
+                                        className="bg-white rounded-lg p-2 border border-gray-300 border-l-4 border-l-gray-600"
+                                      >
+                                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                                          <span className="text-xs font-semibold text-gray-700 uppercase">
+                                            {subVariant.subVariantName}:
+                                          </span>
+                                          <span className="bg-gray-700 text-white px-2 py-0.5 rounded text-sm font-medium">
                                             {subVariant.optionValue}
                                           </span>
-                                          {subVariant.optionDetails && subVariant.optionDetails.priceModifier !== 0 && (
-                                            <span className={`px-1 py-0.5 rounded text-xs ${subVariant.optionDetails.priceModifier > 0
-                                                ? 'bg-orange-100 text-orange-800'
-                                                : 'bg-cyan-100 text-cyan-800'
-                                              }`}>
-                                              {subVariant.optionDetails.priceModifier > 0 ? '+' : ''}Rs.{subVariant.optionDetails.priceModifier}
+                                          {typeof subVariant.optionDetails?.priceModifier ===
+                                            'number' &&
+                                            subVariant.optionDetails.priceModifier !== 0 && (
+                                              <span
+                                                className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                                                  (subVariant.optionDetails?.priceModifier ?? 0) > 0
+                                                    ? 'bg-orange-100 text-orange-700'
+                                                    : 'bg-cyan-100 text-cyan-700'
+                                                }`}
+                                              >
+                                                {(subVariant.optionDetails?.priceModifier ?? 0) > 0
+                                                  ? '+'
+                                                  : ''}
+                                                Rs.
+                                                {Math.abs(subVariant.optionDetails?.priceModifier)}
+                                              </span>
+                                            )}
+                                          {subVariant.optionDetails?.sku && (
+                                            <span className="text-xs text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-300">
+                                              SKU: {subVariant.optionDetails.sku}
                                             </span>
                                           )}
                                         </div>
 
-                                        {subVariant.optionDetails?.sku && (
-                                          <div className="text-gray-500 ml-2 text-xs">
-                                            SKU: {subVariant.optionDetails.sku}
-                                          </div>
-                                        )}
-
                                         {/* Sub-sub-variants */}
-                                        {subVariant.subSubVariants && subVariant.subSubVariants.length > 0 && (
-                                          <div className="ml-4 space-y-1 border-l-2 border-purple-200 pl-3">
-                                            <div className="font-medium text-purple-800 text-xs">Sub-sub-variants:</div>
-                                            {subVariant.subSubVariants.map((subSubVariant, subSubIdx) => (
-                                              <div key={subSubIdx} className="flex items-center gap-2">
-                                                <span className="font-medium text-purple-700 text-xs">{subSubVariant.subSubVariantName}:</span>
-                                                <span className="bg-purple-100 px-2 py-0.5 rounded text-xs">
-                                                  {subSubVariant.optionValue}
-                                                </span>
-                                                {subSubVariant.optionDetails && subSubVariant.optionDetails.priceModifier !== 0 && (
-                                                  <span className={`px-1 py-0.5 rounded text-xs ${subSubVariant.optionDetails.priceModifier > 0
-                                                      ? 'bg-pink-100 text-pink-800'
-                                                      : 'bg-teal-100 text-teal-800'
-                                                    }`}>
-                                                    {subSubVariant.optionDetails.priceModifier > 0 ? '+' : ''}Rs.{subSubVariant.optionDetails.priceModifier}
-                                                  </span>
-                                                )}
-                                              </div>
-                                            ))}
-                                          </div>
-                                        )}
+                                        {subVariant.subSubVariants &&
+                                          subVariant.subSubVariants.length > 0 && (
+                                            <div className="mt-2 ml-4 space-y-1">
+                                              {subVariant.subSubVariants.map(
+                                                (subSubVariant, subSubIdx) => (
+                                                  <div
+                                                    key={subSubIdx}
+                                                    className="bg-gray-50 rounded px-2 py-1 border border-gray-300 border-l-2 border-l-gray-500 flex flex-wrap items-center gap-2"
+                                                  >
+                                                    <span className="text-xs font-semibold text-gray-700">
+                                                      {subSubVariant.subSubVariantName}:
+                                                    </span>
+                                                    <span className="bg-gray-600 text-white px-2 py-0.5 rounded text-xs font-medium">
+                                                      {subSubVariant.optionValue}
+                                                    </span>
+                                                    {typeof subSubVariant.optionDetails
+                                                      ?.priceModifier === 'number' &&
+                                                      subSubVariant.optionDetails.priceModifier !==
+                                                        0 && (
+                                                        <span
+                                                          className={`px-1.5 py-0.5 rounded text-xs font-semibold ${
+                                                            (subSubVariant.optionDetails
+                                                              ?.priceModifier ?? 0) > 0
+                                                              ? 'bg-pink-100 text-pink-700'
+                                                              : 'bg-teal-100 text-teal-700'
+                                                          }`}
+                                                        >
+                                                          {(subSubVariant.optionDetails
+                                                            ?.priceModifier ?? 0) > 0
+                                                            ? '+'
+                                                            : ''}
+                                                          Rs.
+                                                          {Math.abs(
+                                                            subSubVariant.optionDetails
+                                                              ?.priceModifier,
+                                                          )}
+                                                        </span>
+                                                      )}
+                                                    {subSubVariant.optionDetails?.sku && (
+                                                      <span className="text-xs text-gray-500 bg-white px-1.5 py-0.5 rounded">
+                                                        SKU: {subSubVariant.optionDetails.sku}
+                                                      </span>
+                                                    )}
+                                                  </div>
+                                                ),
+                                              )}
+                                            </div>
+                                          )}
                                       </div>
                                     ))}
                                   </div>

@@ -243,7 +243,9 @@ const EnhancedVariantSelector: React.FC<EnhancedVariantSelectorProps> = ({
 
   const renderVariantOption = (variant: Variant, option: VariantOption) => {
     const isSelected = isOptionSelected(variant.name, option.value);
-    const isOutOfStock = (option.stock || 0) <= 0;
+    // Only consider out of stock if it's a leaf node (no sub-variants) and has 0 stock
+    const hasSubVariants = Array.isArray(option.subVariants) && option.subVariants.length > 0;
+    const isOutOfStock = !hasSubVariants && (option.stock || 0) <= 0;
     const isColorVariant = variant.type === 'color' || variant.name.toLowerCase().includes('color');
 
     if (isColorVariant) {
@@ -271,7 +273,7 @@ const EnhancedVariantSelector: React.FC<EnhancedVariantSelectorProps> = ({
               : 'border-gray-300 hover:border-gray-400'
           } ${isOutOfStock ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
           style={gradientStyle}
-          title={`${option.label}${isOutOfStock ? ' (Out of Stock)' : ''}`}
+          title={`${option.label}${isOutOfStock ? ' (Out of Stock)' : hasSubVariants ? '' : ` - ${option.stock} left`}`}
         >
           {isSelected && (
             <div className="w-3 h-3 bg-white rounded-full mx-auto border border-gray-300"></div>
@@ -311,7 +313,9 @@ const EnhancedVariantSelector: React.FC<EnhancedVariantSelectorProps> = ({
         <div className="flex flex-wrap gap-2">
           {subVariant.options.map((subOption) => {
             const isSelected = isSubOptionSelected(parentVariantName, subVariant.name, subOption.value);
-            const isOutOfStock = (subOption.stock || 0) <= 0;
+            // Only consider out of stock if it's a leaf node (no sub-sub-variants) and has 0 stock
+            const hasSubSubVariants = Array.isArray(subOption.subSubVariants) && subOption.subSubVariants.length > 0;
+            const isOutOfStock = !hasSubSubVariants && (subOption.stock || 0) <= 0;
             const isColorVariant = subVariant.type === 'color' || subVariant.name.toLowerCase().includes('color');
 
             if (isColorVariant) {
@@ -339,7 +343,7 @@ const EnhancedVariantSelector: React.FC<EnhancedVariantSelectorProps> = ({
                       : 'border-gray-300 hover:border-gray-400'
                   } ${isOutOfStock ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                   style={gradientStyle}
-                  title={`${subOption.label}${isOutOfStock ? ' (Out of Stock)' : ''}`}
+                  title={`${subOption.label}${isOutOfStock ? ' (Out of Stock)' : hasSubSubVariants ? '' : ` - ${subOption.stock} left`}`}
                 >
                   {isSelected && (
                     <div className="w-2 h-2 bg-white rounded-full mx-auto border border-gray-300"></div>
@@ -392,6 +396,7 @@ const EnhancedVariantSelector: React.FC<EnhancedVariantSelectorProps> = ({
               subSubVariant.name,
               subSubOption.value
             );
+            // Sub-sub-options are always leaf nodes, so check stock normally
             const isOutOfStock = (subSubOption.stock || 0) <= 0;
             const isColorVariant = subSubVariant.type === 'color' || subSubVariant.name.toLowerCase().includes('color');
 
@@ -420,7 +425,7 @@ const EnhancedVariantSelector: React.FC<EnhancedVariantSelectorProps> = ({
                       : 'border-gray-300 hover:border-gray-400'
                   } ${isOutOfStock ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                   style={gradientStyle}
-                  title={`${subSubOption.label}${isOutOfStock ? ' (Out of Stock)' : ''}`}
+                  title={`${subSubOption.label}${isOutOfStock ? ' (Out of Stock)' : ` - ${subSubOption.stock} left`}`}
                 >
                   {isSelected && (
                     <div className="w-1.5 h-1.5 bg-white rounded-full mx-auto border border-gray-300"></div>

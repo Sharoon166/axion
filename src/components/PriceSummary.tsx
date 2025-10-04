@@ -99,10 +99,7 @@ const PriceSummary: React.FC<PriceSummaryProps> = ({
         </div>
       </div>
 
-      {/* Stock Information */}
-      <div className="text-sm text-gray-600">
-        Available Stock: {summary.availableStock} units
-      </div>
+     
     </div>
   );
 };

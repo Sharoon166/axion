@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useEffect } from 'react';
 import {
   Variant,
   VariantOption,
@@ -16,11 +17,98 @@ interface VariantSelectorProps {
   onVariantChange: (selectedVariants: SelectedVariant[]) => void;
 }
 
+interface SubVariantSelection {
+  subVariantName: string;
+  optionValue: string;
+  subSubVariants?: SubSubVariantSelection[];
+}
+
+interface SubSubVariantSelection {
+  subSubVariantName: string;
+  optionValue: string;
+}
+
 const VariantSelector: React.FC<VariantSelectorProps> = ({
   variants,
   selectedVariants,
   onVariantChange,
 }) => {
+  // Auto-select single option chains
+  useEffect(() => {
+    if (!variants || variants.length === 0) return;
+
+    const autoSelectedVariants: SelectedVariant[] = [...selectedVariants];
+    let hasChanges = false;
+
+    variants.forEach((variant) => {
+      // Auto-select main variant if it has only one option
+      if (variant.options.length === 1) {
+        const option = variant.options[0];
+        const existingSelection = autoSelectedVariants.find(
+          (sv) => sv.variantName === variant.name,
+        );
+
+        if (!existingSelection) {
+          const newSelection: SelectedVariant = {
+            variantName: variant.name,
+            optionValue: option.value,
+          };
+
+          // Auto-select sub-variants if they exist and have single options
+          if (Array.isArray(option.subVariants) && option.subVariants.length > 0) {
+            const subVariants: SubVariantSelection[] = [];
+
+            option.subVariants.forEach((subVariant: SubVariant) => {
+              if (subVariant.options.length === 1) {
+                const subOption = subVariant.options[0];
+                const subSelection: SubVariantSelection = {
+                  subVariantName: subVariant.name,
+                  optionValue: subOption.value,
+                };
+
+                // Auto-select sub-sub-variants if they exist and have single options
+                if (
+                  Array.isArray(subOption.subSubVariants) &&
+                  subOption.subSubVariants.length > 0
+                ) {
+                  const subSubVariants: SubSubVariantSelection[] = [];
+
+                  subOption.subSubVariants.forEach((subSubVariant: SubSubVariant) => {
+                    if (subSubVariant.options.length === 1) {
+                      const subSubOption = subSubVariant.options[0];
+                      subSubVariants.push({
+                        subSubVariantName: subSubVariant.name,
+                        optionValue: subSubOption.value,
+                      });
+                    }
+                  });
+
+                  if (subSubVariants.length > 0) {
+                    subSelection.subSubVariants = subSubVariants;
+                  }
+                }
+
+                subVariants.push(subSelection);
+              }
+            });
+
+            if (subVariants.length > 0) {
+              newSelection.subVariants = subVariants;
+            }
+          }
+
+          autoSelectedVariants.push(newSelection);
+          hasChanges = true;
+        }
+      }
+    });
+
+    if (hasChanges) {
+      onVariantChange(autoSelectedVariants);
+    }
+  }, [variants, selectedVariants, onVariantChange]); // Include all dependencies
+
+  // Early return after hooks
   if (!variants || variants.length === 0) return null;
 
   const handleVariantSelection = (variant: Variant, option: VariantOption) => {
@@ -47,22 +135,20 @@ const VariantSelector: React.FC<VariantSelectorProps> = ({
           const subOption = subVariant.options[0];
           const parentVariant = updatedVariants[targetIndex];
           const subVariants = [...(parentVariant.subVariants || [])];
-          
-          const subIndex = subVariants.findIndex(
-            (sv) => sv.subVariantName === subVariant.name
-          );
+
+          const subIndex = subVariants.findIndex((sv) => sv.subVariantName === subVariant.name);
 
           const newSubVariant = {
             subVariantName: subVariant.name,
             optionValue: subOption.value,
           };
-          
+
           if (subIndex >= 0) {
             subVariants[subIndex] = newSubVariant;
           } else {
             subVariants.push(newSubVariant);
           }
-          
+
           updatedVariants[targetIndex] = {
             ...parentVariant,
             subVariants,
@@ -203,11 +289,11 @@ const VariantSelector: React.FC<VariantSelectorProps> = ({
       return { background: value };
     } else if (label.toLowerCase() === 'rgb') {
       const rgb = value.split(',').map(Number);
-      if (rgb.length === 3 && rgb.every(n => n >= 0 && n <= 255)) {
+      if (rgb.length === 3 && rgb.every((n) => n >= 0 && n <= 255)) {
         return { background: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})` };
       }
     }
-  return {}
+    return {};
   };
 
   return (
@@ -225,7 +311,10 @@ const VariantSelector: React.FC<VariantSelectorProps> = ({
               {' '}
               {variant.options.map((option: VariantOption, optionIndex: number) => {
                 const isSelected = isOptionSelected(variant.name, option.value);
-                const isOutOfStock = (option.stock || 0) <= 0;
+                // Only consider out of stock if it's a leaf node (no sub-variants) and has 0 stock
+                const hasSubVariants =
+                  Array.isArray(option.subVariants) && option.subVariants.length > 0;
+                const isOutOfStock = !hasSubVariants && (option.stock || 0) <= 0;
 
                 if (isColorVariant) {
                   return (
@@ -249,7 +338,7 @@ const VariantSelector: React.FC<VariantSelectorProps> = ({
                             }
                           : {}
                       }
-                      title={`${option.label}${isOutOfStock ? ' (Out of Stock)' : ''}`}
+                      title={`${option.label}${isOutOfStock ? ' (Out of Stock)' : hasSubVariants ? '' : ` - ${option.stock} left`}`}
                     ></button>
                   );
                 } else {
@@ -260,15 +349,19 @@ const VariantSelector: React.FC<VariantSelectorProps> = ({
                       type="button"
                       className={`relative flex items-center justify-center rounded-md border px-3 py-2 text-sm font-medium focus:outline-none ${
                         isSelected
-                          ? isRGB(option.value) 
-                            ? 'border-gray-300 shadow-sm' 
+                          ? isRGB(option.value)
+                            ? 'border-gray-300 shadow-sm'
                             : 'border-transparent text-white shadow-sm bg-gray-800'
                           : 'border-gray-300 text-gray-900 hover:bg-gray-50'
                       }`}
-                      style={isRGB(option.value) ? getBackgroundStyle(option.value, variant.name) : {}}
+                      style={
+                        isRGB(option.value) ? getBackgroundStyle(option.value, variant.name) : {}
+                      }
                       onClick={() => handleVariantSelection(variant, option)}
                     >
-                      <span className={`${isSelected && isRGB(option.value) ? 'bg-black/30 px-2 py-1 rounded' : ''} ${isRGB(option.value) ? 'text-white mix-blend-difference' : ''}`}>
+                      <span
+                        className={`${isSelected && isRGB(option.value) ? 'bg-black/30 px-2 py-1 rounded' : ''} ${isRGB(option.value) ? 'text-white mix-blend-difference' : ''}`}
+                      >
                         {option.label || option.value}
                       </span>
                     </button>
@@ -308,7 +401,12 @@ const VariantSelector: React.FC<VariantSelectorProps> = ({
                                     subVariant.name,
                                     subOption.value,
                                   );
-                                  const isSubOutOfStock = (subOption.stock || 0) <= 0;
+                                  // Only consider out of stock if it's a leaf node (no sub-sub-variants) and has 0 stock
+                                  const hasSubSubVariants =
+                                    Array.isArray(subOption.subSubVariants) &&
+                                    subOption.subSubVariants.length > 0;
+                                  const isSubOutOfStock =
+                                    !hasSubSubVariants && (subOption.stock || 0) <= 0;
 
                                   if (isSubColorVariant) {
                                     // Sub-variant color - round button with gradient support
@@ -348,7 +446,7 @@ const VariantSelector: React.FC<VariantSelectorProps> = ({
                                             : 'cursor-pointer'
                                         }`}
                                         style={gradientStyle}
-                                        title={`${subOption.label}${isSubOutOfStock ? ' (Out of Stock)' : ''}`}
+                                        title={`${subOption.label}${isSubOutOfStock ? ' (Out of Stock)' : hasSubSubVariants ? '' : ` - ${subOption.stock} left`}`}
                                       >
                                         {isSubSelected && (
                                           <div className="w-3 h-3 bg-white rounded-full mx-auto border border-gray-300"></div>
@@ -426,6 +524,7 @@ const VariantSelector: React.FC<VariantSelectorProps> = ({
                                                   subSubVariant.name,
                                                   subSubOption.value,
                                                 );
+                                                // Sub-sub-options are always leaf nodes, so check stock normally
                                                 const isSubSubOutOfStock =
                                                   (subSubOption.stock || 0) <= 0;
 
@@ -469,7 +568,7 @@ const VariantSelector: React.FC<VariantSelectorProps> = ({
                                                           : 'cursor-pointer'
                                                       }`}
                                                       style={gradientStyle}
-                                                      title={`${subSubOption.label} - ${subSubOption.stock} left`}
+                                                      title={`${subSubOption.label}${isSubSubOutOfStock ? ' (Out of Stock)' : ` - ${subSubOption.stock} left`}`}
                                                     >
                                                       {isSubSubSelected && (
                                                         <div className="w-2 h-2 bg-white rounded-full mx-auto border border-gray-300"></div>

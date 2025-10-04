@@ -8,7 +8,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
-import type { SelectedVariant, ProductConfiguration, Variant, SubSubVariantOption } from '@/lib/productVariants';
+import type {
+  SelectedVariant,
+  ProductConfiguration,
+  Variant,
+  SubSubVariantOption,
+} from '@/lib/productVariants';
 import { calculateAvailableStock } from '@/lib/productVariants';
 import VariantSelector from '@/components/VariantSelector';
 import { toast } from 'sonner';
@@ -90,28 +95,32 @@ const QuickView: React.FC<QuickViewProps> = ({ product, onClose }) => {
   // Calculate the final price including all variant price modifiers
   const finalPrice = useMemo(() => {
     if (!product) return 0;
-    
+
     let totalPrice = product.price;
-    
+
     // Add price modifiers from selected variants
-    selectedVariants.forEach(sv => {
-      const variant = product.variants?.find(v => v.name === sv.variantName);
-      const option = variant?.options.find(o => o.value === sv.optionValue);
-      
+    selectedVariants.forEach((sv) => {
+      const variant = product.variants?.find((v) => v.name === sv.variantName);
+      const option = variant?.options.find((o) => o.value === sv.optionValue);
+
       if (option) {
         totalPrice += option.priceModifier || 0;
-        
+
         // Add price modifiers from sub-variants
-        sv.subVariants?.forEach(ssv => {
-          const subVariant = option.subVariants?.find(sub => sub.name === ssv.subVariantName);
-          const subOption = subVariant?.options.find(so => so.value === ssv.optionValue);
+        sv.subVariants?.forEach((ssv) => {
+          const subVariant = option.subVariants?.find((sub) => sub.name === ssv.subVariantName);
+          const subOption = subVariant?.options.find((so) => so.value === ssv.optionValue);
           if (subOption) {
             totalPrice += subOption.priceModifier || 0;
-            
+
             // Add price modifiers from sub-sub-variants if they exist
-            ssv.subSubVariants?.forEach(sssv => {
-              const subSubVariant = subOption.subSubVariants?.find(subsub => subsub.name === sssv.subSubVariantName);
-              const subSubOption = subSubVariant?.options.find((ssso: { value: string }) => ssso.value === sssv.optionValue);
+            ssv.subSubVariants?.forEach((sssv) => {
+              const subSubVariant = subOption.subSubVariants?.find(
+                (subsub) => subsub.name === sssv.subSubVariantName,
+              );
+              const subSubOption = subSubVariant?.options.find(
+                (ssso: { value: string }) => ssso.value === sssv.optionValue,
+              );
               if (subSubOption) {
                 totalPrice += subSubOption.priceModifier || 0;
               }
@@ -120,19 +129,19 @@ const QuickView: React.FC<QuickViewProps> = ({ product, onClose }) => {
         });
       }
     });
-    
+
     // Apply sale discount if exists
     if (product.saleInfo?.discountPercent) {
       totalPrice = calculateSalePrice(totalPrice, product.saleInfo.discountPercent);
     }
-    
+
     return totalPrice;
   }, [product, selectedVariants]);
 
   // Compute available stock for the selected path
   const availableStock = useMemo(() => {
     if (!product) return 0;
-    
+
     const configuration: ProductConfiguration = {
       variants: (product.variants as Variant[]) || [],
       addons: [],
@@ -140,7 +149,7 @@ const QuickView: React.FC<QuickViewProps> = ({ product, onClose }) => {
       selectedVariants: selectedVariants,
       selectedAddons: [],
     };
-    
+
     try {
       return calculateAvailableStock(configuration);
     } catch {
@@ -202,40 +211,100 @@ const QuickView: React.FC<QuickViewProps> = ({ product, onClose }) => {
       return;
     }
 
+
     // Validate required variants
     if (product.variants?.length) {
       const missingVariants: string[] = [];
-      
-      product.variants.forEach(variant => {
+
+      product.variants.forEach((variant) => {
         if (variant.required) {
-          const isSelected = selectedVariants.some(sv => sv.variantName === variant.name);
+          const isSelected = selectedVariants.some((sv) => sv.variantName === variant.name);
           if (!isSelected) {
             missingVariants.push(variant.name);
           }
         }
       });
-      
+
       if (missingVariants.length > 0) {
         toast.error(`Please select: ${missingVariants.join(', ')}`);
         return;
       }
     }
 
+    // Validate required sub-variants
+    const missingSubVariants: string[] = [];
+    selectedVariants.forEach((variant) => {
+      const variantDef = product.variants?.find((v) => v.name === variant.variantName);
+      const option = variantDef?.options.find((o) => o.value === variant.optionValue);
+
+      // Check if variant has required sub-variants that aren't selected
+      if (Array.isArray(option?.subVariants) && option.subVariants.length > 0) {
+        option.subVariants.forEach((subVariant) => {
+          const selectedSub = variant.subVariants?.find(
+            (sv) => sv.subVariantName === subVariant.name,
+          );
+
+          // If this required sub-variant is missing entirely
+          if (!selectedSub) {
+            missingSubVariants.push(`${variant.variantName} - ${subVariant.name}`);
+            return;
+          }
+
+          // If a sub-variant is selected, verify required sub-sub-variants on the chosen option
+          const subOption = subVariant.options.find((so) => so.value === selectedSub.optionValue);
+          const subSubDefs = subOption?.subSubVariants;
+          if (Array.isArray(subSubDefs) && subSubDefs.length > 0) {
+            subSubDefs.forEach((subSubDef) => {
+              // If any sub-sub-variant exists, it must be selected
+              const hasSubSub = selectedSub.subSubVariants?.some(
+                (ssv) => ssv.subSubVariantName === subSubDef.name,
+              );
+              if (!hasSubSub) {
+                missingSubVariants.push(
+                  `${variant.variantName} - ${subVariant.name} - ${subSubDef.name}`,
+                );
+              }
+            });
+          }
+        });
+      }
+    });
+
+    if (missingSubVariants.length > 0) {
+      toast.error(`Please select: ${missingSubVariants.join(', ')}`);
+      return;
+    }
+
+    // Check stock availability
+    if (availableStock <= 0) {
+      toast.error('This product is out of stock');
+      return;
+    }
+    if (quantity > availableStock) {
+      toast.warning(`Quantity reduced to available stock (${availableStock}).`);
+    }
+
     try {
       // Convert selectedVariants with full details for cart including sub-variants
-      const variantsForCart = selectedVariants.map(sv => {
-        const variantDef = product.variants?.find(v => v.name === sv.variantName);
-        const opt = variantDef?.options.find(o => o.value === sv.optionValue);
+      const variantsForCart = selectedVariants.map((sv) => {
+        const variantDef = product.variants?.find((v) => v.name === sv.variantName);
+        const opt = variantDef?.options.find((o) => o.value === sv.optionValue);
 
         // Process sub-variants if they exist
-        const subVariantsForCart = (sv.subVariants || []).map(ssv => {
-          const subVariantDef = opt?.subVariants?.find(subVar => subVar.name === ssv.subVariantName);
-          const subOpt = subVariantDef?.options.find(so => so.value === ssv.optionValue);
+        const subVariantsForCart = (sv.subVariants || []).map((ssv) => {
+          const subVariantDef = opt?.subVariants?.find(
+            (subVar) => subVar.name === ssv.subVariantName,
+          );
+          const subOpt = subVariantDef?.options.find((so) => so.value === ssv.optionValue);
 
           // Process sub-sub-variants if they exist
-          const subSubForCart = (ssv.subSubVariants || []).map(sss => {
-            const subSubVariantDef = subOpt?.subSubVariants?.find(def => def.name === sss.subSubVariantName);
-            const subSubOpt = subSubVariantDef?.options.find((o: { value: string }) => o.value === sss.optionValue);
+          const subSubForCart = (ssv.subSubVariants || []).map((sss) => {
+            const subSubVariantDef = subOpt?.subSubVariants?.find(
+              (def) => def.name === sss.subSubVariantName,
+            );
+            const subSubOpt = subSubVariantDef?.options.find(
+              (o: { value: string }) => o.value === sss.optionValue,
+            );
             return {
               subSubVariantName: sss.subSubVariantName,
               optionValue: subSubOpt?.label || sss.optionValue,
@@ -260,8 +329,8 @@ const QuickView: React.FC<QuickViewProps> = ({ product, onClose }) => {
       });
 
       // Determine color and size from variants if using variants, otherwise use empty strings
-      const colorVariant = variantsForCart.find(v => v.variantName.toLowerCase() === 'color');
-      const sizeVariant = variantsForCart.find(v => v.variantName.toLowerCase() === 'size');
+      const colorVariant = variantsForCart.find((v) => v.variantName.toLowerCase() === 'color');
+      const sizeVariant = variantsForCart.find((v) => v.variantName.toLowerCase() === 'size');
 
       const itemToAdd = {
         _id: product._id,
@@ -278,7 +347,7 @@ const QuickView: React.FC<QuickViewProps> = ({ product, onClose }) => {
         salePercent: product.saleInfo?.discountPercent,
       };
 
-      await(addToCart(itemToAdd));
+      await addToCart(itemToAdd);
       toast.success('Added to cart!');
       onClose();
     } catch (error) {
@@ -392,8 +461,7 @@ const QuickView: React.FC<QuickViewProps> = ({ product, onClose }) => {
                         {product.saleInfo.discountPercent}% OFF
                       </span>
                       <span className="text-green-600 font-medium text-sm">
-                        You save Rs.{' '}
-                        {(product.price - finalPrice).toLocaleString()}
+                        You save Rs. {(product.price - finalPrice).toLocaleString()}
                       </span>
                     </div>
                   )}
@@ -414,7 +482,7 @@ const QuickView: React.FC<QuickViewProps> = ({ product, onClose }) => {
                     />
                   </div>
                 )}
-
+           
                 {/* Quantity Selector */}
                 <div className="mt-2">
                   <h4 className="text-sm font-medium">Quantity</h4>
@@ -443,7 +511,9 @@ const QuickView: React.FC<QuickViewProps> = ({ product, onClose }) => {
                       className="border-gray-300 h-8 w-8 p-0 bg-transparent"
                       onClick={() => setQuantity((q) => Math.min(availableStock, q + 1))}
                       disabled={quantity >= availableStock}
-                      title={quantity >= availableStock ? 'Cannot exceed available stock' : undefined}
+                      title={
+                        quantity >= availableStock ? 'Cannot exceed available stock' : undefined
+                      }
                       aria-label="Increase quantity"
                     >
                       <Plus className="h-3 w-3" />
