@@ -56,6 +56,18 @@ const galleryImages = [
 export default function ServicesSection() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const bulkOrderNumber = process.env.NEXT_PUBLIC_CONTACT_BULK_ORDER;
   const servicesNumber = process.env.NEXT_PUBLIC_CONTACT_OTHER_SERVICES;
@@ -71,16 +83,16 @@ export default function ServicesSection() {
   return (
     <div className="p-8">
       <div className="w-full mx-auto">
-        <div className="flex gap-8 items-start">
+        <div className="flex flex-col lg:flex-row gap-8 lg:items-start">
           {/* Left Side - Text and Buttons */}
-          <div className="flex-shrink-0 w-full max-w-xl">
+          <div className="flex-shrink-0 w-full lg:max-w-xl">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Core Services</h2>
             <p className="text-gray-600 mb-8">
               Discover our range of professional lighting solutions designed to elevate every space.
               From expert consultation to seamless installation, we bring brilliance, precision, and
               innovation to every project we deliver.
             </p>
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <Button variant="outline" className="px-8 py-3 hover:bg-(--color-logo)/90" asChild>
                 <a href={servicesWhatsappLink} target="_blank" rel="noopener noreferrer">
                   Book a Service
@@ -97,12 +109,14 @@ export default function ServicesSection() {
           </div>
 
           {/* Right Side - Image Gallery */}
-          <div className="flex gap-3 flex-1 justify-end">
-            {galleryImages.map((image, index) => (
+          <div className="flex gap-3 flex-1 lg:justify-end overflow-x-auto lg:overflow-x-visible">
+            {galleryImages.slice(0, isMobile ? 3 : 6).map((image, index) => (
               <div
                 key={image.id}
                 className={`relative cursor-pointer transition-all duration-500 ease-in-out flex-shrink-0 rounded-2xl overflow-hidden ${
-                  selectedImage === index ? 'w-80 h-72' : 'w-16 h-72'
+                  selectedImage === index
+                    ? 'w-64 sm:w-80 h-48 sm:h-72'
+                    : 'w-12 sm:w-16 h-48 sm:h-72'
                 }`}
                 onClick={() => setSelectedImage(index)}
               >
@@ -137,7 +151,7 @@ export default function ServicesSection() {
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="mt-8 grid grid-cols-2 md:grid-cols-3 gap-8">
+              <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-8">
                 {/* Exclusive Discount */}
                 <div className="text-center space-y-3">
                   <div className="flex justify-center">
