@@ -214,10 +214,35 @@ export function calculateAvailableStock(config: ProductConfiguration): number {
     if (variant) {
       const option = variant.options.find((o) => o.value === selectedVariant.optionValue);
       if (option) {
-        // Check sub-variants if they exist
-        if (selectedVariant.subVariants && selectedVariant.subVariants.length > 0) {
+        // Check if this variant has sub-variants that need to be selected
+        const hasSubVariants = Array.isArray(option.subVariants) && option.subVariants.length > 0;
+        
+        if (hasSubVariants && (!selectedVariant.subVariants || selectedVariant.subVariants.length === 0)) {
+          // If variant has sub-variants but none are selected, calculate max possible stock
+          // from all available sub-variant options
+          let maxSubStock = 0;
+          option.subVariants.forEach((subVariant: SubVariant) => {
+            subVariant.options.forEach((subOption: SubVariantOption) => {
+              // Check if sub-option has sub-sub-variants
+              const hasSubSubVariants = Array.isArray(subOption.subSubVariants) && subOption.subSubVariants.length > 0;
+              
+              if (hasSubSubVariants) {
+                // If has sub-sub-variants, get max from those
+                subOption.subSubVariants.forEach((subSubVariant) => {
+                  subSubVariant.options.forEach((subSubOption) => {
+                    maxSubStock = Math.max(maxSubStock, subSubOption.stock);
+                  });
+                });
+              } else {
+                // Use sub-option stock directly
+                maxSubStock = Math.max(maxSubStock, subOption.stock);
+              }
+            });
+          });
+          minStock = Math.min(minStock, maxSubStock);
+        } else if (selectedVariant.subVariants && selectedVariant.subVariants.length > 0) {
+          // Sub-variants are selected, check their stock
           selectedVariant.subVariants.forEach((selectedSubVariant) => {
-            // Type guard to ensure subVariants is an array of SubVariant objects
             if (Array.isArray(option.subVariants)) {
               const subVariant = option.subVariants.find(
                 (sv: SubVariant) => sv.name === selectedSubVariant.subVariantName,
@@ -227,8 +252,20 @@ export function calculateAvailableStock(config: ProductConfiguration): number {
                   (so: SubVariantOption) => so.value === selectedSubVariant.optionValue,
                 );
                 if (subOption) {
-                  // Check sub-sub-variants if they exist
-                  if (selectedSubVariant.subSubVariants && selectedSubVariant.subSubVariants.length > 0) {
+                  // Check if sub-option has sub-sub-variants that need to be selected
+                  const hasSubSubVariants = Array.isArray(subOption.subSubVariants) && subOption.subSubVariants.length > 0;
+                  
+                  if (hasSubSubVariants && (!selectedSubVariant.subSubVariants || selectedSubVariant.subSubVariants.length === 0)) {
+                    // If sub-option has sub-sub-variants but none are selected, get max possible stock
+                    let maxSubSubStock = 0;
+                    subOption.subSubVariants.forEach((subSubVariant) => {
+                      subSubVariant.options.forEach((subSubOption) => {
+                        maxSubSubStock = Math.max(maxSubSubStock, subSubOption.stock);
+                      });
+                    });
+                    minStock = Math.min(minStock, maxSubSubStock);
+                  } else if (selectedSubVariant.subSubVariants && selectedSubVariant.subSubVariants.length > 0) {
+                    // Sub-sub-variants are selected, check their stock
                     selectedSubVariant.subSubVariants.forEach((selectedSubSubVariant) => {
                       const subSubVariant = subOption.subSubVariants?.find(
                         (ssv) => ssv.name === selectedSubSubVariant.subSubVariantName,
@@ -243,6 +280,7 @@ export function calculateAvailableStock(config: ProductConfiguration): number {
                       }
                     });
                   } else {
+                    // No sub-sub-variants, use sub-option stock
                     minStock = Math.min(minStock, subOption.stock);
                   }
                 }
@@ -250,6 +288,7 @@ export function calculateAvailableStock(config: ProductConfiguration): number {
             }
           });
         } else {
+          // No sub-variants, use main option stock
           minStock = Math.min(minStock, option.stock);
         }
       }
