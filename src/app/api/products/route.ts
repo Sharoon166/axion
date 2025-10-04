@@ -80,21 +80,21 @@ interface SimpleVariant {
 
 export async function GET(request: NextRequest) {
   try {
-    // // Enhanced connection with retry mechanism
-    // let retries = 3;
-    // while (retries > 0) {
-    //   try {
-    //     await Promise.race([
-    //       dbConnect(),
-    //       new Promise((_, reject) => setTimeout(() => reject(new Error('DB timeout')), 8000)),
-    //     ]);
-    //     break;
-    //   } catch (error) {
-    //     retries--;
-    //     if (retries === 0) throw error;
-    //     await new Promise((resolve) => setTimeout(resolve, 1000));
-    //   }
-    // }
+    // Enhanced connection with retry mechanism
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        await Promise.race([
+          dbConnect(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('DB timeout')), 8000)),
+        ]);
+        break;
+      } catch (error) {
+        retries--;
+        if (retries === 0) throw error;
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
 
     const { searchParams } = new URL(request.url);
     const featured = searchParams.get('featured');

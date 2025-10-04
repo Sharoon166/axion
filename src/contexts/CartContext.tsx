@@ -82,9 +82,67 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      // Calculate total quantity in cart (including this addition)
+      // Helper function to compare variants including sub-variants and sub-sub-variants
+      const compareVariants = (v1?: EnhancedVariant[], v2?: EnhancedVariant[]) => {
+        if (!v1 && !v2) return true;
+        if (!v1 || !v2 || v1.length !== v2.length) return false;
+        return v1.every((variant) => {
+          const matchingVariant = v2.find(
+            (v) => v.variantName === variant.variantName && v.optionValue === variant.optionValue,
+          );
+          if (!matchingVariant) return false;
+
+          // Compare sub-variants
+          const sv1 = variant.subVariants || [];
+          const sv2 = matchingVariant.subVariants || [];
+          if (sv1.length !== sv2.length) return false;
+
+          return sv1.every((subVariant) => {
+            const matchingSubVariant = sv2.find(
+              (sv) =>
+                sv.subVariantName === subVariant.subVariantName &&
+                sv.optionValue === subVariant.optionValue,
+            );
+            if (!matchingSubVariant) return false;
+
+            // Compare sub-sub-variants
+            const ssv1 = subVariant.subSubVariants || [];
+            const ssv2 = matchingSubVariant.subSubVariants || [];
+            if (ssv1.length !== ssv2.length) return false;
+
+            return ssv1.every((subSubVariant) =>
+              ssv2.some(
+                (ssv) =>
+                  ssv.subSubVariantName === subSubVariant.subSubVariantName &&
+                  ssv.optionValue === subSubVariant.optionValue,
+              ),
+            );
+          });
+        });
+      };
+
+      const compareAddons = (a1?: SelectedAddon[], a2?: SelectedAddon[]) => {
+        if (!a1 && !a2) return true;
+        if (!a1 || !a2 || a1.length !== a2.length) return false;
+        return a1.every((addon) =>
+          a2.some(
+            (a) =>
+              a.addonName === addon.addonName &&
+              a.optionLabel === addon.optionLabel &&
+              a.quantity === addon.quantity,
+          ),
+        );
+      };
+
+      // Calculate total quantity in cart for this specific variant combination (including this addition)
       const existingItemQuantity = cartItems
-        .filter((cartItem) => cartItem._id === item._id)
+        .filter((cartItem) => 
+          cartItem._id === item._id &&
+          cartItem.color === item.color &&
+          cartItem.size === item.size &&
+          compareVariants(cartItem.variants, item.variants) &&
+          compareAddons(cartItem.addons, item.addons)
+        )
         .reduce((total, cartItem) => total + cartItem.quantity, 0);
 
       const newTotalQuantity = existingItemQuantity + quantity;
@@ -171,58 +229,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         toast.error(`Only ${availableStock} items available in stock for selected variant`);
         return;
       }
-
-      // Helper function to compare variants including sub-variants and sub-sub-variants
-      const compareVariants = (v1?: EnhancedVariant[], v2?: EnhancedVariant[]) => {
-        if (!v1 && !v2) return true;
-        if (!v1 || !v2 || v1.length !== v2.length) return false;
-        return v1.every((variant) => {
-          const matchingVariant = v2.find(
-            (v) => v.variantName === variant.variantName && v.optionValue === variant.optionValue,
-          );
-          if (!matchingVariant) return false;
-
-          // Compare sub-variants
-          const sv1 = variant.subVariants || [];
-          const sv2 = matchingVariant.subVariants || [];
-          if (sv1.length !== sv2.length) return false;
-
-          return sv1.every((subVariant) => {
-            const matchingSubVariant = sv2.find(
-              (sv) =>
-                sv.subVariantName === subVariant.subVariantName &&
-                sv.optionValue === subVariant.optionValue,
-            );
-            if (!matchingSubVariant) return false;
-
-            // Compare sub-sub-variants
-            const ssv1 = subVariant.subSubVariants || [];
-            const ssv2 = matchingSubVariant.subSubVariants || [];
-            if (ssv1.length !== ssv2.length) return false;
-
-            return ssv1.every((subSubVariant) =>
-              ssv2.some(
-                (ssv) =>
-                  ssv.subSubVariantName === subSubVariant.subSubVariantName &&
-                  ssv.optionValue === subSubVariant.optionValue,
-              ),
-            );
-          });
-        });
-      };
-
-      const compareAddons = (a1?: SelectedAddon[], a2?: SelectedAddon[]) => {
-        if (!a1 && !a2) return true;
-        if (!a1 || !a2 || a1.length !== a2.length) return false;
-        return a1.every((addon) =>
-          a2.some(
-            (a) =>
-              a.addonName === addon.addonName &&
-              a.optionLabel === addon.optionLabel &&
-              a.quantity === addon.quantity,
-          ),
-        );
-      };
 
       const existingItemIndex = cartItems.findIndex(
         (cartItem) =>

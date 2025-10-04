@@ -409,20 +409,24 @@ const VariantSelector: React.FC<VariantSelectorProps> = ({
                                     !hasSubSubVariants && (subOption.stock || 0) <= 0;
 
                                   if (isSubColorVariant) {
-                                    // Sub-variant color - round button with gradient support
-                                    const isRgbColor = subOption.value.startsWith('rgb');
-                                    const gradientStyle = isRgbColor
+                                    // Sub-variant color - round button with proper color display
+                                    const colorValue = subOption.value;
+                                    const isValidColor =
+                                      colorValue.startsWith('rgb') || colorValue.startsWith('#');
+
+                                    const colorStyle = isValidColor
                                       ? {
-                                          background: `linear-gradient(45deg, ${subOption.value}, ${subOption.value}dd, ${subOption.value}88)`,
-                                          border: '2px solid #e5e7eb',
+                                          backgroundColor: colorValue,
+                                          border:
+                                            colorValue === '#ffffff' ||
+                                            colorValue === 'white' ||
+                                            colorValue === 'rgb(255, 255, 255)'
+                                              ? '2px solid #e5e7eb'
+                                              : '2px solid #d1d5db',
                                         }
                                       : {
-                                          backgroundColor: subOption.value,
-                                          border:
-                                            subOption.value === '#ffffff' ||
-                                            subOption.value === 'white'
-                                              ? '2px solid #e5e7eb'
-                                              : undefined,
+                                          backgroundColor: '#f3f4f6',
+                                          border: '2px solid #e5e7eb',
                                         };
 
                                     return (
@@ -436,22 +440,18 @@ const VariantSelector: React.FC<VariantSelectorProps> = ({
                                             subOption,
                                           )
                                         }
-                                        className={`w-10 h-10 rounded-full border-2 transition-all ${
+                                        className={`w-10 h-10 rounded-full transition-all ${
                                           isSubSelected
-                                            ? 'border-blue-500 ring-1 ring-blue-200'
-                                            : 'border-gray-300 hover:border-gray-400'
+                                            ? 'ring-2 ring-blue-500 ring-offset-1'
+                                            : 'hover:scale-105'
                                         } ${
                                           isSubOutOfStock
                                             ? 'opacity-50 cursor-not-allowed'
                                             : 'cursor-pointer'
                                         }`}
-                                        style={gradientStyle}
+                                        style={colorStyle}
                                         title={`${subOption.label}${isSubOutOfStock ? ' (Out of Stock)' : hasSubSubVariants ? '' : ` - ${subOption.stock} left`}`}
-                                      >
-                                        {isSubSelected && (
-                                          <div className="w-3 h-3 bg-white rounded-full mx-auto border border-gray-300"></div>
-                                        )}
-                                      </button>
+                                      ></button>
                                     );
                                   } else {
                                     // Regular sub-variant - simple tag button
@@ -529,21 +529,25 @@ const VariantSelector: React.FC<VariantSelectorProps> = ({
                                                   (subSubOption.stock || 0) <= 0;
 
                                                 if (isSubSubColorVariant) {
-                                                  // Sub-sub-variant color - round button with gradient support
-                                                  const isRgbColor =
-                                                    subSubOption.value.startsWith('rgb');
-                                                  const gradientStyle = isRgbColor
+                                                  // Sub-sub-variant color - round button with proper color display
+                                                  const colorValue = subSubOption.value;
+                                                  const isValidColor =
+                                                    colorValue.startsWith('rgb') ||
+                                                    colorValue.startsWith('#');
+
+                                                  const colorStyle = isValidColor
                                                     ? {
-                                                        background: `linear-gradient(45deg, ${subSubOption.value}, ${subSubOption.value}dd, ${subSubOption.value}88)`,
-                                                        border: '2px solid #e5e7eb',
+                                                        backgroundColor: colorValue,
+                                                        border:
+                                                          colorValue === '#ffffff' ||
+                                                          colorValue === 'white' ||
+                                                          colorValue === 'rgb(255, 255, 255)'
+                                                            ? '2px solid #e5e7eb'
+                                                            : '2px solid #d1d5db',
                                                       }
                                                     : {
-                                                        backgroundColor: subSubOption.value,
-                                                        border:
-                                                          subSubOption.value === '#ffffff' ||
-                                                          subSubOption.value === 'white'
-                                                            ? '2px solid #e5e7eb'
-                                                            : undefined,
+                                                        backgroundColor: '#f3f4f6',
+                                                        border: '2px solid #e5e7eb',
                                                       };
 
                                                   return (
@@ -558,21 +562,19 @@ const VariantSelector: React.FC<VariantSelectorProps> = ({
                                                           subSubOption,
                                                         )
                                                       }
-                                                      className={`relative w-8 h-8 rounded-full border-2 transition-all ${
+                                                      className={`relative w-8 h-8 rounded-full transition-all ${
                                                         isSubSubSelected
-                                                          ? 'border-blue-500 ring-1 ring-blue-200'
-                                                          : 'border-gray-300 hover:border-gray-400'
+                                                          ? 'ring-2 ring-blue-500 ring-offset-1'
+                                                          : 'hover:scale-105'
                                                       } ${
                                                         isSubSubOutOfStock
                                                           ? 'opacity-50 cursor-not-allowed'
                                                           : 'cursor-pointer'
                                                       }`}
-                                                      style={gradientStyle}
+                                                      style={colorStyle}
                                                       title={`${subSubOption.label}${isSubSubOutOfStock ? ' (Out of Stock)' : ` - ${subSubOption.stock} left`}`}
                                                     >
-                                                      {isSubSubSelected && (
-                                                        <div className="w-2 h-2 bg-white rounded-full mx-auto border border-gray-300"></div>
-                                                      )}
+                                                     
                                                     </button>
                                                   );
                                                 } else {

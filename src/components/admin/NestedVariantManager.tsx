@@ -210,7 +210,7 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
     variantIndex: number,
     optionIndex: number,
     field: keyof VariantOption,
-    value: string | number | boolean | Record<string, unknown>,
+    value: string | number | boolean | Record<string, unknown> | { name: string; value: string }[],
   ) => {
     const updated = [...variants];
     const updatedOption = {
@@ -366,7 +366,7 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
     subVariantIndex: number,
     subOptionIndex: number,
     field: keyof SubVariantOption,
-    value: string | number | boolean | Record<string, unknown>,
+    value: string | number | boolean | Record<string, unknown> | { name: string; value: string }[],
   ) => {
     const updated = [...variants];
     const option = updated[variantIndex].options[optionIndex];
@@ -583,7 +583,7 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
     subSubVariantIndex: number,
     subSubOptionIndex: number,
     field: keyof SubSubVariantOption,
-    value: string | number | boolean | Record<string, unknown>,
+    value: string | number | boolean | Record<string, unknown> | { name: string; value: string }[],
   ) => {
     const updated = [...variants];
     const option = updated[variantIndex].options[optionIndex];
@@ -630,9 +630,12 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
         ? `rgb(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b})`
         : `rgba(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b}, ${color.rgb.a})`;
 
+    const colorSpec = [{ name: 'Color', value: colorValue }];
+
     if (config.type === 'variant') {
       updateOption(config.variantIndex, config.optionIndex!, 'value', colorValue);
       updateOption(config.variantIndex, config.optionIndex!, 'label', colorValue);
+      updateOption(config.variantIndex, config.optionIndex!, 'specifications', colorSpec);
     } else if (config.type === 'subvariant') {
       updateSubOption(
         config.variantIndex,
@@ -649,6 +652,14 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
         config.subOptionIndex!,
         'label',
         colorValue,
+      );
+      updateSubOption(
+        config.variantIndex,
+        config.optionIndex!,
+        config.subVariantIndex!,
+        config.subOptionIndex!,
+        'specifications',
+        colorSpec,
       );
     } else if (config.type === 'subsubvariant') {
       updateSubSubOption(
@@ -671,6 +682,16 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
         'label',
         colorValue,
       );
+      updateSubSubOption(
+        config.variantIndex,
+        config.optionIndex!,
+        config.subVariantIndex!,
+        config.subOptionIndex!,
+        config.subSubVariantIndex!,
+        config.subSubOptionIndex!,
+        'specifications',
+        colorSpec,
+      );
     }
   };
 
@@ -682,30 +703,33 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
           // If option has sub-variants, don't count its stock, count sub-variants instead
           if (Array.isArray(option.subVariants) && option.subVariants.length > 0) {
             const subVariants = option.subVariants as SubVariant[];
-            return variantTotal + subVariants.reduce((subTotal, subVariant) => {
-              return (
-                subTotal +
-                subVariant.options.reduce((subOptionTotal, subOption) => {
-                  // If sub-option has sub-sub-variants, don't count its stock, count sub-sub-variants instead
-                  if (subOption.subSubVariants && subOption.subSubVariants.length > 0) {
-                    return subOptionTotal + subOption.subSubVariants.reduce(
-                      (subSubTotal, subSubVariant) => {
-                        return (
-                          subSubTotal +
-                          subSubVariant.options.reduce((subSubOptionTotal, subSubOption) => {
-                            return subSubOptionTotal + subSubOption.stock;
-                          }, 0)
-                        );
-                      },
-                      0,
-                    );
-                  } else {
-                    // This is a leaf node, count its stock
-                    return subOptionTotal + subOption.stock;
-                  }
-                }, 0)
-              );
-            }, 0);
+            return (
+              variantTotal +
+              subVariants.reduce((subTotal, subVariant) => {
+                return (
+                  subTotal +
+                  subVariant.options.reduce((subOptionTotal, subOption) => {
+                    // If sub-option has sub-sub-variants, don't count its stock, count sub-sub-variants instead
+                    if (subOption.subSubVariants && subOption.subSubVariants.length > 0) {
+                      return (
+                        subOptionTotal +
+                        subOption.subSubVariants.reduce((subSubTotal, subSubVariant) => {
+                          return (
+                            subSubTotal +
+                            subSubVariant.options.reduce((subSubOptionTotal, subSubOption) => {
+                              return subSubOptionTotal + subSubOption.stock;
+                            }, 0)
+                          );
+                        }, 0)
+                      );
+                    } else {
+                      // This is a leaf node, count its stock
+                      return subOptionTotal + subOption.stock;
+                    }
+                  }, 0)
+                );
+              }, 0)
+            );
           } else {
             // This is a leaf node, count its stock
             return variantTotal + option.stock;
@@ -955,28 +979,33 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                 )}
                               </div>
                             </div>
-                            <div>
-                              <Label>Price Modifier</Label>
-                              <Input
-                                type="number"
-                                step="0.01"
-                                value={option.priceModifier === 0 ? '' : option.priceModifier}
-                                onChange={(e) => {
-                                  const value =
-                                    e.target.value === '' ? 0 : parseFloat(e.target.value);
-                                  updateOption(
-                                    variantIndex,
-                                    optionIndex,
-                                    'priceModifier',
-                                    isNaN(value) ? 0 : value,
-                                  );
-                                }}
-                                placeholder="0.00"
-                                className="w-full"
-                              />
-                            </div>
+                            {/* Only show price modifier input if this option has no sub-variants */}
+                            {(!Array.isArray(option.subVariants) ||
+                              option.subVariants.length === 0) && (
+                              <div>
+                                <Label>Price Modifier</Label>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  value={option.priceModifier === 0 ? '' : option.priceModifier}
+                                  onChange={(e) => {
+                                    const value =
+                                      e.target.value === '' ? 0 : parseFloat(e.target.value);
+                                    updateOption(
+                                      variantIndex,
+                                      optionIndex,
+                                      'priceModifier',
+                                      isNaN(value) ? 0 : value,
+                                    );
+                                  }}
+                                  placeholder="0.00"
+                                  className="w-full"
+                                />
+                              </div>
+                            )}
                             {/* Only show stock input if this option has no sub-variants */}
-                            {(!Array.isArray(option.subVariants) || option.subVariants.length === 0) && (
+                            {(!Array.isArray(option.subVariants) ||
+                              option.subVariants.length === 0) && (
                               <div>
                                 <Label>Stock Quantity</Label>
                                 <Input
@@ -1172,9 +1201,11 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                               )}
                                               <span className="text-sm truncate">
                                                 {subOption.label || 'Unnamed'}
-                                                {(!subOption.subSubVariants || subOption.subSubVariants.length === 0) && 
+                                                {(!subOption.subSubVariants ||
+                                                  subOption.subSubVariants.length === 0) &&
                                                   ` (Stock: ${subOption.stock})`}
-                                                {subOption.subSubVariants && subOption.subSubVariants.length > 0 && 
+                                                {subOption.subSubVariants &&
+                                                  subOption.subSubVariants.length > 0 &&
                                                   ` (${subOption.subSubVariants.length} sub-sub-variants)`}
                                               </span>
                                             </div>
@@ -1331,43 +1362,50 @@ const NestedVariantManager: React.FC<NestedVariantManagerProps> = ({ variants = 
                                                   </div>
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-2">
-                                                  <div>
-                                                    <Label className="text-xs">Price +/-</Label>
-                                                    <Input
-                                                      type="number"
-                                                      step="0.01"
-                                                      value={
-                                                        subOption.priceModifier === 0
-                                                          ? ''
-                                                          : subOption.priceModifier
-                                                      }
-                                                      onChange={(e) => {
-                                                        const value =
-                                                          e.target.value === ''
-                                                            ? 0
-                                                            : parseFloat(e.target.value);
-                                                        updateSubOption(
-                                                          variantIndex,
-                                                          optionIndex,
-                                                          subVariantIndex,
-                                                          subOptionIndex,
-                                                          'priceModifier',
-                                                          isNaN(value) ? 0 : value,
-                                                        );
-                                                      }}
-                                                      placeholder="0.00"
-                                                      className="h-8 text-xs mt-1"
-                                                    />
-                                                  </div>
+                                                  {/* Only show price modifier input if this sub-option has no sub-sub-variants */}
+                                                  {(!subOption.subSubVariants ||
+                                                    subOption.subSubVariants.length === 0) && (
+                                                    <div>
+                                                      <Label className="text-xs">Price +/-</Label>
+                                                      <Input
+                                                        type="number"
+                                                        step="0.01"
+                                                        value={
+                                                          subOption.priceModifier === 0
+                                                            ? ''
+                                                            : subOption.priceModifier
+                                                        }
+                                                        onChange={(e) => {
+                                                          const value =
+                                                            e.target.value === ''
+                                                              ? 0
+                                                              : parseFloat(e.target.value);
+                                                          updateSubOption(
+                                                            variantIndex,
+                                                            optionIndex,
+                                                            subVariantIndex,
+                                                            subOptionIndex,
+                                                            'priceModifier',
+                                                            isNaN(value) ? 0 : value,
+                                                          );
+                                                        }}
+                                                        placeholder="0.00"
+                                                        className="h-8 text-xs mt-1"
+                                                      />
+                                                    </div>
+                                                  )}
                                                   {/* Only show stock input if this sub-option has no sub-sub-variants */}
-                                                  {(!subOption.subSubVariants || subOption.subSubVariants.length === 0) && (
+                                                  {(!subOption.subSubVariants ||
+                                                    subOption.subSubVariants.length === 0) && (
                                                     <div>
                                                       <Label className="text-xs">Stock</Label>
                                                       <Input
                                                         type="number"
                                                         min="0"
                                                         value={
-                                                          subOption.stock === 0 ? '' : subOption.stock
+                                                          subOption.stock === 0
+                                                            ? ''
+                                                            : subOption.stock
                                                         }
                                                         onChange={(e) => {
                                                           const value =

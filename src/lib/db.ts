@@ -36,11 +36,11 @@ async function dbConnect() {
 
   if (!cached.promise) {
     const opts = {
-      bufferCommands: false,
+      bufferCommands: true, // Changed to true for better reliability
       maxPoolSize: 10,
-      serverSelectionTimeoutMS: 10000, // Increased from 5s to 10s
-      socketTimeoutMS: 30000, // Reduced from 45s to 30s
-      connectTimeoutMS: 10000, // Added connection timeout
+      serverSelectionTimeoutMS: 15000, // Increased timeout
+      socketTimeoutMS: 45000, // Increased socket timeout
+      connectTimeoutMS: 15000, // Increased connection timeout
       family: 4, // Use IPv4, skip trying IPv6
       retryWrites: true,
       retryReads: true,
@@ -60,6 +60,29 @@ async function dbConnect() {
   }
 
   return cached.conn;
+}
+
+// Health check function
+export async function checkConnection() {
+  try {
+    const conn = await dbConnect();
+    const state = conn.connection.readyState;
+    const states = {
+      0: 'disconnected',
+      1: 'connected',
+      2: 'connecting',
+      3: 'disconnecting'
+    };
+    return {
+      status: states[state as keyof typeof states] || 'unknown',
+      readyState: state
+    };
+  } catch (error) {
+    return {
+      status: 'error',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
 }
 
 export default dbConnect;

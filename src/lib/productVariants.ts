@@ -138,7 +138,6 @@ export interface ProductConfiguration {
   addons: Addon[];
 }
 
-
 export function calculateFinalPrice(config: ProductConfiguration): number {
   let finalPrice = config.basePrice;
 
@@ -164,7 +163,10 @@ export function calculateFinalPrice(config: ProductConfiguration): number {
                   finalPrice += subOption.priceModifier;
 
                   // Add sub-sub-variant price modifiers
-                  if (selectedSubVariant.subSubVariants && selectedSubVariant.subSubVariants.length > 0) {
+                  if (
+                    selectedSubVariant.subSubVariants &&
+                    selectedSubVariant.subSubVariants.length > 0
+                  ) {
                     selectedSubVariant.subSubVariants.forEach((selectedSubSubVariant) => {
                       const subSubVariant = subOption.subSubVariants?.find(
                         (ssv) => ssv.name === selectedSubSubVariant.subSubVariantName,
@@ -216,29 +218,35 @@ export function calculateAvailableStock(config: ProductConfiguration): number {
       if (option) {
         // Check if this variant has sub-variants that need to be selected
         const hasSubVariants = Array.isArray(option.subVariants) && option.subVariants.length > 0;
-        
-        if (hasSubVariants && (!selectedVariant.subVariants || selectedVariant.subVariants.length === 0)) {
+
+        if (
+          hasSubVariants &&
+          (!selectedVariant.subVariants || selectedVariant.subVariants.length === 0)
+        ) {
           // If variant has sub-variants but none are selected, calculate max possible stock
           // from all available sub-variant options
           let maxSubStock = 0;
-          option.subVariants.forEach((subVariant: SubVariant) => {
-            subVariant.options.forEach((subOption: SubVariantOption) => {
-              // Check if sub-option has sub-sub-variants
-              const hasSubSubVariants = Array.isArray(subOption.subSubVariants) && subOption.subSubVariants.length > 0;
-              
-              if (hasSubSubVariants) {
-                // If has sub-sub-variants, get max from those
-                subOption.subSubVariants.forEach((subSubVariant) => {
-                  subSubVariant.options.forEach((subSubOption) => {
-                    maxSubStock = Math.max(maxSubStock, subSubOption.stock);
+          if (Array.isArray(option.subVariants)) {
+            option.subVariants.forEach((subVariant: SubVariant) => {
+              subVariant.options.forEach((subOption: SubVariantOption) => {
+                // Check if sub-option has su.isArraariants
+                const hasSubSubVariants =
+                  Array.isArray(subOption.subSubVariants) && subOption.subSubVariants.length > 0;
+
+                if (hasSubSubVariants) {
+                  // If has sub-sub-variants, get max from those
+                  subOption?.subSubVariants?.forEach((subSubVariant) => {
+                    subSubVariant.options.forEach((subSubOption) => {
+                      maxSubStock = Math.max(maxSubStock, subSubOption.stock);
+                    });
                   });
-                });
-              } else {
-                // Use sub-option stock directly
-                maxSubStock = Math.max(maxSubStock, subOption.stock);
-              }
+                } else {
+                  // Use sub-option stock directly
+                  maxSubStock = Math.max(maxSubStock, subOption.stock);
+                }
+              });
             });
-          });
+          }
           minStock = Math.min(minStock, maxSubStock);
         } else if (selectedVariant.subVariants && selectedVariant.subVariants.length > 0) {
           // Sub-variants are selected, check their stock
@@ -253,18 +261,26 @@ export function calculateAvailableStock(config: ProductConfiguration): number {
                 );
                 if (subOption) {
                   // Check if sub-option has sub-sub-variants that need to be selected
-                  const hasSubSubVariants = Array.isArray(subOption.subSubVariants) && subOption.subSubVariants.length > 0;
-                  
-                  if (hasSubSubVariants && (!selectedSubVariant.subSubVariants || selectedSubVariant.subSubVariants.length === 0)) {
+                  const hasSubSubVariants =
+                    Array.isArray(subOption.subSubVariants) && subOption.subSubVariants.length > 0;
+
+                  if (
+                    hasSubSubVariants &&
+                    (!selectedSubVariant.subSubVariants ||
+                      selectedSubVariant.subSubVariants.length === 0)
+                  ) {
                     // If sub-option has sub-sub-variants but none are selected, get max possible stock
                     let maxSubSubStock = 0;
-                    subOption.subSubVariants.forEach((subSubVariant) => {
+                    subOption?.subSubVariants?.forEach((subSubVariant) => {
                       subSubVariant.options.forEach((subSubOption) => {
                         maxSubSubStock = Math.max(maxSubSubStock, subSubOption.stock);
                       });
                     });
                     minStock = Math.min(minStock, maxSubSubStock);
-                  } else if (selectedSubVariant.subSubVariants && selectedSubVariant.subSubVariants.length > 0) {
+                  } else if (
+                    selectedSubVariant.subSubVariants &&
+                    selectedSubVariant.subSubVariants.length > 0
+                  ) {
                     // Sub-sub-variants are selected, check their stock
                     selectedSubVariant.subSubVariants.forEach((selectedSubSubVariant) => {
                       const subSubVariant = subOption.subSubVariants?.find(
